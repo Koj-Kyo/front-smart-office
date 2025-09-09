@@ -1,0 +1,17 @@
+﻿/* Style de la barre de recherche pour correspondre au design Figma */
+.custom-search-field .mud-input-control.mud-input-control-input-container {
+    border-radius: 9999px; /* Bords très arrondis */
+    background-color: var(--mud-palette-surface); /* Couleur de fond des cartes (blanc) */
+}
+
+/* Enlever la bordure et l'ombre par défaut au focus */
+.custom-search-field .mud-input-control.mud-focused .mud-input {
+    box-shadow: none;
+    border-color: transparent !important;
+}
+
+/* Réduire le padding autour du champ de recherche */
+.custom-search-field .mud-input-control.mud-input {
+    padding-left: 16px;
+    padding-right: 16px;
+}

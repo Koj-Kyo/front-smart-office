@@ -1,0 +1,117 @@
+﻿@page "/utilisateurs"
+@using MudBlazor
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="my-8">
+    <MudText Typo="Typo.h4" Class="mb-4">Gestion des utilisateurs</MudText>
+    <MudText Typo="Typo.body1" Class="mb-8">Gérez ici la liste complète des utilisateurs, leurs rôles et leur statut.</MudText>
+
+    <MudButton OnClick="OpenAddDialog" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" Class="mb-4">
+        Ajouter un utilisateur
+    </MudButton>
+
+    <MudExpansionPanels MultiExpansion="true" Class="rounded-xl">
+        @foreach (var user in users)
+        {
+            <MudExpansionPanel Text="@user.Name">
+                <ChildContent>
+                    <div class="d-flex flex-column pa-4">
+                        <MudText Typo="Typo.h6">Détails de l'utilisateur</MudText>
+                        <MudText Typo="Typo.body2">Nom: @user.Name</MudText>
+                        <MudText Typo="Typo.body2">Rôle: @user.Role</MudText>
+                        <MudText Typo="Typo.body2">Statut: @(user.IsActive ? "Actif" : "Inactif")</MudText>
+                    </div>
+                    <div class="d-flex justify-end pa-2">
+                        <MudIconButton OnClick="@(() => OpenEditDialog(user))" Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" />
+                        <MudIconButton OnClick="@(() => DeleteUser(user))" Icon="@Icons.Material.Filled.Delete" Color="Color.Error" />
+                    </div>
+                </ChildContent>
+            </MudExpansionPanel>
+        }
+    </MudExpansionPanels>
+</MudContainer>
+
+<MudDialog @bind-IsVisible="isDialogOpen" Options="dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@(isAdding ? Icons.Material.Filled.Add : Icons.Material.Filled.Edit)" Class="mr-3" />
+            @(isAdding ? "Ajouter un utilisateur" : "Modifier l'utilisateur")
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudForm>
+            <MudTextField T="string" @bind-Value="editingUser.Name" Label="Nom de l'utilisateur" Required />
+            <MudSelect T="string" @bind-Value="editingUser.Role" Label="Rôle" Required>
+                <MudSelectItem Value="@("Admin")">Admin</MudSelectItem>
+                <MudSelectItem Value="@("Membre")">Membre</MudSelectItem>
+                <MudSelectItem Value="@("Visiteur")">Visiteur</MudSelectItem>
+            </MudSelect>
+            <MudCheckBox T="bool" @bind-Checked="editingUser.IsActive" Label="Actif" Color="Color.Primary" />
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="OnCancel" Color="Color.Default">Annuler</MudButton>
+        <MudButton OnClick="OnSave" Color="Color.Primary" Variant="Variant.Filled">Sauvegarder</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private List<User> users = new List<User>();
+    private bool isDialogOpen = false;
+    private bool isAdding = true;
+    private User editingUser = new User();
+    private DialogOptions dialogOptions = new DialogOptions() { CloseButton = true };
+
+    // Modèle de données pour l'utilisateur
+    public class User
+    {
+        public string Name { get; set; }
+        public string Role { get; set; }
+        public bool IsActive { get; set; }
+    }
+
+    protected override void OnInitialized()
+    {
+        // Données d'utilisateurs fictives
+        users = new List<User>
+        {
+            new User { Name = "Scarlett", Role = "Admin", IsActive = true },
+            new User { Name = "Nariya", Role = "Membre", IsActive = true },
+            new User { Name = "Riya", Role = "Visiteur", IsActive = false }
+        };
+    }
+
+    private void OpenAddDialog()
+    {
+        isAdding = true;
+        editingUser = new User();
+        isDialogOpen = true;
+    }
+
+    private void OpenEditDialog(User user)
+    {
+        isAdding = false;
+        editingUser = user;
+        isDialogOpen = true;
+    }
+
+    private void OnCancel()
+    {
+        isDialogOpen = false;
+    }
+
+    private void OnSave()
+    {
+        if (isAdding)
+        {
+            users.Add(editingUser);
+        }
+        isDialogOpen = false;
+        StateHasChanged();
+    }
+
+    private void DeleteUser(User user)
+    {
+        users.Remove(user);
+        StateHasChanged();
+    }
+}

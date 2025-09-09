@@ -1,0 +1,137 @@
+﻿@page "/devices"
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="my-8">
+    <MudText Typo="Typo.h4" Class="mb-4">Gestion des appareils</MudText>
+    <MudText Typo="Typo.body1" Class="mb-8">En tant qu'administrateur, vous pouvez ici ajouter, modifier et supprimer des appareils, et les affecter à une zone.</MudText>
+
+    <MudButton OnClick="OpenAddDialog" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add">
+        Ajouter un appareil
+    </MudButton>
+
+    <MudTable Items="@devices" Class="mt-8 rounded-xl" T="Device">
+        <ToolBarContent>
+            <MudText Typo="Typo.h6">Liste des appareils</MudText>
+            <MudSpacer />
+            <MudTextField T="string" Placeholder="Rechercher..." Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+        </ToolBarContent>
+        <HeaderContent>
+            <MudTh>Nom</MudTh>
+            <MudTh>Icône</MudTh>
+            <MudTh>État</MudTh>
+            <MudTh>Couleur</MudTh>
+            <MudTh>Zone</MudTh>
+            <MudTh>Actions</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Name">@context.DeviceName</MudTd>
+            <MudTd DataLabel="Icon"><MudIcon Icon="@context.Icon" Style="@($"color:{context.DeviceColor};")" /></MudTd>
+            <MudTd DataLabel="IsOn">@(context.IsOn ? "ON" : "OFF")</MudTd>
+            <MudTd DataLabel="Color">
+                <div style="@($"width: 20px; height: 20px; background-color:{context.DeviceColor}; border-radius: 50%;")"></div>
+            </MudTd>
+            <MudTd DataLabel="Zone">@context.Zone</MudTd>
+            <MudTd>
+                <MudIconButton OnClick="@(() => OpenEditDialog(context))" Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" />
+                <MudIconButton OnClick="@(() => DeleteDevice(context))" Icon="@Icons.Material.Filled.Delete" Color="Color.Error" />
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+</MudContainer>
+
+<MudDialog @bind-IsVisible="isDialogOpen" Options="dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@(isAdding ? Icons.Material.Filled.Add : Icons.Material.Filled.Edit)" Class="mr-3" />
+            @(isAdding ? "Ajouter un appareil" : "Modifier l'appareil")
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudForm>
+            <MudTextField T="string" @bind-Value="editingDevice.DeviceName" Label="Nom de l'appareil" Required />
+            <MudTextField T="string" @bind-Value="editingDevice.Icon" Label="@Icons.Material.Filled.Lightbulb" Required />
+            <MudTextField T="string" @bind-Value="editingDevice.DeviceColor" Label="#5850EC" Required />
+            <MudSwitch @bind-Value="editingDevice.IsOn" Label="Allumé" Color="Color.Primary" />
+            <MudSelect T="string" @bind-Value="editingDevice.Zone" Label="Zone" Required>
+                <MudSelectItem Value="@("Salon")" />
+                <MudSelectItem Value="@("Chambre")" />
+                <MudSelectItem Value="@("Cuisine")" />
+                <MudSelectItem Value="@("Garage")" />
+            </MudSelect>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="OnCancel" Color="Color.Default">Annuler</MudButton>
+        <MudButton OnClick="OnSave" Color="Color.Primary" Variant="Variant.Filled">Sauvegarder</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private List<Device> devices = new List<Device>();
+    private bool isDialogOpen = false;
+    private bool isAdding = true;
+    private Device editingDevice = new Device();
+
+    private DialogOptions dialogOptions = new DialogOptions() { CloseButton = true };
+
+    // Modèle de données pour un appareil
+    public class Device
+    {
+        public string Icon { get; set; } = Icons.Material.Filled.Lightbulb;
+        public string DeviceName { get; set; } = "Nouvel Appareil";
+        public string DeviceColor { get; set; } = "#5850EC";
+        public bool IsOn { get; set; }
+        public string Zone { get; set; } = "Salon";
+    }
+
+    protected override void OnInitialized()
+    {
+        // Données d'exemple
+        devices = new List<Device>
+        {
+            new Device { Icon = Icons.Material.Filled.AcUnit, DeviceName = "Climatiseur", DeviceColor = "#5850EC", IsOn = true, Zone = "Salon" },
+            new Device { Icon = Icons.Material.Filled.Lightbulb, DeviceName = "Lumières", DeviceColor = "#FFD700", IsOn = true, Zone = "Cuisine" },
+            new Device { Icon = Icons.Material.Filled.Thermostat, DeviceName = "Thermostat", DeviceColor = "#FF7F50", IsOn = true, Zone = "Chambre" },
+            new Device { Icon = Icons.Material.Filled.Router, DeviceName = "Routeur", DeviceColor = "#00CED1", IsOn = false, Zone = "Bureau" }
+        };
+    }
+
+    private void OpenAddDialog()
+    {
+        isAdding = true;
+        editingDevice = new Device();
+        isDialogOpen = true;
+    }
+
+    private void OpenEditDialog(Device device)
+    {
+        isAdding = false;
+        editingDevice = device;
+        isDialogOpen = true;
+    }
+
+    private void OnCancel()
+    {
+        isDialogOpen = false;
+    }
+
+    private void OnSave()
+    {
+        if (isAdding)
+        {
+            // Ajouter le nouvel appareil à la liste
+            devices.Add(editingDevice);
+        }
+        else
+        {
+            // La modification est gérée par la liaison de données
+        }
+        isDialogOpen = false;
+    }
+
+    private void DeleteDevice(Device device)
+    {
+        // Supprimer l'appareil de la liste
+        devices.Remove(device);
+        StateHasChanged(); // Forcer la mise à jour de l'UI
+    }
+}

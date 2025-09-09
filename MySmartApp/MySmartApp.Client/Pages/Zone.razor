@@ -1,0 +1,201 @@
+﻿@page "/zones"
+@using MudBlazor
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="my-8">
+    <MudText Typo="Typo.h4" Class="mb-4">Gestion des zones</MudText>
+    <MudText Typo="Typo.body1" Class="mb-8">En tant qu'administrateur, vous pouvez ici gérer les zones, affecter des appareils et des utilisateurs.</MudText>
+
+    <MudButton OnClick="OpenAddDialog" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" Class="mb-4">
+        Ajouter une zone
+    </MudButton>
+
+    <MudExpansionPanels MultiExpansion="true" Class="rounded-xl">
+        @foreach (var zone in zones)
+        {
+            <MudExpansionPanel Text="@zone.Name">
+                <ChildContent>
+                    <div class="d-flex flex-column pa-4">
+                        <MudGrid>
+                            <MudItem xs="12" sm="6">
+                                <MudText Typo="Typo.h6">Appareils</MudText>
+                                @if (zone.Devices.Any())
+                                {
+                                    <MudList T="Device">
+                                        @foreach (var device in zone.Devices)
+                                        {
+                                            <MudListItem T="Device" Icon="@device.Icon" Text="@device.DeviceName" />
+                                        }
+                                    </MudList>
+                                }
+                                else
+                                {
+                                    <MudText>Aucun appareil assigné.</MudText>
+                                }
+                            </MudItem>
+                            <MudItem xs="12" sm="6">
+                                <MudText Typo="Typo.h6">Membres</MudText>
+                                @if (zone.Members.Any())
+                                {
+                                    <MudList T="Member">
+                                        @foreach (var member in zone.Members)
+                                        {
+                                            <MudListItem T="Member" Text="@member.Name" />
+                                        }
+                                    </MudList>
+                                }
+                                else
+                                {
+                                    <MudText>Aucun membre assigné.</MudText>
+                                }
+                            </MudItem>
+                        </MudGrid>
+                    </div>
+                    <div class="d-flex justify-end pa-2">
+                        <MudIconButton OnClick="@(() => OpenEditDialog(zone))" Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" />
+                        <MudIconButton OnClick="@(() => DeleteZone(zone))" Icon="@Icons.Material.Filled.Delete" Color="Color.Error" />
+                    </div>
+                </ChildContent>
+            </MudExpansionPanel>
+        }
+    </MudExpansionPanels>
+</MudContainer>
+
+<MudDialog @bind-IsVisible="isDialogOpen" Options="dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@(isAdding? Icons.Material.Filled.Add : Icons.Material.Filled.Edit)" Class="mr-3" />
+            @(isAdding ? "Ajouter une zone" : "Modifier la zone")
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudForm>
+            <MudTextField T="string" @bind-Value="editingZone.Name" Label="Nom de la zone" Required />
+            <MudTextField T="string" @bind-Value="editingZone.Icon" Label="Icône (ex: Icons.Material.Filled.Home)" Required />
+            <MudSelect T="Device" Label="Appareils" MultiSelection="true" @bind-SelectedValues="selectedDevices">
+                @foreach (var device in MockDevices)
+                {
+                    <MudSelectItem Value="@device">@device.DeviceName</MudSelectItem>
+                }
+            </MudSelect>
+            <MudSelect T="Member" Label="Membres" MultiSelection="true" @bind-SelectedValues="selectedMembers">
+                @foreach (var member in MockMembers)
+                {
+                    <MudSelectItem Value="@member">@member.Name</MudSelectItem>
+                }
+            </MudSelect>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="OnCancel" Color="Color.Default">Annuler</MudButton>
+        <MudButton OnClick="OnSave" Color="Color.Primary" Variant="Variant.Filled">Sauvegarder</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private List<ZoneModel> zones = new List<ZoneModel>();
+    private bool isDialogOpen = false;
+    private bool isAdding = true;
+    private ZoneModel editingZone = new ZoneModel();
+    private DialogOptions dialogOptions = new DialogOptions() { CloseButton = true };
+    private IEnumerable<Device> selectedDevices { get; set; } = new List<Device>();
+    private IEnumerable<Member> selectedMembers { get; set; } = new List<Member>();
+
+    // Modèles de données
+    public class ZoneModel
+    {
+        public string Name { get; set; }
+        public string Icon { get; set; }
+        public List<Device> Devices { get; set; } = new List<Device>();
+        public List<Member> Members { get; set; } = new List<Member>();
+    }
+
+    public class Device
+    {
+        public string DeviceName { get; set; }
+        public string Icon { get; set; }
+        public string DeviceColor { get; set; }
+        public bool IsOn { get; set; }
+
+        public override string ToString() => DeviceName;
+    }
+
+    public class Member
+    {
+        public string Name { get; set; }
+        public string ImageUrl { get; set; }
+        public string Role { get; set; }
+
+        public override string ToString() => Name;
+    }
+
+    private List<Device> MockDevices = new List<Device>
+    {
+        new Device { DeviceName = "Climatiseur", Icon = Icons.Material.Filled.AcUnit, DeviceColor = "#5850EC", IsOn = true },
+        new Device { DeviceName = "Lumières", Icon = Icons.Material.Filled.Lightbulb, DeviceColor = "#FFD700", IsOn = true },
+        new Device { DeviceName = "Thermostat", Icon = Icons.Material.Filled.Thermostat, DeviceColor = "#FF7F50", IsOn = true },
+        new Device { DeviceName = "Routeur", Icon = Icons.Material.Filled.Router, DeviceColor = "#00CED1", IsOn = false }
+    };
+
+    private List<Member> MockMembers = new List<Member>
+    {
+        new Member { Name = "Scarlett", ImageUrl = "https://i.pravatar.cc/100?img=1", Role = "Admin" },
+        new Member { Name = "Nariya", ImageUrl = "https://i.pravatar.cc/100?img=2", Role = "Membre" },
+        new Member { Name = "Riya", ImageUrl = "https://i.pravatar.cc/100?img=3", Role = "Membre" }
+    };
+
+    protected override void OnInitialized()
+    {
+        zones = new List<ZoneModel>
+        {
+            new ZoneModel { Name = "Salon", Icon = Icons.Material.Filled.MeetingRoom, Devices = MockDevices.GetRange(0, 2), Members = MockMembers.GetRange(0, 2) },
+            new ZoneModel { Name = "Chambre", Icon = Icons.Material.Filled.BedroomParent, Devices = MockDevices.GetRange(2, 2), Members = MockMembers.GetRange(0, 1) },
+            new ZoneModel { Name = "Cuisine", Icon = Icons.Material.Filled.Kitchen, Devices = new List<Device>(), Members = new List<Member>() },
+        };
+    }
+
+    private void OpenAddDialog()
+    {
+        isAdding = true;
+        editingZone = new ZoneModel();
+        selectedDevices = new List<Device>();
+        selectedMembers = new List<Member>();
+        isDialogOpen = true;
+    }
+
+    private void OpenEditDialog(ZoneModel zone)
+    {
+        isAdding = false;
+        editingZone = zone;
+        selectedDevices = zone.Devices;
+        selectedMembers = zone.Members;
+        isDialogOpen = true;
+    }
+
+    private void OnCancel()
+    {
+        isDialogOpen = false;
+    }
+
+    private void OnSave()
+    {
+        if (isAdding)
+        {
+            editingZone.Devices = selectedDevices.ToList();
+            editingZone.Members = selectedMembers.ToList();
+            zones.Add(editingZone);
+        }
+        else
+        {
+            editingZone.Devices = selectedDevices.ToList();
+            editingZone.Members = selectedMembers.ToList();
+        }
+        isDialogOpen = false;
+        StateHasChanged();
+    }
+
+    private void DeleteZone(ZoneModel zone)
+    {
+        zones.Remove(zone);
+        StateHasChanged();
+    }
+}

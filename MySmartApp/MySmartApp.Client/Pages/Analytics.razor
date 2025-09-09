@@ -1,0 +1,44 @@
+﻿@page "/analytics"
+@using MudBlazor
+@using MudBlazor.Charts
+@using MudBlazor.Utilities
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="my-8">
+    <MudText Typo="Typo.h4" Class="mb-4">Analyse de la maison intelligente</MudText>
+    <MudText Typo="Typo.body1" Class="mb-8">Visualisez les statistiques d'utilisation des zones et des appareils.</MudText>
+
+    <MudGrid>
+        <MudItem xs="12" md="6">
+            <MudPaper Class="pa-4 rounded-xl" Elevation="2">
+                <MudText Typo="Typo.h6" Class="mb-2">Utilisation des appareils (Heures)</MudText>
+                <MudChart ChartType="ChartType.Bar"
+                          ChartSeries="@BarSeries"
+                          XAxisLabels="@XAxisLabels"
+                          Height="300" />
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" md="6">
+            <MudPaper Class="pa-4 rounded-xl" Elevation="2">
+                <MudText Typo="Typo.h6" Class="mb-2">Appareils par zone</MudText>
+                <MudChart ChartType="ChartType.Pie"
+                          InputData="@PieData"
+                          InputLabels="@PieLabels"
+                          Height="300" />
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
+
+@code {
+    public List<ChartSeries> BarSeries = new List<ChartSeries>();
+    public string[] XAxisLabels = { "Climatiseur", "Lumières", "Thermostat", "Routeur" };
+    public double[] PieData = { 4, 3, 2 };
+    public string[] PieLabels = { "Salon", "Chambre", "Cuisine" };
+
+    protected override void OnInitialized()
+    {
+        // Données d'utilisation des appareils (heures par semaine)
+        BarSeries.Add(new ChartSeries() { Name = "Heures par semaine", Data = new double[] { 25, 60, 45, 12 } });
+    }
+}

@@ -1,0 +1,63 @@
+﻿<MudPaper Class="d-flex flex-column pa-4 rounded-xl" Style="@($"background-color: {GetColor(DeviceColor, IsOn)};")">
+
+    @* En-tête avec l'icône et l'interrupteur *@
+    <div class="d-flex justify-space-between align-center">
+        <MudIconButton Icon="@Icon" Color="@(IsOn? Color.Surface: Color.Primary)" />
+        <MudSwitch MudSwitch @bind-Value="@IsOn" Color="@(IsOn? GetMudColor(DeviceColor) : Color.Primary)"/>
+    </div>
+
+    @* Nom de l'appareil et statut *@
+    <div class="mt-auto">
+        <MudText Typo="Typo.body1" Class="mt-2" Style="@($"color: {(IsOn ? "white" : "black")};")">
+            @DeviceName
+        </MudText>
+        <MudText Typo="Typo.caption" Class="mt-1" Style="@($"color: {(IsOn ? "white" : "black")};")">
+            @(IsOn ? "ON" : "OFF")
+        </MudText>
+    </div>
+</MudPaper>
+
+@code {
+    [Parameter]
+    public string Icon { get; set; } = string.Empty;
+
+    [Parameter]
+    public string DeviceName { get; set; } = string.Empty;
+
+    [Parameter]
+    public string DeviceColor { get; set; } = string.Empty;
+
+    [Parameter]
+    public bool IsOn { get; set; } = false;
+
+    private string GetColor(string color, bool isOn)
+    {
+        if (isOn)
+        {
+            return color switch
+            {
+                "Purple" => "#5850EC",
+                "Yellow" => "#FFD700",
+                "Orange" => "#FF7F50",
+                "Cyan" => "#00CED1",
+                _ => "#5850EC", // Couleur par défaut lorsque la carte est allumée
+            };
+        }
+        else
+        {
+            return "#F4F6F9"; // Couleur par défaut lorsque la carte est éteinte
+        }
+    }
+
+    private MudBlazor.Color GetMudColor(string color)
+    {
+        return color switch
+        {
+            "Purple" => MudBlazor.Color.Primary,
+            "Yellow" => MudBlazor.Color.Warning,
+            "Orange" => MudBlazor.Color.Error,
+            "Cyan" => MudBlazor.Color.Info,
+            _ => MudBlazor.Color.Primary,
+        };
+    }
+}

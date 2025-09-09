@@ -1,59 +1,36 @@
 ﻿@page "/"
+@rendermode InteractiveWebAssembly
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Smart Home App</PageTitle>
 
-<MudText Typo="Typo.h3" GutterBottom="true">Hello, world!</MudText>
-<MudText Class="mb-8">Welcome to your new app, powered by MudBlazor and the .NET 9 Template!</MudText>
+<MudContainer Fixed="true" Class="d-flex align-center justify-center flex-column text-center" Style="height: 100vh;">
+    @* Conteneur interactif pour l'icône de la maison *@
+    <MudPaper Elevation="4" Class="pa-6 rounded-xl mb-8 home-icon-animation"
+              @onmouseenter="(() => _isHovered = true)"
+              @onmouseleave="(() => _isHovered = false)">
+        <MudIcon Icon="@(_isHovered? Icons.Material.Filled.House : Icons.Material.Outlined.House)"
+                 Size="Size.Large"
+                 Color="@(_isHovered ? Color.Primary : Color.Secondary)"
+                 Style="font-size: 80px;" />
+    </MudPaper>
 
-<MudAlert Severity="Severity.Normal" ContentAlignment="HorizontalAlignment.Start">
-    You can find documentation and examples on our website here:
-    <MudLink Href="https://mudblazor.com" Target="_blank" Typo="Typo.body2" Color="Color.Primary">
-        <b>www.mudblazor.com</b>
-    </MudLink>
-</MudAlert>
+    <MudText Typo="Typo.h2" GutterBottom="true" Class="fade-in">Bienvenue dans l'Application Smart Home</MudText>
+    <MudText Typo="Typo.body1" Class="mb-8 fade-in-delay-1" Style="max-width: 600px;">
+        Gérez tous vos appareils connectés à domicile depuis une interface simple et intuitive.
+        Contrôlez l'éclairage, la température, la sécurité, et bien plus encore, où que vous soyez.
+    </MudText>
 
-<br />
-<MudText Typo="Typo.h5" GutterBottom="true">Interactivity in this Template</MudText>
-<br />
-<MudText Typo="Typo.body2">
-    When you opt for the "Global" Interactivity Location, <br />
-    the render modes are defined in App.razor and consequently apply to all child components.<br />
-    In this case, providers are globally set in the MainLayout.<br />
-    <br />
-    On the other hand, if you choose the "Per page/component" Interactivity Location,<br />
-    it is necessary to include the <br />
-    <br />
-    &lt;MudPopoverProvider /&gt; <br />
-    &lt;MudDialogProvider /&gt; <br />
-    &lt;MudSnackbarProvider /&gt; <br />
-    <br />
-    components on every interactive page.<br />
-    <br />
-    If a render mode is not specified for a page, it defaults to Server-Side Rendering (SSR),<br />
-    similar to this page. While MudBlazor allows pages to be rendered in SSR,<br />
-    please note that interactive features, such as buttons and dropdown menus, will not be functional.
-</MudText>
+    @* Le stack pour les deux boutons *@
+    <MudStack Row="true" Spacing="2" Justify="Justify.Center" Class="fade-in-delay-2">
+        <MudButton Href="/dashboard" Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large">
+            Accéder au Tableau de Bord
+        </MudButton>
+        <MudButton Href="/login" Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Large">
+            Se connecter
+        </MudButton>
+    </MudStack>
+</MudContainer>
 
-<br />
-<MudText Typo="Typo.h5" GutterBottom="true">What's New in Blazor with the Release of .NET 9</MudText>
-<br />
-
-<MudText Typo="Typo.h6" GutterBottom="true">Prerendering</MudText>
-<MudText Typo="Typo.body2" GutterBottom="true">
-    If you're exploring the features of .NET 9 Blazor,<br /> you might be pleasantly surprised to learn that each page is prerendered on the server,<br /> regardless of the selected render mode.<br /><br />
-    This means that you'll need to inject all necessary services on the server,<br /> even when opting for the wasm (WebAssembly) render mode.<br /><br />
-    This prerendering functionality is crucial to ensuring that WebAssembly mode feels fast and responsive,<br /> especially when it comes to initial page load times.<br /><br />
-    For more information on how to detect prerendering and leverage the RenderContext, you can refer to the following link:
-    <MudLink Href="https://github.com/dotnet/aspnetcore/issues/51468#issuecomment-1783568121" Target="_blank" Typo="Typo.body2" Color="Color.Primary">
-        More details
-    </MudLink>
-</MudText>
-
-<br />
-<MudText Typo="Typo.h6" GutterBottom="true">InteractiveAuto</MudText>
-<MudText Typo="Typo.body2">
-    A discussion on how to achieve this can be found here:
-    <MudLink Href="https://github.com/dotnet/aspnetcore/issues/51468#issue-1950424116" Target="_blank" Typo="Typo.body2" Color="Color.Primary">
-        More details
-    </MudLink>
-</MudText>
+@code {
+    private bool _isHovered = false;
+}

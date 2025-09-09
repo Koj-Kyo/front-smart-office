@@ -1,0 +1,156 @@
+﻿<style>
+    .gauge-card {
+        padding: 40px;
+        border-radius: 20px;
+    }
+
+    .header-section {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .header-title {
+        display: flex;
+        align-items: center;
+    }
+
+    .main-content {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        gap: 60px;
+    }
+
+    .button-container {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        position: relative;
+    }
+
+    .gauge-container {
+        width: 250px;
+        height: 250px;
+        position: relative;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .gauge-background {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.5);
+        box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+    }
+
+    .gauge-ticks {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        border: 2px solid #e0e0e0;
+        border-style: dashed;
+        transform: rotate(120deg);
+        -webkit-mask: conic-gradient(from 0deg, black 0.5deg, transparent 0.5deg) 0 0;
+        -webkit-mask-size: 100% 100%;
+    }
+
+    .gauge-ring {
+        position: absolute;
+        width: 80%;
+        height: 80%;
+        border-radius: 50%;
+        background: conic-gradient(from 120deg at 50% 50%, #5850EC 0%, #F94A29 60%, transparent 60%);
+        -webkit-mask: radial-gradient(circle at 50% 50%, transparent 65%, black 66%);
+    }
+
+    .gauge-inner-circle {
+        position: absolute;
+        width: 60%;
+        height: 60%;
+        border-radius: 50%;
+        background: #fff;
+        box-shadow: inset 0px 4px 10px rgba(0, 0, 0, 0.1);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .current-temp-text {
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: black;
+    }
+
+    .unit-text {
+        color: #6c757d;
+    }
+
+    .label-text {
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+
+    .icon-button {
+        background-color: #E0E0E0 !important;
+        border-radius: 50%;
+        width: 60px;
+        height: 60px;
+    }
+
+    .icon-button-add {
+        background-color: #5850EC !important;
+        color: white;
+        border-radius: 50%;
+        width: 60px;
+        height: 60px;
+    }
+</style>
+
+<MudPaper Class="d-flex flex-column pa-6 rounded-xl gauge-card">
+    <div class="header-section">
+        <div class="header-title">
+            <MudIcon Icon="@Icons.Material.Filled.Bolt" Size="Size.Small" Color="Color.Primary" Class="mr-2" />
+            <MudText Typo="Typo.h6" Style="color: #5850EC;">Living Room Temperature</MudText>
+        </div>
+        <div>
+            <MudText Typo="Typo.subtitle1" Class="mr-2">ON</MudText>
+            <MudSwitch T="bool" Color="Color.Primary" />
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="button-container">
+            <MudIconButton Icon="@Icons.Material.Filled.Remove" Class="icon-button" />
+            <MudText Typo="Typo.caption" Class="label-text">05°C</MudText>
+        </div>
+
+        <div class="gauge-container">
+            <div class="gauge-background"></div>
+            <div class="gauge-ticks"></div>
+            <div class="gauge-ring"></div>
+            <div class="gauge-inner-circle">
+                <MudText Typo="Typo.h3" Class="current-temp-text">@Temperature°C</MudText>
+                <MudText Typo="Typo.caption" Class="unit-text">Celcius</MudText>
+            </div>
+        </div>
+
+        <div class="button-container">
+            <MudIconButton Icon="@Icons.Material.Filled.Add" Class="icon-button-add" />
+            <MudText Typo="Typo.caption" Class="label-text" Style="color: #F94A29;">25°C</MudText>
+        </div>
+    </div>
+</MudPaper>
+
+@code {
+    [Parameter] public int Temperature { get; set; } = 25;
+}

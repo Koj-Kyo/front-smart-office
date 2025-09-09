@@ -8,8 +8,12 @@
 
 
   <ItemGroup>
-    <ProjectReference Include="..\MySmartApp.Client\MySmartApp.Client.csproj" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="9.*" />
+  </ItemGroup>
+
+
+  <ItemGroup>
+    <ProjectReference Include="..\MySmartApp.Client\MySmartApp.Client.csproj" />
   </ItemGroup>
 
 </Project>

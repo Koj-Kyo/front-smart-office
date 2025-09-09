@@ -1,0 +1,41 @@
+﻿/* Index.razor.css */
+
+/* Animation de fondu pour le texte */
+.fade-in {
+    animation: fadeIn 2s ease-in-out;
+}
+
+/* Animation avec délai pour la description */
+.fade-in-delay-1 {
+    animation: fadeIn 2s ease-in-out 0.5s forwards;
+    opacity: 0;
+}
+
+/* Animation avec délai pour le bouton */
+.fade-in-delay-2 {
+    animation: fadeIn 2s ease-in-out 1s forwards;
+    opacity: 0;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Animation d'icône au survol */
+.home-icon-animation {
+    transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+    cursor: pointer;
+}
+
+    .home-icon-animation:hover {
+        transform: scale(1.1); /* Agrandissement au survol */
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2) !important;
+    }

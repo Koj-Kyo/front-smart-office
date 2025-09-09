@@ -1,0 +1,45 @@
+﻿@using MudBlazor
+
+<style>
+    /* Style de la barre de recherche pour correspondre au design Figma */
+    .custom-search-field .mud-input-control.mud-input-control-input-container {
+        border-radius: 9999px; /* Bords très arrondis */
+        background-color: var(--mud-palette-surface); /* Couleur de fond des cartes (blanc) */
+    }
+
+    /* Enlever la bordure et l'ombre par défaut au focus */
+    .custom-search-field .mud-input-control.mud-focused .mud-input {
+        box-shadow: none;
+        border-color: transparent !important;
+    }
+
+    /* Réduire le padding autour du champ de recherche */
+    .custom-search-field .mud-input-control.mud-input {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+
+</style>
+
+<MudGrid Class="pa-4">
+    <MudItem xs="12" sm="6" md="8">
+        <MudTextField T="string"
+                      Placeholder="Search"
+                      Adornment="Adornment.Start"
+                      AdornmentIcon="@Icons.Material.Filled.Search"
+                      Class="custom-search-field" />
+    </MudItem>
+    <MudItem xs="12" sm="6" md="4" Class="d-flex justify-end align-center">
+        <MudIconButton Icon="@Icons.Material.Filled.Settings" />
+        <MudIconButton Icon="@Icons.Material.Filled.Notifications" Class="mx-2" />
+        <MudAvatar>
+            <MudImage Src="img/admin.jpg" />
+        </MudAvatar>
+        <MudText Typo="Typo.subtitle1" Class="ml-2">Admin</MudText>
+        <MudIconButton Icon="@Icons.Material.Filled.ArrowDropDown" />
+    </MudItem>
+</MudGrid>
+
+@code {
+
+}

@@ -1,0 +1,2 @@
+wwwroot\favicon.ico
+D:\Memoire\FrontSmart\MySmartApp\MySmartApp\wwwroot\favicon.ico

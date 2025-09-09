@@ -1,10 +1,79 @@
-﻿
-<MudNavMenu>
-    <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
-    <MudNavLink Href="counter" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Add">Counter</MudNavLink>
-    
-    <MudNavLink Href="weather" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.List">Weather</MudNavLink>
+﻿@using MudBlazor
+@inject NavigationManager NavigationManager
 
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+
+<style>
+
+    .nav-link-item.mud-nav-item {
+    border-radius: 50%;
+    margin: 8px auto;
+    padding: 0;
+    transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+}
+    /* Style de l'icône par défaut à l'intérieur du lien de navigation */
+    .nav-link-item.mud-nav-item .mud-nav-link-icon.mud-icon {
+        font-size: 24px !important;
+        color: var(--mud-palette-white);
+    }
+
+    /* Style quand le lien est ACTIF (fond blanc, icône violette) */
+    .nav-link-item.mud-nav-item.active {
+        background-color: var(--mud-palette-white); /* Le fond devient blanc */
+        color: var(--mud-palette-primary) !important; /* Le texte/l'icône devient violet */
+    }
+
+        /* Style de l'icône à l'intérieur du lien ACTIF */
+        .nav-link-item.mud-nav-item.active .mud-nav-link-icon.mud-icon {
+            color: var(--mud-palette-primary) !important; /* Force la couleur violette pour l'icône active */
+        }
+
+    /* Hover state pour un peu d'interactivité */
+    .nav-link-item.mud-nav-item:hover {
+        background-color: var(--mud-palette-primary-lighten);
+        cursor: pointer;
+    }
+
+</style>
+
+<div class="d-flex align-center justify-center pt-8 pb-4">
+    <MudIcon Icon="@Icons.Material.Outlined.MapsHomeWork" Size="Size.Large" Color="Color.Primary" />
+</div>
+
+<MudNavMenu Class="px-4">
+    
+    <MudNavLink Href="" Match="NavLinkMatch.All" Icon="material-symbols-outlined/home" IconColor="Color.Inherit" class="nav-link-item mb-4" />
+    <MudNavLink Href="dashboard" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Dashboard" IconColor="Color.Inherit" class="nav-link-item mb-4" />
+    <MudNavLink Href="devices" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Devices" IconColor="Color.Inherit" class="nav-link-item mb-4" />
+    <MudNavLink Href="access" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Security" IconColor="Color.Inherit" class="nav-link-item mb-4" />
+    <MudNavLink Href="zones" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.LocationOn" IconColor="Color.Inherit" class="nav-link-item mb-4" />
+    <MudNavLink Href="utilisateurs" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.PeopleOutline" IconColor="Color.Inherit" class="nav-link-item mb-4" />
+    <MudNavLink Href="analytics" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Analytics" IconColor="Color.Inherit" class="nav-link-item mb-4" />
 </MudNavMenu>
 
+<div style="flex-grow: 1;" />
 
+<MudNavMenu Class="px-4">
+    <MudIconButton Icon="@DarkLightModeButtonIcon" OnClick="OnToggleDarkMode" Color="Color.Inherit" Class="mud-nav-link" />
+    
+
+    <MudNavLink Href="profile" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Person" IconColor="Color.Inherit" class="nav-link-item" />
+    <MudNavLink Href="#" OnClick="Logout" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.ExitToApp" IconColor="Color.Inherit" class="nav-link-item" />
+</MudNavMenu>
+
+@code {
+    [Parameter]
+    public bool IsDarkMode { get; set; }
+
+    [Parameter]
+    public EventCallback OnToggleDarkMode { get; set; }
+
+    public string DarkLightModeButtonIcon => IsDarkMode ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode;
+
+    private void Logout()
+    {
+        // Logique de déconnexion
+        // Redirige vers la page de connexion
+        NavigationManager.NavigateTo("/login");
+    }
+}

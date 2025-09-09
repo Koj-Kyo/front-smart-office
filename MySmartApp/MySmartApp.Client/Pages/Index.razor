@@ -1,0 +1,206 @@
+﻿@page "/dashboard"
+@using MySmartApp.Client.Layout
+
+<PageTitle>Dashboard</PageTitle>
+
+@* Le contenu principal est un MudGrid qui divise la page en deux colonnes *@
+<MudGrid Class="pa-4">
+    @* Colonne de gauche (contenu principal) *@
+    <MudItem xs="12" md="8">
+        @* La grille de gauche contiendra les cartes 'Hello Scarlett' et les appareils *@
+        <MudGrid>
+            @* Ligne 1 : Carte "Hello, Scarlett!" *@
+            <MudItem xs="12" Class="mb-4">
+                <MudPaper Class="pa-6 rounded-xl" Style="@($"color:{Colors.LightGreen.Accent3}; background:{Colors.BlueGray.Darken4};")">
+                    <MudGrid>
+                        @* Colonne gauche : Le texte et la météo *@
+                        <MudItem xs="12" sm="7" md="8" >
+                           
+                            <MudText Typo="Typo.h5" GutterBottom="true" Color="Color.Primary">Hello, Scarlett!</MudText>
+                            <MudText Typo="Typo.body2" Class="mb-4" Color="Color.Secondary">
+                                Welcome Home! The air quality is good & fresh you can go out today.
+                            </MudText>
+
+                            <div class="d-flex align-center mb-2">
+                                <MudIcon Icon="@Icons.Material.Filled.DeviceThermostat" Color="Color.Dark" Class="mr-2" />
+                                <MudText Typo="Typo.body1" Class="font-weight-bold" Color="Color.Dark">+25°C</MudText>
+                                <MudText Typo="Typo.body2" Class="ml-2" Color="Color.Dark">Outdoor temperature</MudText>
+                            </div>
+
+                            <div class="d-flex align-center">
+                                <MudIcon Icon="@Icons.Material.Filled.Cloud" Color="Color.Dark" Class="mr-2" />
+                                <MudText Typo="Typo.body2" Color="Color.Dark">Fuzzy cloudy weather</MudText>
+                            </div>
+                        </MudItem>
+
+                        @* Colonne droite : L'image de l'illustration *@
+                        <MudItem xs="12" sm="5" md="4" Class="d-flex justify-center">
+                            <MudImage Src="img/Humaaan.png" Style="max-height: 200px; width: auto;" />
+                        </MudItem>
+                    </MudGrid>
+                </MudPaper>
+            </MudItem>
+           @* Ligne 2 : Titre "Scarlett's Home" et les commandes en ligne *@
+            <MudItem xs="12">
+                <MudGrid Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                    <MudItem xs="12" md="4">
+                        <MudText Typo="Typo.h6">Scarlett's Home</MudText>
+                    </MudItem>
+                    <MudItem xs="12" md="8">
+                        <div class="d-flex align-center justify-end">
+                            <MudText Typo="Typo.subtitle2" Class="mr-4">35%</MudText>
+                            <MudText Typo="Typo.subtitle2" Class="mr-4">15°C</MudText>
+                            <MudSelect T="string" Label="Living Room" Class="mr-4 rounded-pill">
+                                <MudSelectItem Value="@("Living Room")" />
+                                <MudSelectItem Value="@("Bedroom")" />
+                                <MudSelectItem Value="@("Kitchen")" />
+                            </MudSelect>
+                            <div class="d-flex align-center">
+                                <MudText Class="mr-2">OFF</MudText>
+                                <MudSwitch T="bool" Color="Color.Primary" />
+                            </div>
+                        </div>
+                    </MudItem>
+                </MudGrid>
+            </MudItem>
+
+            @* Ligne 2 (suite) : Les cartes des appareils *@
+            <MudItem xs="6" sm="3">
+                <DeviceCard Icon="@Icons.Material.Filled.AcUnit" DeviceName="A/C" />
+            </MudItem>
+            <MudItem xs="6" sm="3">
+                <DeviceCard Icon="@Icons.Material.Filled.Lightbulb" DeviceName="Lights" />
+            </MudItem>
+            <MudItem xs="6" sm="3">
+                <DeviceCard Icon="@Icons.Material.Filled.Thermostat" DeviceName="Temperature" />
+            </MudItem>
+            <MudItem xs="6" sm="3">
+                <DeviceCard Icon="@Icons.Material.Filled.Kitchen" DeviceName="Refrigerator" />
+            </MudItem>
+
+
+            @* Ligne 3 : Jauge de température *@
+            <MudItem xs="12" Class="mt-4">
+                <TemperatureGauge />
+            </MudItem>
+        </MudGrid>
+    </MudItem>
+
+    @* Colonne de droite (barre latérale) *@
+    <MudItem xs="12" md="4">
+        @* La grille de droite contiendra les listes et le graphique *@
+        <MudGrid>
+            <MudItem xs="12" Class="d-flex justify-space-between align-center pa-4 rounded-xl">
+                
+                    <MudText Typo="Typo.h6">My Devices</MudText>
+                    <div>
+                        <MudSwitch @bind-Value="switchb" Color="Color.Primary" Class="d-inline-flex mr-2" />
+                        <MudIconButton OnClick="NavigateToDevices" Icon="@Icons.Material.Filled.ArrowForwardIos" Color="Color.Dark" />
+                    </div>
+                
+            </MudItem>
+
+            <MudItem xs="6" sm="6">
+                <DeviceCard Icon="@Icons.Material.Filled.AcUnit" DeviceName="A/C" DeviceColor="Purple" IsOn="true" />
+            </MudItem>
+            <MudItem xs="6" sm="6">
+                <DeviceCard Icon="@Icons.Material.Filled.Router" DeviceName="Router" DeviceColor="Yellow" IsOn="true" />
+            </MudItem>
+            <MudItem xs="6" sm="6">
+                <DeviceCard Icon="@Icons.Material.Filled.MusicNote" DeviceName="Music System" DeviceColor="Orange" IsOn="true" />
+            </MudItem>
+            <MudItem xs="6" sm="6">
+                <DeviceCard Icon="@Icons.Material.Filled.Lightbulb" DeviceName="Lamps" DeviceColor="Cyan" IsOn="false" />
+            </MudItem>
+            
+            <MudItem xs="12" Class="d-flex justify-space-between align-center pa-4 rounded-xl">
+                
+                    <MudText Typo="Typo.h6">Members</MudText>
+                    <div>
+                        <MudIconButton OnClick="NavigateToMembers" Icon="@Icons.Material.Filled.ArrowForwardIos" Color="Color.Dark" Class="d-inline-flex mr-2" />
+
+                    </div>
+                
+            </MudItem>
+            <MudItem xs="12" Class="mt-4">
+                <MudPaper Class="d-flex justify-space-between align-center pa-4 rounded-xl">
+                    <div>
+                        <MudStack Row="true" Spacing="4">
+                            <div class="d-flex flex-column align-center">
+                                <MudAvatar Image="https://i.pravatar.cc/100?img=1" />
+                                <MudText Typo="Typo.body2">Scarlett</MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Primary">Admin</MudText>
+                            </div>
+                            <div class="d-flex flex-column align-center">
+                                <MudAvatar Image="https://i.pravatar.cc/100?img=2" />
+                                <MudText Typo="Typo.body2">Nariya</MudText>
+                                <MudText Typo="Typo.caption">Full Access</MudText>
+                            </div>
+                            <div class="d-flex flex-column align-center">
+                                <MudAvatar Image="https://i.pravatar.cc/100?img=3" />
+                                <MudText Typo="Typo.body2">Riya</MudText>
+                                <MudText Typo="Typo.caption">Full Access</MudText>
+                            </div>
+                            <div class="d-flex flex-column align-center">
+                                <MudAvatar Image="https://i.pravatar.cc/100?img=4" />
+                                <MudText Typo="Typo.body2">Dad</MudText>
+                                <MudText Typo="Typo.caption">Full Access</MudText>
+                            </div>
+                            <div class="d-flex flex-column align-center">
+                                <MudAvatar Image="https://i.pravatar.cc/100?img=5" />
+                                <MudText Typo="Typo.body2">Mom</MudText>
+                                <MudText Typo="Typo.caption">Full Access</MudText>
+                            </div>
+                        </MudStack>
+                    </div>
+                </MudPaper>
+            </MudItem>
+
+          <MudItem xs="12" Class="mt-4">
+                <MudPaper Class="pa-4 rounded-xl">
+                    <div class="d-flex justify-space-between align-center">
+                        <div class="d-flex align-center">
+                            <MudText Typo="Typo.h6">Power Consumed</MudText>
+                        </div>
+                        <div class="d-flex align-center">
+                            <MudSelect T="string" Label="Month" Variant="Variant.Outlined" Class="rounded-pill pa-2" Style="width: 150px;">
+                                <MudSelectItem Value="@("Month")" />
+                                <MudSelectItem Value="@("Week")" />
+                                <MudSelectItem Value="@("Day")" />
+                            </MudSelect>
+                            <MudText Typo="Typo.body2" Class="ml-2">73% Spending</MudText>
+                            <MudIconButton OnClick="NavigateToAnalytics" Icon="@Icons.Material.Filled.ArrowForwardIos" Color="Color.Primary" />
+                        </div>
+                    </div>
+                    <MudChart ChartType="ChartType.Line" ChartSeries="@_series" XAxisLabels="@_xAxisLabels" Width="100%" Height="300px" Class="mt-4" />
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+    </MudItem>
+</MudGrid>
+
+@code{
+    [Parameter] public bool switchb { get; set; } = true;
+    @inject NavigationManager NavigationManager
+
+    private void NavigateToDevices()
+    {
+        NavigationManager.NavigateTo("/devices");
+    }
+    private void NavigateToMembers()
+    {
+        NavigationManager.NavigateTo("/utilisateurs");
+    }
+    private void NavigateToAnalytics()
+    {
+        NavigationManager.NavigateTo("/analytics");
+    }
+
+    // Données pour le graphique
+    private List<ChartSeries> _series = new List<ChartSeries>()
+    {
+        new ChartSeries() { Name = "Electricity Consumed", Data = new double[] { 70, 75, 80, 85, 90, 88, 92, 95, 90, 85, 80, 75 } }
+    };
+    private string[] _xAxisLabels = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
+
+}
