@@ -9,7 +9,12 @@
     border-radius: 50%;
     margin: 8px auto;
     padding: 0;
-    transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+    transition: all 0.3s ease-in-out;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
     /* Style de l'icône par défaut à l'intérieur du lien de navigation */
     .nav-link-item.mud-nav-item .mud-nav-link-icon.mud-icon {
@@ -21,6 +26,10 @@
     .nav-link-item.mud-nav-item.active {
         background-color: var(--mud-palette-white); /* Le fond devient blanc */
         color: var(--mud-palette-primary) !important; /* Le texte/l'icône devient violet */
+        border-radius: 24px; /* Forme ovale/elliptique au lieu de circulaire */
+        width: 80px; /* Largeur étendue pour créer l'effet ovale */
+        height: 48px; /* Hauteur conservée */
+        transform: scale(1.1); /* Légère augmentation de taille */
     }
 
         /* Style de l'icône à l'intérieur du lien ACTIF */
@@ -32,6 +41,9 @@
     .nav-link-item.mud-nav-item:hover {
         background-color: var(--mud-palette-primary-lighten);
         cursor: pointer;
+        border-radius: 20px; /* Commence à devenir ovale au survol */
+        width: 60px;
+        transform: scale(1.05);
     }
 
 </style>

@@ -16,89 +16,89 @@ build_property.EnforceExtendedAnalyzerRules =
 build_property._SupportedPlatformList = browser
 build_property.RootNamespace = MySmartApp.Client
 build_property.RootNamespace = MySmartApp.Client
-build_property.ProjectDir = D:\Memoire\FrontSmart\MySmartApp\MySmartApp.Client\
+build_property.ProjectDir = /home/gedeonkp/Documents/jeremy/projetmemoire/front-smart-office/MySmartApp/MySmartApp.Client/
 build_property.EnableComHosting = 
 build_property.EnableGeneratedComInterfaceComImportInterop = false
 build_property.RazorLangVersion = 9.0
 build_property.SupportLocalizedComponentNames = 
 build_property.GenerateRazorMetadataSourceChecksumAttributes = 
-build_property.MSBuildProjectDirectory = D:\Memoire\FrontSmart\MySmartApp\MySmartApp.Client
+build_property.MSBuildProjectDirectory = /home/gedeonkp/Documents/jeremy/projetmemoire/front-smart-office/MySmartApp/MySmartApp.Client
 build_property._RazorSourceGeneratorDebug = 
 build_property.EffectiveAnalysisLevelStyle = 9.0
 build_property.EnableCodeStyleSeverity = 
 
-[D:/Memoire/FrontSmart/MySmartApp/MySmartApp.Client/Layout/DeviceCard.razor]
-build_metadata.AdditionalFiles.TargetPath = TGF5b3V0XERldmljZUNhcmQucmF6b3I=
+[/home/gedeonkp/Documents/jeremy/projetmemoire/front-smart-office/MySmartApp/MySmartApp.Client/Layout/DeviceCard.razor]
+build_metadata.AdditionalFiles.TargetPath = TGF5b3V0L0RldmljZUNhcmQucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[D:/Memoire/FrontSmart/MySmartApp/MySmartApp.Client/Layout/HelloCard.razor]
-build_metadata.AdditionalFiles.TargetPath = TGF5b3V0XEhlbGxvQ2FyZC5yYXpvcg==
+[/home/gedeonkp/Documents/jeremy/projetmemoire/front-smart-office/MySmartApp/MySmartApp.Client/Layout/HelloCard.razor]
+build_metadata.AdditionalFiles.TargetPath = TGF5b3V0L0hlbGxvQ2FyZC5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
-[D:/Memoire/FrontSmart/MySmartApp/MySmartApp.Client/Layout/MainLayout.razor]
-build_metadata.AdditionalFiles.TargetPath = TGF5b3V0XE1haW5MYXlvdXQucmF6b3I=
+[/home/gedeonkp/Documents/jeremy/projetmemoire/front-smart-office/MySmartApp/MySmartApp.Client/Layout/MainLayout.razor]
+build_metadata.AdditionalFiles.TargetPath = TGF5b3V0L01haW5MYXlvdXQucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[D:/Memoire/FrontSmart/MySmartApp/MySmartApp.Client/Pages/Access.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQWNjZXNzLnJhem9y
+[/home/gedeonkp/Documents/jeremy/projetmemoire/front-smart-office/MySmartApp/MySmartApp.Client/Pages/Access.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXMvQWNjZXNzLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
-[D:/Memoire/FrontSmart/MySmartApp/MySmartApp.Client/Pages/Analytics.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQW5hbHl0aWNzLnJhem9y
+[/home/gedeonkp/Documents/jeremy/projetmemoire/front-smart-office/MySmartApp/MySmartApp.Client/Pages/Analytics.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXMvQW5hbHl0aWNzLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
-[D:/Memoire/FrontSmart/MySmartApp/MySmartApp.Client/Pages/Counter.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQ291bnRlci5yYXpvcg==
+[/home/gedeonkp/Documents/jeremy/projetmemoire/front-smart-office/MySmartApp/MySmartApp.Client/Pages/Counter.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXMvQ291bnRlci5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
-[D:/Memoire/FrontSmart/MySmartApp/MySmartApp.Client/Pages/Devices.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRGV2aWNlcy5yYXpvcg==
+[/home/gedeonkp/Documents/jeremy/projetmemoire/front-smart-office/MySmartApp/MySmartApp.Client/Pages/Devices.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXMvRGV2aWNlcy5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
-[D:/Memoire/FrontSmart/MySmartApp/MySmartApp.Client/Pages/Home.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXNcSG9tZS5yYXpvcg==
+[/home/gedeonkp/Documents/jeremy/projetmemoire/front-smart-office/MySmartApp/MySmartApp.Client/Pages/Home.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXMvSG9tZS5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
-[D:/Memoire/FrontSmart/MySmartApp/MySmartApp.Client/Pages/Index.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXNcSW5kZXgucmF6b3I=
+[/home/gedeonkp/Documents/jeremy/projetmemoire/front-smart-office/MySmartApp/MySmartApp.Client/Pages/Index.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXMvSW5kZXgucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[D:/Memoire/FrontSmart/MySmartApp/MySmartApp.Client/Pages/Login.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXNcTG9naW4ucmF6b3I=
+[/home/gedeonkp/Documents/jeremy/projetmemoire/front-smart-office/MySmartApp/MySmartApp.Client/Pages/Login.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXMvTG9naW4ucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[D:/Memoire/FrontSmart/MySmartApp/MySmartApp.Client/Pages/Profiles.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUHJvZmlsZXMucmF6b3I=
+[/home/gedeonkp/Documents/jeremy/projetmemoire/front-smart-office/MySmartApp/MySmartApp.Client/Pages/Profiles.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXMvUHJvZmlsZXMucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[D:/Memoire/FrontSmart/MySmartApp/MySmartApp.Client/Pages/Users.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXNcVXNlcnMucmF6b3I=
+[/home/gedeonkp/Documents/jeremy/projetmemoire/front-smart-office/MySmartApp/MySmartApp.Client/Pages/Users.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXMvVXNlcnMucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[D:/Memoire/FrontSmart/MySmartApp/MySmartApp.Client/Pages/Weather.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXNcV2VhdGhlci5yYXpvcg==
+[/home/gedeonkp/Documents/jeremy/projetmemoire/front-smart-office/MySmartApp/MySmartApp.Client/Pages/Weather.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXMvV2VhdGhlci5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
-[D:/Memoire/FrontSmart/MySmartApp/MySmartApp.Client/Pages/Zone.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXNcWm9uZS5yYXpvcg==
+[/home/gedeonkp/Documents/jeremy/projetmemoire/front-smart-office/MySmartApp/MySmartApp.Client/Pages/Zone.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXMvWm9uZS5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
-[D:/Memoire/FrontSmart/MySmartApp/MySmartApp.Client/Routes.razor]
+[/home/gedeonkp/Documents/jeremy/projetmemoire/front-smart-office/MySmartApp/MySmartApp.Client/Routes.razor]
 build_metadata.AdditionalFiles.TargetPath = Um91dGVzLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
-[D:/Memoire/FrontSmart/MySmartApp/MySmartApp.Client/_Imports.razor]
+[/home/gedeonkp/Documents/jeremy/projetmemoire/front-smart-office/MySmartApp/MySmartApp.Client/_Imports.razor]
 build_metadata.AdditionalFiles.TargetPath = X0ltcG9ydHMucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[D:/Memoire/FrontSmart/MySmartApp/MySmartApp.Client/Layout/DashBoardHeader.razor]
-build_metadata.AdditionalFiles.TargetPath = TGF5b3V0XERhc2hCb2FyZEhlYWRlci5yYXpvcg==
-build_metadata.AdditionalFiles.CssScope = b-yt48cljylr
+[/home/gedeonkp/Documents/jeremy/projetmemoire/front-smart-office/MySmartApp/MySmartApp.Client/Layout/DashBoardHeader.razor]
+build_metadata.AdditionalFiles.TargetPath = TGF5b3V0L0Rhc2hCb2FyZEhlYWRlci5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = b-a7g9nzn2xt
 
-[D:/Memoire/FrontSmart/MySmartApp/MySmartApp.Client/Layout/NavMenu.razor]
-build_metadata.AdditionalFiles.TargetPath = TGF5b3V0XE5hdk1lbnUucmF6b3I=
-build_metadata.AdditionalFiles.CssScope = b-cm2w0l4xp1
+[/home/gedeonkp/Documents/jeremy/projetmemoire/front-smart-office/MySmartApp/MySmartApp.Client/Layout/NavMenu.razor]
+build_metadata.AdditionalFiles.TargetPath = TGF5b3V0L05hdk1lbnUucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = b-f9a5ypurso
 
-[D:/Memoire/FrontSmart/MySmartApp/MySmartApp.Client/Layout/TemperatureGauge.razor]
-build_metadata.AdditionalFiles.TargetPath = TGF5b3V0XFRlbXBlcmF0dXJlR2F1Z2UucmF6b3I=
-build_metadata.AdditionalFiles.CssScope = b-4uh5yj9hf1
+[/home/gedeonkp/Documents/jeremy/projetmemoire/front-smart-office/MySmartApp/MySmartApp.Client/Layout/TemperatureGauge.razor]
+build_metadata.AdditionalFiles.TargetPath = TGF5b3V0L1RlbXBlcmF0dXJlR2F1Z2UucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = b-99urpda4u7
