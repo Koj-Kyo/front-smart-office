@@ -4,74 +4,127 @@
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
 
 <style>
+    /* Style pour les boutons icônes de navigation */
+    .mud-icon-button.nav-link-item {
+        border-radius: 50%;
+        margin: 8px auto;
+        padding: 0;
+        transition: all 0.3s ease-in-out;
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: rgba(255, 255, 255, 0.7);
+    }
 
-    .nav-link-item.mud-nav-item {
-    border-radius: 50%;
-    margin: 8px auto;
-    padding: 0;
-    transition: all 0.3s ease-in-out;
-    width: 48px;
-    height: 48px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-    /* Style de l'icône par défaut à l'intérieur du lien de navigation */
-    .nav-link-item.mud-nav-item .mud-nav-link-icon.mud-icon {
+    /* Style de l'icône par défaut */
+    .mud-icon-button.nav-link-item .mud-icon {
         font-size: 24px !important;
-        color: var(--mud-palette-white);
+        color: rgba(255, 255, 255, 0.7);
+        transition: all 0.3s ease;
     }
 
-    /* Style quand le lien est ACTIF (fond blanc, icône violette) */
-    .nav-link-item.mud-nav-item.active {
-        background-color: var(--mud-palette-white); /* Le fond devient blanc */
-        color: var(--mud-palette-primary) !important; /* Le texte/l'icône devient violet */
-        border-radius: 24px; /* Forme ovale/elliptique au lieu de circulaire */
-        width: 80px; /* Largeur étendue pour créer l'effet ovale */
-        height: 48px; /* Hauteur conservée */
-        transform: scale(1.1); /* Légère augmentation de taille */
+    /* Style quand le bouton est ACTIF - très visible */
+    .mud-icon-button.nav-link-item.active {
+        background-color: white !important;
+        color: var(--mud-palette-primary) !important;
+        border-radius: 24px;
+        width: 80px;
+        height: 48px;
+        transform: scale(1.15);
+        box-shadow: 0 8px 20px rgba(255, 255, 255, 0.3);
+        border: 2px solid rgba(255, 255, 255, 0.9);
     }
 
-        /* Style de l'icône à l'intérieur du lien ACTIF */
-        .nav-link-item.mud-nav-item.active .mud-nav-link-icon.mud-icon {
-            color: var(--mud-palette-primary) !important; /* Force la couleur violette pour l'icône active */
-        }
+    /* Style de l'icône à l'intérieur du bouton ACTIF */
+    .mud-icon-button.nav-link-item.active .mud-icon {
+        color: var(--mud-palette-primary) !important;
+        font-weight: bold;
+        transform: scale(1.1);
+    }
 
-    /* Hover state pour un peu d'interactivité */
-    .nav-link-item.mud-nav-item:hover {
-        background-color: var(--mud-palette-primary-lighten);
+    /* Style spécifique pour le mode sombre - contraste maximum */
+    .mud-theme-dark .mud-icon-button.nav-link-item.active {
+        background-color: white !important;
+        color: #6B46C1 !important;
+        box-shadow: 0 8px 25px rgba(255, 255, 255, 0.4);
+        border: 2px solid white;
+    }
+
+    .mud-theme-dark .mud-icon-button.nav-link-item.active .mud-icon {
+        color: #6B46C1 !important;
+    }
+
+    /* Style pour les icônes non actives en mode sombre */
+    .mud-theme-dark .mud-icon-button.nav-link-item .mud-icon {
+        color: rgba(255, 255, 255, 0.6);
+    }
+
+    /* Hover state */
+    .mud-icon-button.nav-link-item:hover:not(.active) {
+        background-color: rgba(255, 255, 255, 0.1);
         cursor: pointer;
-        border-radius: 20px; /* Commence à devenir ovale au survol */
+        border-radius: 20px;
         width: 60px;
         transform: scale(1.05);
     }
 
+    .mud-icon-button.nav-link-item:hover:not(.active) .mud-icon {
+        color: rgba(255, 255, 255, 0.9);
+    }
 </style>
 
 <div class="d-flex align-center justify-center pt-8 pb-4">
     <MudIcon Icon="@Icons.Material.Outlined.MapsHomeWork" Size="Size.Large" Color="Color.Primary" />
 </div>
 
-<MudNavMenu Class="px-4">
+<div class="px-4 d-flex flex-column">
+    <MudIconButton Icon="@Icons.Material.Outlined.Home" 
+                   Class="@GetNavLinkClass("")" 
+                   OnClick="GoHome" />
     
-    <MudNavLink Href="" Match="NavLinkMatch.All" Icon="material-symbols-outlined/home" IconColor="Color.Inherit" class="nav-link-item mb-4" />
-    <MudNavLink Href="dashboard" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Dashboard" IconColor="Color.Inherit" class="nav-link-item mb-4" />
-    <MudNavLink Href="devices" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Devices" IconColor="Color.Inherit" class="nav-link-item mb-4" />
-    <MudNavLink Href="access" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Security" IconColor="Color.Inherit" class="nav-link-item mb-4" />
-    <MudNavLink Href="zones" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.LocationOn" IconColor="Color.Inherit" class="nav-link-item mb-4" />
-    <MudNavLink Href="utilisateurs" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.PeopleOutline" IconColor="Color.Inherit" class="nav-link-item mb-4" />
-    <MudNavLink Href="analytics" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Analytics" IconColor="Color.Inherit" class="nav-link-item mb-4" />
-</MudNavMenu>
+    <MudIconButton Icon="@Icons.Material.Outlined.Dashboard" 
+                   Class="@GetNavLinkClass("dashboard")" 
+                   OnClick="GoDashboard" />
+    
+    <MudIconButton Icon="@Icons.Material.Outlined.Devices" 
+                   Class="@GetNavLinkClass("devices")" 
+                   OnClick="GoDevices" />
+    
+    <MudIconButton Icon="@Icons.Material.Outlined.Security" 
+                   Class="@GetNavLinkClass("access")" 
+                   OnClick="GoAccess" />
+    
+    <MudIconButton Icon="@Icons.Material.Outlined.LocationOn" 
+                   Class="@GetNavLinkClass("zones")" 
+                   OnClick="GoZones" />
+    
+    <MudIconButton Icon="@Icons.Material.Outlined.PeopleOutline" 
+                   Class="@GetNavLinkClass("utilisateurs")" 
+                   OnClick="GoUsers" />
+    
+    <MudIconButton Icon="@Icons.Material.Outlined.Analytics" 
+                   Class="@GetNavLinkClass("analytics")" 
+                   OnClick="GoAnalytics" />
+</div>
 
 <div style="flex-grow: 1;" />
 
-<MudNavMenu Class="px-4">
-    <MudIconButton Icon="@DarkLightModeButtonIcon" OnClick="OnToggleDarkMode" Color="Color.Inherit" Class="mud-nav-link" />
+<div class="px-4 d-flex flex-column">
+    <MudIconButton Icon="@DarkLightModeButtonIcon" 
+                   OnClick="OnToggleDarkMode" 
+                   Color="Color.Inherit" 
+                   Class="nav-link-item mb-4" />
     
-
-    <MudNavLink Href="profile" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Person" IconColor="Color.Inherit" class="nav-link-item" />
-    <MudNavLink Href="#" OnClick="Logout" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.ExitToApp" IconColor="Color.Inherit" class="nav-link-item" />
-</MudNavMenu>
+    <MudIconButton Icon="@Icons.Material.Outlined.Person" 
+                   Class="@GetNavLinkClass("profile")" 
+                   OnClick="GoProfile" />
+    
+    <MudIconButton Icon="@Icons.Material.Outlined.ExitToApp" 
+                   Class="nav-link-item mb-4" 
+                   OnClick="Logout" />
+</div>
 
 @code {
     [Parameter]
@@ -87,5 +140,38 @@
         // Logique de déconnexion
         // Redirige vers la page de connexion
         NavigationManager.NavigateTo("/login");
+    }
+
+    private void NavigateToPage(string url)
+    {
+        NavigationManager.NavigateTo(url);
+    }
+
+    private void GoHome() => NavigationManager.NavigateTo("");
+    private void GoDashboard() => NavigationManager.NavigateTo("dashboard");
+    private void GoDevices() => NavigationManager.NavigateTo("devices");
+    private void GoAccess() => NavigationManager.NavigateTo("access");
+    private void GoZones() => NavigationManager.NavigateTo("zones");
+    private void GoUsers() => NavigationManager.NavigateTo("utilisateurs");
+    private void GoAnalytics() => NavigationManager.NavigateTo("analytics");
+    private void GoProfile() => NavigationManager.NavigateTo("profile");
+
+    private string GetNavLinkClass(string href)
+    {
+        var currentPath = NavigationManager.ToBaseRelativePath(NavigationManager.Uri).ToLower();
+        
+        // Pour la page d'accueil
+        if (href == "" && (currentPath == "" || currentPath == "index"))
+        {
+            return "nav-link-item mb-4 active";
+        }
+        
+        // Pour les autres pages
+        if (!string.IsNullOrEmpty(href) && currentPath.StartsWith(href.ToLower()))
+        {
+            return "nav-link-item mb-4 active";
+        }
+        
+        return "nav-link-item mb-4";
     }
 }
