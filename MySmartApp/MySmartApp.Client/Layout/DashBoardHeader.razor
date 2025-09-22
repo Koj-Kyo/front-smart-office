@@ -58,14 +58,9 @@
 
 <MudGrid Class="pa-1">
     <MudItem xs="12" sm="6" md="8" Class="search-container">
-        <MudTextField T="string"
-                      Placeholder="Search"
-                      Adornment="Adornment.Start"
-                      AdornmentIcon="@Icons.Material.Outlined.Search"
-                      Variant="Variant.Outlined"
-                      Class="modern-search-field"
-                      DisableUnderLine="true"
-                      Style="border: none; background-color: #f8f9fa; border-radius: 25px;" />
+        <MudSpacer />
+            <MudTextField T="string" Placeholder="Rechercher..." Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+        
     </MudItem>
     <MudItem xs="12" sm="6" md="4" Class="d-flex justify-end align-center">
         <MudIconButton Icon="@Icons.Material.Outlined.Settings" Color="Color.Default" />

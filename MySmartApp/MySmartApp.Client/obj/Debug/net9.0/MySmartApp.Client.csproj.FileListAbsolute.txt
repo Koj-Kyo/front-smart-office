@@ -2111,10 +2111,10 @@ D:/Memoire/FrontSmart/MySmartApp/MySmartApp.Client/obj/Debug/net9.0/compressed/k
 /home/gedeonkp/Documents/jeremy/projetmemoire/front-smart-office/MySmartApp/MySmartApp.Client/obj/Debug/net9.0/refint/MySmartApp.Client.dll
 /home/gedeonkp/Documents/jeremy/projetmemoire/front-smart-office/MySmartApp/MySmartApp.Client/obj/Debug/net9.0/MySmartApp.Client.pdb
 /home/gedeonkp/Documents/jeremy/projetmemoire/front-smart-office/MySmartApp/MySmartApp.Client/obj/Debug/net9.0/ref/MySmartApp.Client.dll
-/home/gedeonkp/Documents/jeremy/projetmemoire/front-smart-office/MySmartApp/MySmartApp.Client/bin/Debug/net9.0/wwwroot/_framework/MySmartApp.Client.vq6v0ica6k.pdb
-/home/gedeonkp/Documents/jeremy/projetmemoire/front-smart-office/MySmartApp/MySmartApp.Client/bin/Debug/net9.0/wwwroot/_framework/MySmartApp.Client.xsztxz7hb3.wasm
-/home/gedeonkp/Documents/jeremy/projetmemoire/front-smart-office/MySmartApp/MySmartApp.Client/bin/Debug/net9.0/wwwroot/_framework/MySmartApp.Client.vq6v0ica6k.pdb.gz
-/home/gedeonkp/Documents/jeremy/projetmemoire/front-smart-office/MySmartApp/MySmartApp.Client/bin/Debug/net9.0/wwwroot/_framework/MySmartApp.Client.xsztxz7hb3.wasm.gz
-/home/gedeonkp/Documents/jeremy/projetmemoire/front-smart-office/MySmartApp/MySmartApp.Client/obj/Debug/net9.0/compressed/gzec4urwh5-xsztxz7hb3.gz
-/home/gedeonkp/Documents/jeremy/projetmemoire/front-smart-office/MySmartApp/MySmartApp.Client/obj/Debug/net9.0/compressed/7sqlifytcu-vq6v0ica6k.gz
-/home/gedeonkp/Documents/jeremy/projetmemoire/front-smart-office/MySmartApp/MySmartApp.Client/obj/Debug/net9.0/compressed/kqxus7fkec-ojpiwaix6y.gz
+/home/gedeonkp/Documents/jeremy/projetmemoire/front-smart-office/MySmartApp/MySmartApp.Client/bin/Debug/net9.0/wwwroot/_framework/MySmartApp.Client.7vtza8hruf.pdb
+/home/gedeonkp/Documents/jeremy/projetmemoire/front-smart-office/MySmartApp/MySmartApp.Client/bin/Debug/net9.0/wwwroot/_framework/MySmartApp.Client.cx4m1ksrhn.wasm
+/home/gedeonkp/Documents/jeremy/projetmemoire/front-smart-office/MySmartApp/MySmartApp.Client/bin/Debug/net9.0/wwwroot/_framework/MySmartApp.Client.7vtza8hruf.pdb.gz
+/home/gedeonkp/Documents/jeremy/projetmemoire/front-smart-office/MySmartApp/MySmartApp.Client/bin/Debug/net9.0/wwwroot/_framework/MySmartApp.Client.cx4m1ksrhn.wasm.gz
+/home/gedeonkp/Documents/jeremy/projetmemoire/front-smart-office/MySmartApp/MySmartApp.Client/obj/Debug/net9.0/compressed/gzec4urwh5-cx4m1ksrhn.gz
+/home/gedeonkp/Documents/jeremy/projetmemoire/front-smart-office/MySmartApp/MySmartApp.Client/obj/Debug/net9.0/compressed/7sqlifytcu-7vtza8hruf.gz
+/home/gedeonkp/Documents/jeremy/projetmemoire/front-smart-office/MySmartApp/MySmartApp.Client/obj/Debug/net9.0/compressed/kqxus7fkec-5gyr3c6dg4.gz
