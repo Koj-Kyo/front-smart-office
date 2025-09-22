@@ -5,10 +5,18 @@
     <MudText Typo="Typo.h4" Class="mb-4">Gestion des zones</MudText>
     <MudText Typo="Typo.body1" Class="mb-8">En tant qu'administrateur, vous pouvez ici gérer les zones, affecter des appareils et des utilisateurs.</MudText>
 
+<div class="d-flex align-center justify-space-between mb-4">
     <MudButton OnClick="OpenAddDialog" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" Class="mb-4">
         Ajouter une zone
     </MudButton>
-
+    <MudTextField T="string" 
+                      Placeholder="Rechercher..." 
+                      Adornment="Adornment.Start" 
+                      AdornmentIcon="@Icons.Material.Filled.Search" 
+                      IconSize="Size.Medium" 
+                      Class="ml-4"
+                      Style="max-width: 300px;"></MudTextField>
+</div>
     <MudExpansionPanels MultiExpansion="true" Class="rounded-xl">
         @foreach (var zone in zones)
         {
