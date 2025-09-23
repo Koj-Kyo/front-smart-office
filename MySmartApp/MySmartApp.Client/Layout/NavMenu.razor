@@ -4,23 +4,46 @@
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
 
 <style>
+    /* Container principal - empêche le débordement */
+    .navigation-container {
+        height: 100vh;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Zone de navigation principale avec scroll interne si nécessaire */
+    .nav-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+        scrollbar-width: none; /* Firefox */
+        -ms-overflow-style: none; /* Internet Explorer 10+ */
+    }
+
+    .nav-content::-webkit-scrollbar { /* WebKit */
+        display: none;
+    }
+
     /* Style pour les boutons icônes de navigation */
     .mud-icon-button.nav-link-item {
         border-radius: 50%;
-        margin: 8px auto;
+        margin: 6px auto; /* Réduit la marge pour économiser l'espace */
         padding: 0;
         transition: all 0.3s ease-in-out;
-        width: 48px;
-        height: 48px;
+        width: 44px; /* Légèrement réduit */
+        height: 44px; /* Légèrement réduit */
         display: flex;
         align-items: center;
         justify-content: center;
         color: rgba(255, 255, 255, 0.7);
+        flex-shrink: 0; /* Empêche la compression */
     }
 
     /* Style de l'icône par défaut */
     .mud-icon-button.nav-link-item .mud-icon {
-        font-size: 24px !important;
+        font-size: 22px !important; /* Légèrement réduit */
         color: rgba(255, 255, 255, 0.7);
         transition: all 0.3s ease;
     }
@@ -29,11 +52,11 @@
     .mud-icon-button.nav-link-item.active {
         background-color: white !important;
         color: var(--mud-palette-primary) !important;
-        border-radius: 24px;
-        width: 80px;
-        height: 48px;
-        transform: scale(1.15);
-        box-shadow: 0 8px 20px rgba(255, 255, 255, 0.3);
+        border-radius: 18px; /* Ajusté proportionnellement */
+        width: 56px; /* Ajusté proportionnellement */
+        height: 44px;
+        transform: scale(1.1); /* Réduit légèrement l'agrandissement */
+        box-shadow: 0 6px 16px rgba(255, 255, 255, 0.3); /* Réduit l'ombre */
         border: 2px solid rgba(255, 255, 255, 0.9);
     }
 
@@ -41,14 +64,14 @@
     .mud-icon-button.nav-link-item.active .mud-icon {
         color: var(--mud-palette-primary) !important;
         font-weight: bold;
-        transform: scale(1.1);
+        transform: scale(1.05); /* Réduit légèrement */
     }
 
     /* Style spécifique pour le mode sombre - contraste maximum */
     .mud-theme-dark .mud-icon-button.nav-link-item.active {
         background-color: white !important;
         color: #6B46C1 !important;
-        box-shadow: 0 8px 25px rgba(255, 255, 255, 0.4);
+        box-shadow: 0 6px 20px rgba(255, 255, 255, 0.4);
         border: 2px solid white;
     }
 
@@ -65,65 +88,102 @@
     .mud-icon-button.nav-link-item:hover:not(.active) {
         background-color: rgba(255, 255, 255, 0.1);
         cursor: pointer;
-        border-radius: 20px;
-        width: 60px;
-        transform: scale(1.05);
+        border-radius: 18px;
+        width: 56px;
+        transform: scale(1.02); /* Réduit l'effet hover */
     }
 
     .mud-icon-button.nav-link-item:hover:not(.active) .mud-icon {
         color: rgba(255, 255, 255, 0.9);
     }
+
+    /* Header et footer fixes */
+    .nav-header {
+        flex-shrink: 0;
+        padding: 12px 0; /* Réduit le padding */
+    }
+
+    .nav-footer {
+        flex-shrink: 0;
+        padding: 8px 0; /* Réduit le padding */
+    }
+
+    /* Section navigation principale */
+    .nav-main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        padding: 0 16px;
+        min-height: 0; /* Important pour permettre la compression */
+    }
+
+    /* Section footer */
+    .nav-footer-content {
+        padding: 0 16px;
+    }
 </style>
 
-<div class="d-flex align-center justify-center pt-8 pb-4">
-    <MudIcon Icon="@Icons.Material.Outlined.MapsHomeWork" Size="Size.Large" Color="Color.Primary" />
-</div>
+<div class="navigation-container">
+    <!-- Header fixe -->
+    <div class="nav-header d-flex align-center justify-center">
+        <MudIcon Icon="@Icons.Material.Outlined.MapsHomeWork" Size="Size.Large" Color="Color.Primary" />    
+    </div>
 
-<div class="px-4 d-flex flex-column">
-    <MudIconButton Icon="@Icons.Material.Outlined.Home" 
-                   Class="@GetNavLinkClass("")" 
-                   OnClick="GoHome" />
-    
-    <MudIconButton Icon="@Icons.Material.Outlined.Dashboard" 
-                   Class="@GetNavLinkClass("dashboard")" 
-                   OnClick="GoDashboard" />
-    
-    <MudIconButton Icon="@Icons.Material.Outlined.Devices" 
-                   Class="@GetNavLinkClass("devices")" 
-                   OnClick="GoDevices" />
-    
-    <MudIconButton Icon="@Icons.Material.Outlined.Security" 
-                   Class="@GetNavLinkClass("access")" 
-                   OnClick="GoAccess" />
-    
-    <MudIconButton Icon="@Icons.Material.Outlined.LocationOn" 
-                   Class="@GetNavLinkClass("zones")" 
-                   OnClick="GoZones" />
-    
-    <MudIconButton Icon="@Icons.Material.Outlined.PeopleOutline" 
-                   Class="@GetNavLinkClass("utilisateurs")" 
-                   OnClick="GoUsers" />
-    
-    <MudIconButton Icon="@Icons.Material.Outlined.Analytics" 
-                   Class="@GetNavLinkClass("analytics")" 
-                   OnClick="GoAnalytics" />
-</div>
+    <!-- Contenu scrollable -->
+    <div class="nav-content">
+        <!-- Navigation principale -->
+        <div class="nav-main">
+            <MudIconButton Icon="@Icons.Material.Outlined.Home" 
+                           Class="@GetNavLinkClass("")" 
+                           OnClick="GoHome" />
+            
+            <MudIconButton Icon="@Icons.Material.Outlined.Dashboard" 
+                           Class="@GetNavLinkClass("dashboard")" 
+                           OnClick="GoDashboard" />
+            
+            <MudIconButton Icon="@Icons.Material.Outlined.Devices" 
+                           Class="@GetNavLinkClass("devices")" 
+                           OnClick="GoDevices" />
+            
+            <MudIconButton Icon="@Icons.Material.Outlined.Security" 
+                           Class="@GetNavLinkClass("access")" 
+                           OnClick="GoAccess" />
+            
+            <MudIconButton Icon="@Icons.Material.Outlined.LocationOn" 
+                           Class="@GetNavLinkClass("zones")" 
+                           OnClick="GoZones" />
+            
+            <MudIconButton Icon="@Icons.Material.Outlined.PeopleOutline" 
+                           Class="@GetNavLinkClass("utilisateurs")" 
+                           OnClick="GoUsers" />
+            
+            <MudIconButton Icon="@Icons.Material.Outlined.Analytics" 
+                           Class="@GetNavLinkClass("analytics")" 
+                           OnClick="GoAnalytics" />
+        </div>
 
-<div style="flex-grow: 1;" />
+        <!-- Spacer pour pousser le footer vers le bas -->
+        <div style="flex-grow: 1;" />
+    </div>
 
-<div class="px-4 d-flex flex-column">
-    <MudIconButton Icon="@DarkLightModeButtonIcon" 
-                   OnClick="OnToggleDarkMode" 
-                   Color="Color.Inherit" 
-                   Class="nav-link-item mb-4" />
-    
-    <MudIconButton Icon="@Icons.Material.Outlined.Person" 
-                   Class="@GetNavLinkClass("profile")" 
-                   OnClick="GoProfile" />
-    
-    <MudIconButton Icon="@Icons.Material.Outlined.ExitToApp" 
-                   Class="nav-link-item mb-4" 
-                   OnClick="Logout" />
+    <!-- Footer fixe -->
+    <div class="nav-footer">
+        <div class="nav-footer-content d-flex flex-column">
+            <MudIconButton Icon="@DarkLightModeButtonIcon" 
+                           OnClick="OnToggleDarkMode" 
+                           Color="Color.Inherit" 
+                           Class="nav-link-item" />
+            
+            <MudIconButton Icon="@Icons.Material.Outlined.Person" 
+                           Class="@GetNavLinkClass("profile")" 
+                           OnClick="GoProfile" />
+            
+            <MudIconButton Icon="@Icons.Material.Outlined.ExitToApp" 
+                           Class="nav-link-item" 
+                           OnClick="Logout" />
+        </div>
+    </div>
 </div>
 
 @code {
@@ -163,15 +223,15 @@
         // Pour la page d'accueil
         if (href == "" && (currentPath == "" || currentPath == "index"))
         {
-            return "nav-link-item mb-4 active";
+            return "nav-link-item active";
         }
         
         // Pour les autres pages
         if (!string.IsNullOrEmpty(href) && currentPath.StartsWith(href.ToLower()))
         {
-            return "nav-link-item mb-4 active";
+            return "nav-link-item active";
         }
         
-        return "nav-link-item mb-4";
+        return "nav-link-item";
     }
 }
