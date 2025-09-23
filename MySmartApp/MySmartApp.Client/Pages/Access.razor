@@ -5,9 +5,19 @@
     <MudText Typo="Typo.h4" Class="mb-4">Gestion des accès</MudText>
     <MudText Typo="Typo.body1" Class="mb-8">Gérez ici les droits d'accès des utilisateurs aux zones et aux appareils de votre maison intelligente.</MudText>
 
-    <MudButton OnClick="OpenAddDialog" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" Class="mb-4">
-        Attribuer des accès
-    </MudButton>
+    <div class="d-flex align-center justify-space-between mb-4">
+        <MudButton OnClick="OpenAddDialog" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add">
+            Attribuer des accès
+        </MudButton>
+        
+        <MudTextField T="string" 
+                      Placeholder="Rechercher..." 
+                      Adornment="Adornment.Start" 
+                      AdornmentIcon="@Icons.Material.Filled.Search" 
+                      IconSize="Size.Medium" 
+                      Class="ml-4"
+                      Style="max-width: 300px;"></MudTextField>
+    </div>
 
     <MudExpansionPanels MultiExpansion="true" Class="rounded-xl">
         @foreach (var user in users)

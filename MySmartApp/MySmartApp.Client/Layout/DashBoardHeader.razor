@@ -1,42 +1,75 @@
 ﻿@using MudBlazor
 
 <style>
-    /* Style de la barre de recherche pour correspondre au design Figma */
-    .custom-search-field .mud-input-control.mud-input-control-input-container {
-        border-radius: 9999px; /* Bords très arrondis */
-        background-color: var(--mud-palette-surface); /* Couleur de fond des cartes (blanc) */
+    /* Style moderne de la barre de recherche */
+    .modern-search-field {
+        background-color: #f8f9fa;
+        border-radius: 25px;
+        border: none;
+        padding: 12px 20px;
+        font-size: 14px;
+        width: 100%;
+
+        max-width: 100px;
     }
 
-    /* Enlever la bordure et l'ombre par défaut au focus */
-    .custom-search-field .mud-input-control.mud-focused .mud-input {
-        box-shadow: none;
-        border-color: transparent !important;
+    .modern-search-field .mud-input-root {
+        border: none !important;
+        background-color: transparent !important;
+        box-shadow: none !important;
     }
 
-    /* Réduire le padding autour du champ de recherche */
-    .custom-search-field .mud-input-control.mud-input {
-        padding-left: 16px;
-        padding-right: 16px;
+    .modern-search-field .mud-input {
+        border: none !important;
+        background-color: transparent !important;
+        padding: 0 !important;
+    }
+
+    .modern-search-field .mud-input:focus {
+        box-shadow: none !important;
+        border: none !important;
+        outline: none !important;
+    }
+
+    .modern-search-field .mud-input-adornment {
+        color: #6c757d;
+        margin-right: 8px;
+    }
+
+    /* Style pour le mode sombre */
+    .mud-theme-dark .modern-search-field {
+        background-color: rgba(255, 255, 255, 0.1);
+        color: white;
+    }
+
+    .mud-theme-dark .modern-search-field .mud-input-adornment {
+        color: rgba(255, 255, 255, 0.7);
+    }
+
+    /* Container pour centrer la recherche */
+    .search-container {
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+        width: 10%;
     }
 
 </style>
 
-<MudGrid Class="pa-4">
-    <MudItem xs="12" sm="6" md="8">
-        <MudTextField T="string"
-                      Placeholder="Search"
-                      Adornment="Adornment.Start"
-                      AdornmentIcon="@Icons.Material.Filled.Search"
-                      Class="custom-search-field" />
+<MudGrid Class="pa-1">
+    <MudItem xs="12" sm="6" md="8" Class="search-container">
+        <MudSpacer />
+            <MudTextField T="string" Placeholder="Rechercher..." Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+        
     </MudItem>
     <MudItem xs="12" sm="6" md="4" Class="d-flex justify-end align-center">
-        <MudIconButton Icon="@Icons.Material.Filled.Settings" />
-        <MudIconButton Icon="@Icons.Material.Filled.Notifications" Class="mx-2" />
-        <MudAvatar>
+        <MudIconButton Icon="@Icons.Material.Outlined.Settings" Color="Color.Default" />
+        <MudIconButton Icon="@Icons.Material.Outlined.Notifications" Color="Color.Default" Class="mx-2" />
+        <MudAvatar Size="Size.Small">
             <MudImage Src="img/admin.jpg" />
         </MudAvatar>
         <MudText Typo="Typo.subtitle1" Class="ml-2">Admin</MudText>
-        <MudIconButton Icon="@Icons.Material.Filled.ArrowDropDown" />
+        <MudIconButton Icon="@Icons.Material.Filled.ArrowDropDown" Size="Size.Small" />
     </MudItem>
 </MudGrid>
 

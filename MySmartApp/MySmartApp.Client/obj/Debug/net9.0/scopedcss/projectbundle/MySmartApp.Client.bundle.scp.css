@@ -1,18 +1,18 @@
 /* /Layout/DashBoardHeader.razor.rz.scp.css */
 /* Style de la barre de recherche pour correspondre au design Figma */
-.custom-search-field .mud-input-control.mud-input-control-input-container[b-yt48cljylr] {
+.custom-search-field .mud-input-control.mud-input-control-input-container[b-a7g9nzn2xt] {
     border-radius: 9999px; /* Bords très arrondis */
     background-color: var(--mud-palette-surface); /* Couleur de fond des cartes (blanc) */
 }
 
 /* Enlever la bordure et l'ombre par défaut au focus */
-.custom-search-field .mud-input-control.mud-focused .mud-input[b-yt48cljylr] {
+.custom-search-field .mud-input-control.mud-focused .mud-input[b-a7g9nzn2xt] {
     box-shadow: none;
     border-color: transparent !important;
 }
 
 /* Réduire le padding autour du champ de recherche */
-.custom-search-field .mud-input-control.mud-input[b-yt48cljylr] {
+.custom-search-field .mud-input-control.mud-input[b-a7g9nzn2xt] {
     padding-left: 16px;
     padding-right: 16px;
 }
@@ -20,7 +20,7 @@
 /* NavMenu.razor.css */
 
 /* Style de base pour tous les éléments de navigation */
-.nav-link-item.mud-nav-item[b-cm2w0l4xp1] {
+.nav-link-item.mud-nav-item[b-f9a5ypurso] {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -33,24 +33,24 @@
 }
 
     /* Style de l'icône par défaut à l'intérieur du lien de navigation */
-    .nav-link-item.mud-nav-item .mud-nav-link-icon.mud-icon[b-cm2w0l4xp1] {
+    .nav-link-item.mud-nav-item .mud-nav-link-icon.mud-icon[b-f9a5ypurso] {
         font-size: 24px !important;
         color: var(--mud-palette-white);
     }
 
     /* Style quand le lien est ACTIF (fond blanc, icône violette) */
-    .nav-link-item.mud-nav-item.active[b-cm2w0l4xp1] {
+    .nav-link-item.mud-nav-item.active[b-f9a5ypurso] {
         background-color: var(--mud-palette-white); /* Le fond devient blanc */
         color: var(--mud-palette-primary) !important; /* Le texte/l'icône devient violet */
     }
 
         /* Style de l'icône à l'intérieur du lien ACTIF */
-        .nav-link-item.mud-nav-item.active .mud-nav-link-icon.mud-icon[b-cm2w0l4xp1] {
+        .nav-link-item.mud-nav-item.active .mud-nav-link-icon.mud-icon[b-f9a5ypurso] {
             color: var(--mud-palette-primary) !important; /* Force la couleur violette pour l'icône active */
         }
 
     /* Hover state pour un peu d'interactivité */
-    .nav-link-item.mud-nav-item:hover[b-cm2w0l4xp1] {
+    .nav-link-item.mud-nav-item:hover[b-f9a5ypurso] {
         background-color: var(--mud-palette-primary-lighten);
         cursor: pointer;
     }

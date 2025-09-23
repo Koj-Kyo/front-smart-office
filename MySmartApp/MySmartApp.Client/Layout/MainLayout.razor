@@ -9,9 +9,6 @@
 <MudDialogProvider />
 <MudSnackbarProvider />
 <MudLayout>
-    <MudAppBar Elevation="0">
-        <DashBoardHeader />
-    </MudAppBar>
     <MudDrawer id="nav-drawer"
                @bind-Open="_drawerOpen"
                Elevation="3"
@@ -20,7 +17,7 @@
         
         <NavMenu IsDarkMode="@_isDarkMode" OnToggleDarkMode="@DarkModeToggle" />
     </MudDrawer>
-    <MudMainContent Class="pa-16">
+    <MudMainContent Class="pa-4">
         @Body
     </MudMainContent>
 </MudLayout>
