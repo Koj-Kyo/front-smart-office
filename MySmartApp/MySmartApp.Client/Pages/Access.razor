@@ -1,5 +1,5 @@
 ﻿@page "/access"
-@using MudBlazor
+@inject IDialogService DialogService
 
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="my-8">
     <MudText Typo="Typo.h4" Class="mb-4">Gestion des accès</MudText>
@@ -11,6 +11,7 @@
         </MudButton>
         
         <MudTextField T="string" 
+                      @bind-Value="searchString"
                       Placeholder="Rechercher..." 
                       Adornment="Adornment.Start" 
                       AdornmentIcon="@Icons.Material.Filled.Search" 
@@ -20,7 +21,7 @@
     </div>
 
     <MudExpansionPanels MultiExpansion="true" Class="rounded-xl">
-        @foreach (var user in users)
+        @foreach (var user in filteredUsers)
         {
             <MudExpansionPanel Text="@user.Name">
                 <ChildContent>
@@ -68,105 +69,160 @@
     </MudExpansionPanels>
 </MudContainer>
 
-<MudDialog @bind-IsVisible="isDialogOpen" Options="dialogOptions">
-    <TitleContent>
-        <MudText Typo="Typo.h6">
-            <MudIcon Icon="@(isAdding? Icons.Material.Filled.Add : Icons.Material.Filled.Edit)" Class="mr-3" />
+<MudOverlay @bind-Visible="isDialogOpen" DarkBackground="true" Absolute="false">
+    <MudPaper Class="pa-6" Style="max-width: 600px; margin: 50px auto;">
+        <MudText Typo="Typo.h6" Class="mb-4">
+            <MudIcon Icon="@(isAdding ? Icons.Material.Filled.Add : Icons.Material.Filled.Edit)" Class="mr-3" />
             @(isAdding ? "Attribuer des accès" : "Modifier les accès")
         </MudText>
-    </TitleContent>
-    <DialogContent>
-        <MudForm>
-            <MudSelect T="User" Label="Sélectionner un utilisateur" @bind-Value="editingUser" Required>
-                @foreach (var user in users)
-                {
-                    <MudSelectItem Value="@user">@user.Name</MudSelectItem>
-                }
-            </MudSelect>
-            <MudSelect T="ZoneModel" Label="Zones accessibles" MultiSelection="true" @bind-SelectedValues="selectedZones">
-                @foreach (var zone in zones)
-                {
-                    <MudSelectItem Value="@zone">@zone.Name</MudSelectItem>
-                }
-            </MudSelect>
-            <MudSelect T="Device" Label="Appareils accessibles" MultiSelection="true" @bind-SelectedValues="selectedDevices">
-                @foreach (var device in devices)
-                {
-                    <MudSelectItem Value="@device">@device.DeviceName</MudSelectItem>
-                }
-            </MudSelect>
-        </MudForm>
-    </DialogContent>
-    <DialogActions>
-        <MudButton OnClick="OnCancel" Color="Color.Default">Annuler</MudButton>
-        <MudButton OnClick="OnSave" Color="Color.Primary" Variant="Variant.Filled">Sauvegarder</MudButton>
-    </DialogActions>
-</MudDialog>
+
+        @if (isAdding)
+        {
+            <MudTextField @bind-Value="editingUser.Name" 
+                         Label="Nom de l'utilisateur" 
+                         Required="true" 
+                         Class="mb-4" />
+        }
+        else
+        {
+            <MudTextField Value="@editingUser.Name" 
+                         Label="Nom de l'utilisateur" 
+                         ReadOnly="true"
+                         Class="mb-4" />
+        }
+        
+        <MudSelect @bind-Value="editingUser.Role" 
+                  Label="Rôle" 
+                  Required="true" 
+                  Class="mb-4">
+            <MudSelectItem Value="@("Admin")">🔐 Administrateur</MudSelectItem>
+            <MudSelectItem Value="@("Membre")">👤 Membre</MudSelectItem>
+            <MudSelectItem Value="@("Visiteur")">👁️ Visiteur</MudSelectItem>
+        </MudSelect>
+        
+        <MudSelect T="ZoneModel" 
+                  Label="Zones accessibles" 
+                  MultiSelection="true" 
+                  @bind-SelectedValues="selectedZones"
+                  Class="mb-4">
+            @foreach (var zone in zones)
+            {
+                <MudSelectItem Value="@zone">@zone.Name</MudSelectItem>
+            }
+        </MudSelect>
+        
+        <MudSelect T="Device" 
+                  Label="Appareils accessibles" 
+                  MultiSelection="true" 
+                  @bind-SelectedValues="selectedDevices"
+                  Class="mb-4">
+            @foreach (var device in devices)
+            {
+                <MudSelectItem Value="@device">@device.DeviceName</MudSelectItem>
+            }
+        </MudSelect>
+        
+        <MudSwitch @bind-Value="editingUser.IsActive" 
+                  Label="Utilisateur actif" 
+                  Color="Color.Primary" 
+                  Class="mb-4" />
+
+        <MudGrid Class="mt-4">
+            <MudItem xs="6">
+                <MudButton OnClick="OnCancel" FullWidth="true" Color="Color.Default">Annuler</MudButton>
+            </MudItem>
+            <MudItem xs="6">
+                <MudButton OnClick="OnSave" FullWidth="true" Color="Color.Primary" Variant="Variant.Filled">
+                    Sauvegarder
+                </MudButton>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+</MudOverlay>
 
 @code {
     private List<User> users = new List<User>();
+    private List<User> filteredUsers => FilterUsers();
     private List<ZoneModel> zones = new List<ZoneModel>();
     private List<Device> devices = new List<Device>();
+    private string searchString = "";
     private bool isDialogOpen = false;
     private bool isAdding = true;
     private User editingUser = new User();
-    private DialogOptions dialogOptions = new DialogOptions() { CloseButton = true };
-    private IEnumerable<ZoneModel> selectedZones { get; set; } = new List<ZoneModel>();
-    private IEnumerable<Device> selectedDevices { get; set; } = new List<Device>();
+    private IEnumerable<ZoneModel> selectedZones = new List<ZoneModel>();
+    private IEnumerable<Device> selectedDevices = new List<Device>();
+    private int nextId = 4;
 
-    // Modèles de données
     public class User
     {
-        public string Name { get; set; }
-        public string Role { get; set; }
+        public int Id { get; set; }
+        public string Name { get; set; } = "";
+        public string Role { get; set; } = "Membre";
         public List<ZoneModel> AccessibleZones { get; set; } = new List<ZoneModel>();
         public List<Device> AccessibleDevices { get; set; } = new List<Device>();
-        public bool IsActive { get; set; }
+        public bool IsActive { get; set; } = true;
 
-        public override string ToString() => Name;
+        public override bool Equals(object? obj) => obj is User user && Id == user.Id;
+        public override int GetHashCode() => Id.GetHashCode();
     }
 
     public class ZoneModel
     {
-        public string Name { get; set; }
-        public string Icon { get; set; }
+        public int Id { get; set; }
+        public string Name { get; set; } = "";
+        public string Icon { get; set; } = "";
 
-        public override string ToString() => Name;
+        public override bool Equals(object? obj) => obj is ZoneModel zone && Id == zone.Id;
+        public override int GetHashCode() => Id.GetHashCode();
     }
 
     public class Device
     {
-        public string DeviceName { get; set; }
-        public string Icon { get; set; }
+        public int Id { get; set; }
+        public string DeviceName { get; set; } = "";
+        public string Icon { get; set; } = "";
 
-        public override string ToString() => DeviceName;
+        public override bool Equals(object? obj) => obj is Device device && Id == device.Id;
+        public override int GetHashCode() => Id.GetHashCode();
     }
 
     protected override void OnInitialized()
     {
-        // Données d'appareils et de zones fictives
         devices = new List<Device>
         {
-            new Device { DeviceName = "Climatiseur", Icon = Icons.Material.Filled.AcUnit },
-            new Device { DeviceName = "Lumières", Icon = Icons.Material.Filled.Lightbulb },
-            new Device { DeviceName = "Thermostat", Icon = Icons.Material.Filled.Thermostat },
-            new Device { DeviceName = "Routeur", Icon = Icons.Material.Filled.Router }
+            new Device { Id = 1, DeviceName = "Climatiseur", Icon = Icons.Material.Filled.AcUnit },
+            new Device { Id = 2, DeviceName = "Lumières", Icon = Icons.Material.Filled.Lightbulb },
+            new Device { Id = 3, DeviceName = "Thermostat", Icon = Icons.Material.Filled.Thermostat },
+            new Device { Id = 4, DeviceName = "Routeur", Icon = Icons.Material.Filled.Router }
         };
 
         zones = new List<ZoneModel>
         {
-            new ZoneModel { Name = "Salon", Icon = Icons.Material.Filled.MeetingRoom },
-            new ZoneModel { Name = "Chambre", Icon = Icons.Material.Filled.BedroomParent },
-            new ZoneModel { Name = "Cuisine", Icon = Icons.Material.Filled.Kitchen },
+            new ZoneModel { Id = 1, Name = "Salon", Icon = Icons.Material.Filled.MeetingRoom },
+            new ZoneModel { Id = 2, Name = "Chambre", Icon = Icons.Material.Filled.BedroomParent },
+            new ZoneModel { Id = 3, Name = "Cuisine", Icon = Icons.Material.Filled.Kitchen },
+            new ZoneModel { Id = 4, Name = "Bureau", Icon = Icons.Material.Filled.Work },
+            new ZoneModel { Id = 5, Name = "Garage", Icon = Icons.Material.Filled.Garage },
+            new ZoneModel { Id = 6, Name = "Salle de bain", Icon = Icons.Material.Filled.Bathroom }
         };
 
-        // Données d'utilisateurs fictives
         users = new List<User>
         {
-            new User { Name = "Scarlett", Role = "Admin", IsActive = true, AccessibleZones = zones, AccessibleDevices = devices },
-            new User { Name = "Nariya", Role = "Membre", IsActive = true, AccessibleZones = zones.GetRange(0, 1), AccessibleDevices = devices.GetRange(0, 2) },
-            new User { Name = "Riya", Role = "Visiteur", IsActive = false, AccessibleZones = new List<ZoneModel>(), AccessibleDevices = new List<Device>() }
+            new User { Id = 1, Name = "Scarlett", Role = "Admin", IsActive = true, AccessibleZones = new List<ZoneModel>(zones), AccessibleDevices = new List<Device>(devices) },
+            new User { Id = 2, Name = "Nariya", Role = "Membre", IsActive = true, AccessibleZones = zones.Take(2).ToList(), AccessibleDevices = devices.Take(2).ToList() },
+            new User { Id = 3, Name = "Riya", Role = "Visiteur", IsActive = false, AccessibleZones = new List<ZoneModel>(), AccessibleDevices = new List<Device>() }
         };
+    }
+
+    private List<User> FilterUsers()
+    {
+        if (string.IsNullOrWhiteSpace(searchString))
+            return users;
+
+        return users.Where(u => 
+            u.Name.ToLower().Contains(searchString.ToLower()) ||
+            u.Role.ToLower().Contains(searchString.ToLower())
+        ).ToList();
     }
 
     private void OpenAddDialog()
@@ -181,7 +237,15 @@
     private void OpenEditDialog(User user)
     {
         isAdding = false;
-        editingUser = user;
+        editingUser = new User
+        {
+            Id = user.Id,
+            Name = user.Name,
+            Role = user.Role,
+            IsActive = user.IsActive,
+            AccessibleZones = new List<ZoneModel>(user.AccessibleZones),
+            AccessibleDevices = new List<Device>(user.AccessibleDevices)
+        };
         selectedZones = user.AccessibleZones;
         selectedDevices = user.AccessibleDevices;
         isDialogOpen = true;
@@ -190,28 +254,53 @@
     private void OnCancel()
     {
         isDialogOpen = false;
+        editingUser = new User();
+        selectedZones = new List<ZoneModel>();
+        selectedDevices = new List<Device>();
     }
 
     private void OnSave()
     {
+        if (string.IsNullOrWhiteSpace(editingUser.Name))
+            return;
+
+        editingUser.AccessibleZones = selectedZones.ToList();
+        editingUser.AccessibleDevices = selectedDevices.ToList();
+
         if (isAdding)
         {
-            editingUser.AccessibleZones = selectedZones.ToList();
-            editingUser.AccessibleDevices = selectedDevices.ToList();
+            editingUser.Id = nextId++;
             users.Add(editingUser);
         }
         else
         {
-            editingUser.AccessibleZones = selectedZones.ToList();
-            editingUser.AccessibleDevices = selectedDevices.ToList();
+            var existingUser = users.FirstOrDefault(u => u.Id == editingUser.Id);
+            if (existingUser != null)
+            {
+                existingUser.Name = editingUser.Name;
+                existingUser.Role = editingUser.Role;
+                existingUser.IsActive = editingUser.IsActive;
+                existingUser.AccessibleZones = editingUser.AccessibleZones;
+                existingUser.AccessibleDevices = editingUser.AccessibleDevices;
+            }
         }
+
         isDialogOpen = false;
-        StateHasChanged();
+        editingUser = new User();
+        selectedZones = new List<ZoneModel>();
+        selectedDevices = new List<Device>();
     }
 
-    private void DeleteUser(User user)
+    private async Task DeleteUser(User user)
     {
-        users.Remove(user);
-        StateHasChanged();
+        bool? result = await DialogService.ShowMessageBox(
+            "Confirmation",
+            $"Êtes-vous sûr de vouloir supprimer l'utilisateur '{user.Name}' ?",
+            yesText:"Supprimer", cancelText:"Annuler");
+
+        if (result == true)
+        {
+            users.Remove(user);
+        }
     }
 }
