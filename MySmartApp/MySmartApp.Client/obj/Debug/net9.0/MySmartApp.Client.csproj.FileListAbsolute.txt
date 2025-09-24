@@ -1100,8 +1100,6 @@ D:/Memoire/FrontSmart/MySmartApp/MySmartApp.Client/obj/Debug/net9.0/compressed/k
 /home/gedeonkp/Documents/jeremy/projetmemoire/branch/front-smart-office/MySmartApp/MySmartApp.Client/bin/Debug/net9.0/wwwroot/_framework/Microsoft.Win32.Registry.8nfqsezyx3.wasm
 /home/gedeonkp/Documents/jeremy/projetmemoire/branch/front-smart-office/MySmartApp/MySmartApp.Client/bin/Debug/net9.0/wwwroot/_framework/mscorlib.qiu3j3msqk.wasm
 /home/gedeonkp/Documents/jeremy/projetmemoire/branch/front-smart-office/MySmartApp/MySmartApp.Client/bin/Debug/net9.0/wwwroot/_framework/MudBlazor.p2t6fnkmwy.wasm
-/home/gedeonkp/Documents/jeremy/projetmemoire/branch/front-smart-office/MySmartApp/MySmartApp.Client/bin/Debug/net9.0/wwwroot/_framework/MySmartApp.Client.h8unb6ghp4.pdb
-/home/gedeonkp/Documents/jeremy/projetmemoire/branch/front-smart-office/MySmartApp/MySmartApp.Client/bin/Debug/net9.0/wwwroot/_framework/MySmartApp.Client.mjcfptn16h.wasm
 /home/gedeonkp/Documents/jeremy/projetmemoire/branch/front-smart-office/MySmartApp/MySmartApp.Client/bin/Debug/net9.0/wwwroot/_framework/netstandard.lp03u0xxi4.wasm
 /home/gedeonkp/Documents/jeremy/projetmemoire/branch/front-smart-office/MySmartApp/MySmartApp.Client/bin/Debug/net9.0/wwwroot/_framework/System.AppContext.fw4d0g3f7l.wasm
 /home/gedeonkp/Documents/jeremy/projetmemoire/branch/front-smart-office/MySmartApp/MySmartApp.Client/bin/Debug/net9.0/wwwroot/_framework/System.Buffers.8rbxcdf1qr.wasm
@@ -1307,7 +1305,6 @@ D:/Memoire/FrontSmart/MySmartApp/MySmartApp.Client/obj/Debug/net9.0/compressed/k
 /home/gedeonkp/Documents/jeremy/projetmemoire/branch/front-smart-office/MySmartApp/MySmartApp.Client/bin/Debug/net9.0/wwwroot/_framework/Microsoft.Extensions.Configuration.Abstractions.2q3rnwzz6j.wasm.gz
 /home/gedeonkp/Documents/jeremy/projetmemoire/branch/front-smart-office/MySmartApp/MySmartApp.Client/bin/Debug/net9.0/wwwroot/_framework/dotnet.native.pk43x8e436.wasm.gz
 /home/gedeonkp/Documents/jeremy/projetmemoire/branch/front-smart-office/MySmartApp/MySmartApp.Client/bin/Debug/net9.0/wwwroot/_framework/System.Text.Encoding.Extensions.236ey7glbu.wasm.gz
-/home/gedeonkp/Documents/jeremy/projetmemoire/branch/front-smart-office/MySmartApp/MySmartApp.Client/bin/Debug/net9.0/wwwroot/_framework/MySmartApp.Client.h8unb6ghp4.pdb.gz
 /home/gedeonkp/Documents/jeremy/projetmemoire/branch/front-smart-office/MySmartApp/MySmartApp.Client/bin/Debug/net9.0/wwwroot/_framework/System.Runtime.Extensions.413l2ts0be.wasm.gz
 /home/gedeonkp/Documents/jeremy/projetmemoire/branch/front-smart-office/MySmartApp/MySmartApp.Client/bin/Debug/net9.0/wwwroot/_framework/System.Runtime.InteropServices.d48fmo0tsi.wasm.gz
 /home/gedeonkp/Documents/jeremy/projetmemoire/branch/front-smart-office/MySmartApp/MySmartApp.Client/bin/Debug/net9.0/wwwroot/_framework/System.Runtime.Serialization.Formatters.w2f7rlywsj.wasm.gz
@@ -1355,7 +1352,6 @@ D:/Memoire/FrontSmart/MySmartApp/MySmartApp.Client/obj/Debug/net9.0/compressed/k
 /home/gedeonkp/Documents/jeremy/projetmemoire/branch/front-smart-office/MySmartApp/MySmartApp.Client/bin/Debug/net9.0/wwwroot/_framework/System.Xml.XPath.XDocument.n9vmzv7j4f.wasm.gz
 /home/gedeonkp/Documents/jeremy/projetmemoire/branch/front-smart-office/MySmartApp/MySmartApp.Client/bin/Debug/net9.0/wwwroot/_framework/icudt_CJK.tjcz0u77k5.dat.gz
 /home/gedeonkp/Documents/jeremy/projetmemoire/branch/front-smart-office/MySmartApp/MySmartApp.Client/bin/Debug/net9.0/wwwroot/_framework/System.Diagnostics.FileVersionInfo.036glfep3r.wasm.gz
-/home/gedeonkp/Documents/jeremy/projetmemoire/branch/front-smart-office/MySmartApp/MySmartApp.Client/bin/Debug/net9.0/wwwroot/_framework/MySmartApp.Client.mjcfptn16h.wasm.gz
 /home/gedeonkp/Documents/jeremy/projetmemoire/branch/front-smart-office/MySmartApp/MySmartApp.Client/bin/Debug/net9.0/wwwroot/_framework/System.Security.AccessControl.1f4h9q7gw2.wasm.gz
 /home/gedeonkp/Documents/jeremy/projetmemoire/branch/front-smart-office/MySmartApp/MySmartApp.Client/bin/Debug/net9.0/wwwroot/_framework/System.Linq.Queryable.fdo28ryoc2.wasm.gz
 /home/gedeonkp/Documents/jeremy/projetmemoire/branch/front-smart-office/MySmartApp/MySmartApp.Client/bin/Debug/net9.0/wwwroot/_framework/System.Resources.ResourceManager.wnuh2itm6p.wasm.gz
@@ -1896,8 +1892,6 @@ D:/Memoire/FrontSmart/MySmartApp/MySmartApp.Client/obj/Debug/net9.0/compressed/k
 /home/gedeonkp/Documents/jeremy/projetmemoire/branch/front-smart-office/MySmartApp/MySmartApp.Client/obj/Debug/net9.0/compressed/iu7yfrumrt-x0ueugt8gp.gz
 /home/gedeonkp/Documents/jeremy/projetmemoire/branch/front-smart-office/MySmartApp/MySmartApp.Client/obj/Debug/net9.0/compressed/if6sxvvhdq-x0ueugt8gp.gz
 /home/gedeonkp/Documents/jeremy/projetmemoire/branch/front-smart-office/MySmartApp/MySmartApp.Client/obj/Debug/net9.0/compressed/c6ax2ytsjd-md9yvkcqlf.gz
-/home/gedeonkp/Documents/jeremy/projetmemoire/branch/front-smart-office/MySmartApp/MySmartApp.Client/obj/Debug/net9.0/compressed/gt3uvokyjv-f1l1zp3jf7.gz
-/home/gedeonkp/Documents/jeremy/projetmemoire/branch/front-smart-office/MySmartApp/MySmartApp.Client/obj/Debug/net9.0/compressed/hk7f1xeoud-f1l1zp3jf7.gz
 /home/gedeonkp/Documents/jeremy/projetmemoire/branch/front-smart-office/MySmartApp/MySmartApp.Client/obj/Debug/net9.0/compressed/20t9gjpgey-tnyc7xpluy.gz
 /home/gedeonkp/Documents/jeremy/projetmemoire/branch/front-smart-office/MySmartApp/MySmartApp.Client/obj/Debug/net9.0/compressed/lna1rsjs8a-t32damlu4o.gz
 /home/gedeonkp/Documents/jeremy/projetmemoire/branch/front-smart-office/MySmartApp/MySmartApp.Client/obj/Debug/net9.0/compressed/lmnjozwiw2-up1bcx14yi.gz
@@ -2101,9 +2095,6 @@ D:/Memoire/FrontSmart/MySmartApp/MySmartApp.Client/obj/Debug/net9.0/compressed/k
 /home/gedeonkp/Documents/jeremy/projetmemoire/branch/front-smart-office/MySmartApp/MySmartApp.Client/obj/Debug/net9.0/compressed/gwavzywsfo-tjcz0u77k5.gz
 /home/gedeonkp/Documents/jeremy/projetmemoire/branch/front-smart-office/MySmartApp/MySmartApp.Client/obj/Debug/net9.0/compressed/ue40chuwcy-tptq2av103.gz
 /home/gedeonkp/Documents/jeremy/projetmemoire/branch/front-smart-office/MySmartApp/MySmartApp.Client/obj/Debug/net9.0/compressed/3scxxzs9h7-lfu7j35m59.gz
-/home/gedeonkp/Documents/jeremy/projetmemoire/branch/front-smart-office/MySmartApp/MySmartApp.Client/obj/Debug/net9.0/compressed/gzec4urwh5-mjcfptn16h.gz
-/home/gedeonkp/Documents/jeremy/projetmemoire/branch/front-smart-office/MySmartApp/MySmartApp.Client/obj/Debug/net9.0/compressed/7sqlifytcu-h8unb6ghp4.gz
-/home/gedeonkp/Documents/jeremy/projetmemoire/branch/front-smart-office/MySmartApp/MySmartApp.Client/obj/Debug/net9.0/compressed/kqxus7fkec-g6ncf5x0wi.gz
 /home/gedeonkp/Documents/jeremy/projetmemoire/branch/front-smart-office/MySmartApp/MySmartApp.Client/obj/Debug/net9.0/staticwebassets.build.json
 /home/gedeonkp/Documents/jeremy/projetmemoire/branch/front-smart-office/MySmartApp/MySmartApp.Client/obj/Debug/net9.0/staticwebassets.development.json
 /home/gedeonkp/Documents/jeremy/projetmemoire/branch/front-smart-office/MySmartApp/MySmartApp.Client/obj/Debug/net9.0/staticwebassets.build.endpoints.json
@@ -2118,3 +2109,12 @@ D:/Memoire/FrontSmart/MySmartApp/MySmartApp.Client/obj/Debug/net9.0/compressed/k
 /home/gedeonkp/Documents/jeremy/projetmemoire/branch/front-smart-office/MySmartApp/MySmartApp.Client/obj/Debug/net9.0/refint/MySmartApp.Client.dll
 /home/gedeonkp/Documents/jeremy/projetmemoire/branch/front-smart-office/MySmartApp/MySmartApp.Client/obj/Debug/net9.0/MySmartApp.Client.pdb
 /home/gedeonkp/Documents/jeremy/projetmemoire/branch/front-smart-office/MySmartApp/MySmartApp.Client/obj/Debug/net9.0/ref/MySmartApp.Client.dll
+/home/gedeonkp/Documents/jeremy/projetmemoire/branch/front-smart-office/MySmartApp/MySmartApp.Client/bin/Debug/net9.0/wwwroot/_framework/MySmartApp.Client.xo8nnwqqzh.pdb
+/home/gedeonkp/Documents/jeremy/projetmemoire/branch/front-smart-office/MySmartApp/MySmartApp.Client/bin/Debug/net9.0/wwwroot/_framework/MySmartApp.Client.v5cqj0fac8.wasm
+/home/gedeonkp/Documents/jeremy/projetmemoire/branch/front-smart-office/MySmartApp/MySmartApp.Client/bin/Debug/net9.0/wwwroot/_framework/MySmartApp.Client.xo8nnwqqzh.pdb.gz
+/home/gedeonkp/Documents/jeremy/projetmemoire/branch/front-smart-office/MySmartApp/MySmartApp.Client/bin/Debug/net9.0/wwwroot/_framework/MySmartApp.Client.v5cqj0fac8.wasm.gz
+/home/gedeonkp/Documents/jeremy/projetmemoire/branch/front-smart-office/MySmartApp/MySmartApp.Client/obj/Debug/net9.0/compressed/gt3uvokyjv-ikhe3ekgrh.gz
+/home/gedeonkp/Documents/jeremy/projetmemoire/branch/front-smart-office/MySmartApp/MySmartApp.Client/obj/Debug/net9.0/compressed/hk7f1xeoud-ikhe3ekgrh.gz
+/home/gedeonkp/Documents/jeremy/projetmemoire/branch/front-smart-office/MySmartApp/MySmartApp.Client/obj/Debug/net9.0/compressed/gzec4urwh5-v5cqj0fac8.gz
+/home/gedeonkp/Documents/jeremy/projetmemoire/branch/front-smart-office/MySmartApp/MySmartApp.Client/obj/Debug/net9.0/compressed/7sqlifytcu-xo8nnwqqzh.gz
+/home/gedeonkp/Documents/jeremy/projetmemoire/branch/front-smart-office/MySmartApp/MySmartApp.Client/obj/Debug/net9.0/compressed/kqxus7fkec-f74gv2yktm.gz

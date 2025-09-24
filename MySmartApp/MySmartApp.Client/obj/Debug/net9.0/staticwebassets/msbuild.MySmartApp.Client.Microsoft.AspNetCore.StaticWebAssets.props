@@ -144,23 +144,23 @@
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
       <OriginalItemSpec>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\img\Humaaan.png'))</OriginalItemSpec>
     </StaticWebAsset>
-    <StaticWebAsset Include="$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\MySmartApp.Client.f1l1zp3jf7.bundle.scp.css'))">
+    <StaticWebAsset Include="$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\MySmartApp.Client.ikhe3ekgrh.bundle.scp.css'))">
       <SourceType>Package</SourceType>
       <SourceId>MySmartApp.Client</SourceId>
       <ContentRoot>$(MSBuildThisFileDirectory)..\staticwebassets\</ContentRoot>
       <BasePath>/</BasePath>
-      <RelativePath>MySmartApp.Client.f1l1zp3jf7.bundle.scp.css</RelativePath>
+      <RelativePath>MySmartApp.Client.ikhe3ekgrh.bundle.scp.css</RelativePath>
       <AssetKind>All</AssetKind>
       <AssetMode>Reference</AssetMode>
       <AssetRole>Primary</AssetRole>
       <RelatedAsset></RelatedAsset>
       <AssetTraitName>ScopedCss</AssetTraitName>
       <AssetTraitValue>ProjectBundle</AssetTraitValue>
-      <Fingerprint>f1l1zp3jf7</Fingerprint>
-      <Integrity>PejcT6fe/t3b6wZmspC5CROqwttcHeanwwrz6fjg6E8=</Integrity>
+      <Fingerprint>ikhe3ekgrh</Fingerprint>
+      <Integrity>cmv83RR1gU1k3D0dEZKq+njuKcgkkmuhSf3c+X75hOE=</Integrity>
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-      <OriginalItemSpec>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\MySmartApp.Client.f1l1zp3jf7.bundle.scp.css'))</OriginalItemSpec>
+      <OriginalItemSpec>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\MySmartApp.Client.ikhe3ekgrh.bundle.scp.css'))</OriginalItemSpec>
     </StaticWebAsset>
     <StaticWebAsset Include="$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\_framework\blazor.webassembly.js'))">
       <SourceType>Package</SourceType>

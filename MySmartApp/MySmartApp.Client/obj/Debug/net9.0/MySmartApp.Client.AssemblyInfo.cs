@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("MySmartApp.Client")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+7d089d677e1095309fb9441746c921a0c3053d65")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+1d92a9dc3b98738e9c3b5b4e47a5cfc546b22a3a")]
 [assembly: System.Reflection.AssemblyProductAttribute("MySmartApp.Client")]
 [assembly: System.Reflection.AssemblyTitleAttribute("MySmartApp.Client")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
