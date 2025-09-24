@@ -1,24 +1,27 @@
 ﻿@page "/utilisateurs"
 @using MudBlazor
+@inject IDialogService DialogService
 
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="my-8">
     <MudText Typo="Typo.h4" Class="mb-4">Gestion des utilisateurs</MudText>
     <MudText Typo="Typo.body1" Class="mb-8">Gérez ici la liste complète des utilisateurs, leurs rôles et leur statut.</MudText>
 
-<div class="d-flex align-center justify-space-between mb-4">
-    <MudButton OnClick="OpenAddDialog" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" Class="mb-4">
-        Ajouter un utilisateur
-    </MudButton>
-    <MudTextField T="string" 
+    <div class="d-flex align-center justify-space-between mb-4">
+        <MudButton OnClick="OpenAddDialog" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" Class="mb-4">
+            Ajouter un utilisateur
+        </MudButton>
+        <MudTextField T="string" 
+                      @bind-Value="searchString"
                       Placeholder="Rechercher..." 
                       Adornment="Adornment.Start" 
                       AdornmentIcon="@Icons.Material.Filled.Search" 
                       IconSize="Size.Medium" 
                       Class="ml-4"
                       Style="max-width: 300px;"></MudTextField>
-</div>
+    </div>
+
     <MudExpansionPanels MultiExpansion="true" Class="rounded-xl">
-        @foreach (var user in users)
+        @foreach (var user in filteredUsers)
         {
             <MudExpansionPanel Text="@user.Name">
                 <ChildContent>
@@ -38,88 +41,180 @@
     </MudExpansionPanels>
 </MudContainer>
 
-<MudDialog @bind-IsVisible="isDialogOpen" Options="dialogOptions">
-    <TitleContent>
-        <MudText Typo="Typo.h6">
-            <MudIcon Icon="@(isAdding ? Icons.Material.Filled.Add : Icons.Material.Filled.Edit)" Class="mr-3" />
-            @(isAdding ? "Ajouter un utilisateur" : "Modifier l'utilisateur")
-        </MudText>
-    </TitleContent>
-    <DialogContent>
-        <MudForm>
-            <MudTextField T="string" @bind-Value="editingUser.Name" Label="Nom de l'utilisateur" Required />
-            <MudSelect T="string" @bind-Value="editingUser.Role" Label="Rôle" Required>
-                <MudSelectItem Value="@("Admin")">Admin</MudSelectItem>
-                <MudSelectItem Value="@("Membre")">Membre</MudSelectItem>
-                <MudSelectItem Value="@("Visiteur")">Visiteur</MudSelectItem>
-            </MudSelect>
-            <MudCheckBox T="bool" @bind-Checked="editingUser.IsActive" Label="Actif" Color="Color.Primary" />
-        </MudForm>
-    </DialogContent>
-    <DialogActions>
-        <MudButton OnClick="OnCancel" Color="Color.Default">Annuler</MudButton>
-        <MudButton OnClick="OnSave" Color="Color.Primary" Variant="Variant.Filled">Sauvegarder</MudButton>
-    </DialogActions>
-</MudDialog>
+@if (isDialogOpen)
+{
+    <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1300; display: flex; align-items: center; justify-content: center;">
+        <MudPaper Class="pa-6" Style="max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto;">
+            <MudText Typo="Typo.h6" Class="mb-4">
+                <MudIcon Icon="@(isAdding ? Icons.Material.Filled.Add : Icons.Material.Filled.Edit)" Class="mr-3" />
+                @(isAdding ? "Ajouter un utilisateur" : "Modifier l'utilisateur")
+            </MudText>
+
+            <MudForm @ref="form">
+                <MudTextField @bind-Value="editingUser.Name" 
+                             Label="Nom de l'utilisateur" 
+                             Required="true" 
+                             RequiredError="Le nom est obligatoire!" 
+                             Class="mb-4" />
+                
+                <MudSelect @bind-Value="editingUser.Role" 
+                          Label="Rôle" 
+                          Required="true" 
+                          RequiredError="Le rôle est obligatoire!"
+                          Class="mb-4">
+                    <MudSelectItem Value="@("Admin")">🔐 Admin</MudSelectItem>
+                    <MudSelectItem Value="@("Membre")">👤 Membre</MudSelectItem>
+                    <MudSelectItem Value="@("Visiteur")">👁️ Visiteur</MudSelectItem>
+                </MudSelect>
+                
+                <MudSwitch @bind-Value="editingUser.IsActive" 
+                          Label="Utilisateur actif" 
+                          Color="Color.Primary" 
+                          Class="mb-4" />
+            </MudForm>
+
+            <MudGrid Class="mt-4">
+                <MudItem xs="6">
+                    <MudButton OnClick="OnCancel" FullWidth="true" Color="Color.Default">Annuler</MudButton>
+                </MudItem>
+                <MudItem xs="6">
+                    <MudButton OnClick="OnSave" FullWidth="true" Color="Color.Primary" Variant="Variant.Filled">
+                        Sauvegarder
+                    </MudButton>
+                </MudItem>
+            </MudGrid>
+        </MudPaper>
+    </div>
+}
 
 @code {
     private List<User> users = new List<User>();
+    private List<User> filteredUsers => FilterUsers();
+    private string searchString = "";
     private bool isDialogOpen = false;
     private bool isAdding = true;
     private User editingUser = new User();
-    private DialogOptions dialogOptions = new DialogOptions() { CloseButton = true };
+    private MudForm? form;
+    private int nextId = 4;
 
     // Modèle de données pour l'utilisateur
     public class User
     {
-        public string Name { get; set; }
-        public string Role { get; set; }
-        public bool IsActive { get; set; }
+        public int Id { get; set; }
+        public string Name { get; set; } = "";
+        public string Role { get; set; } = "Membre";
+        public bool IsActive { get; set; } = true;
+
+        public override bool Equals(object? obj) => obj is User user && Id == user.Id;
+        public override int GetHashCode() => Id.GetHashCode();
     }
 
     protected override void OnInitialized()
     {
-        // Données d'utilisateurs fictives
+        // Données d'utilisateurs fictives avec des ID uniques
         users = new List<User>
         {
-            new User { Name = "Scarlett", Role = "Admin", IsActive = true },
-            new User { Name = "Nariya", Role = "Membre", IsActive = true },
-            new User { Name = "Riya", Role = "Visiteur", IsActive = false }
+            new User { Id = 1, Name = "Scarlett", Role = "Admin", IsActive = true },
+            new User { Id = 2, Name = "Nariya", Role = "Membre", IsActive = true },
+            new User { Id = 3, Name = "Riya", Role = "Visiteur", IsActive = false }
         };
+    }
+
+    private List<User> FilterUsers()
+    {
+        if (string.IsNullOrWhiteSpace(searchString))
+            return users;
+
+        return users.Where(u => 
+            u.Name.ToLower().Contains(searchString.ToLower()) ||
+            u.Role.ToLower().Contains(searchString.ToLower())
+        ).ToList();
     }
 
     private void OpenAddDialog()
     {
         isAdding = true;
-        editingUser = new User();
+        editingUser = new User 
+        { 
+            Name = "",
+            Role = "Membre",
+            IsActive = true
+        };
         isDialogOpen = true;
+        StateHasChanged();
     }
 
     private void OpenEditDialog(User user)
     {
         isAdding = false;
-        editingUser = user;
+        // Créer une copie pour éviter la modification directe
+        editingUser = new User
+        {
+            Id = user.Id,
+            Name = user.Name,
+            Role = user.Role,
+            IsActive = user.IsActive
+        };
         isDialogOpen = true;
+        StateHasChanged();
     }
 
     private void OnCancel()
     {
         isDialogOpen = false;
+        editingUser = new User();
+        StateHasChanged();
     }
 
-    private void OnSave()
+    private async Task OnSave()
     {
+        bool isValid = true;
+        
+        if (form != null)
+        {
+            await form.Validate();
+            isValid = form.IsValid;
+        }
+
+        if (!isValid || string.IsNullOrWhiteSpace(editingUser.Name))
+        {
+            return;
+        }
+
         if (isAdding)
         {
+            // Ajouter le nouvel utilisateur avec un ID unique
+            editingUser.Id = nextId++;
             users.Add(editingUser);
         }
+        else
+        {
+            // Modifier l'utilisateur existant
+            var existingUser = users.FirstOrDefault(u => u.Id == editingUser.Id);
+            if (existingUser != null)
+            {
+                existingUser.Name = editingUser.Name;
+                existingUser.Role = editingUser.Role;
+                existingUser.IsActive = editingUser.IsActive;
+            }
+        }
+
         isDialogOpen = false;
+        editingUser = new User();
         StateHasChanged();
     }
 
-    private void DeleteUser(User user)
+    private async Task DeleteUser(User user)
     {
-        users.Remove(user);
-        StateHasChanged();
+        bool? result = await DialogService.ShowMessageBox(
+            "Confirmation",
+            $"Êtes-vous sûr de vouloir supprimer l'utilisateur '{user.Name}' ?",
+            yesText:"Supprimer", cancelText:"Annuler");
+
+        if (result == true)
+        {
+            users.Remove(user);
+            StateHasChanged();
+        }
     }
 }
