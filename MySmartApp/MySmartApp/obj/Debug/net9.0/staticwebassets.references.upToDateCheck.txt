@@ -37,3 +37,5 @@ D:\Memoire\FrontSmart\MySmartApp\MySmartApp.Client\obj\Debug\net9.0\staticwebass
 D:\Memoire\FrontSmart\MySmartApp\MySmartApp.Client\obj\Debug\net9.0\staticwebassets.build.json
 D:\Memoire\FrontSmart\MySmartApp\MySmartApp.Client\obj\Debug\net9.0\staticwebassets.build.json
 D:\Memoire\FrontSmart\MySmartApp\MySmartApp.Client\obj\Debug\net9.0\staticwebassets.build.json
+D:\Memoire\FrontSmart\MySmartApp\MySmartApp.Client\obj\Debug\net9.0\staticwebassets.build.json
+D:\Memoire\FrontSmart\MySmartApp\MySmartApp.Client\obj\Debug\net9.0\staticwebassets.build.json

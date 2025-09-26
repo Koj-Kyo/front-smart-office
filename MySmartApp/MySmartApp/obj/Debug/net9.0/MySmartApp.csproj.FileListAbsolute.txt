@@ -152,3 +152,14 @@ D:/Memoire/FrontSmart/MySmartApp/MySmartApp/obj/Debug/net9.0/compressed/htjmoawz
 /home/gedeonkp/Documents/jeremy/projetmemoire/branch/front-smart-office/MySmartApp/MySmartApp/obj/Debug/net9.0/MySmartApp.genruntimeconfig.cache
 /home/gedeonkp/Documents/jeremy/projetmemoire/branch/front-smart-office/MySmartApp/MySmartApp/obj/Debug/net9.0/ref/MySmartApp.dll
 /home/gedeonkp/Documents/jeremy/projetmemoire/branch/front-smart-office/MySmartApp/MySmartApp/obj/Debug/net9.0/compressed/htjmoawz56-hqpgkm4blu.gz
+D:\Memoire\FrontSmart\MySmartApp\MySmartApp\obj\Debug\net9.0\MySmartApp.csproj.AssemblyReference.cache
+D:\Memoire\FrontSmart\MySmartApp\MySmartApp\obj\Debug\net9.0\rpswa.dswa.cache.json
+D:\Memoire\FrontSmart\MySmartApp\MySmartApp\obj\Debug\net9.0\MySmartApp.GeneratedMSBuildEditorConfig.editorconfig
+D:\Memoire\FrontSmart\MySmartApp\MySmartApp\obj\Debug\net9.0\MySmartApp.AssemblyInfoInputs.cache
+D:\Memoire\FrontSmart\MySmartApp\MySmartApp\obj\Debug\net9.0\MySmartApp.AssemblyInfo.cs
+D:\Memoire\FrontSmart\MySmartApp\MySmartApp\obj\Debug\net9.0\MySmartApp.csproj.CoreCompileInputs.cache
+D:\Memoire\FrontSmart\MySmartApp\MySmartApp\obj\Debug\net9.0\MySmartApp.MvcApplicationPartsAssemblyInfo.cache
+D:\Memoire\FrontSmart\MySmartApp\MySmartApp\obj\Debug\net9.0\MySmartApp.sourcelink.json
+D:\Memoire\FrontSmart\MySmartApp\MySmartApp\obj\Debug\net9.0\MySmartApp.dll
+D:\Memoire\FrontSmart\MySmartApp\MySmartApp\obj\Debug\net9.0\refint\MySmartApp.dll
+D:\Memoire\FrontSmart\MySmartApp\MySmartApp\obj\Debug\net9.0\MySmartApp.pdb
