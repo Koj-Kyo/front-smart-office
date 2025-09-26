@@ -1,4 +1,5 @@
 ﻿@using MudBlazor
+@inject NavigationManager NavigationManager
 
 <style>
     /* Style moderne de la barre de recherche */
@@ -9,7 +10,6 @@
         padding: 12px 20px;
         font-size: 14px;
         width: 100%;
-
         max-width: 100px;
     }
 
@@ -54,25 +54,47 @@
         width: 10%;
     }
 
+    /* Style pour le profil cliquable */
+    .profile-section {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        padding: 8px;
+        border-radius: 8px;
+        transition: background-color 0.3s ease;
+    }
+
+    .profile-section:hover {
+        background-color: rgba(0, 0, 0, 0.04);
+    }
+
+    .mud-theme-dark .profile-section:hover {
+        background-color: rgba(255, 255, 255, 0.08);
+    }
 </style>
 
 <MudGrid Class="pa-1">
     <MudItem xs="12" sm="6" md="8" Class="search-container">
         <MudSpacer />
-            <MudTextField T="string" Placeholder="Rechercher..." Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
-        
+        <MudTextField T="string" Placeholder="Rechercher..." Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
     </MudItem>
     <MudItem xs="12" sm="6" md="4" Class="d-flex justify-end align-center">
         <MudIconButton Icon="@Icons.Material.Outlined.Settings" Color="Color.Default" />
         <MudIconButton Icon="@Icons.Material.Outlined.Notifications" Color="Color.Default" Class="mx-2" />
-        <MudAvatar Size="Size.Small">
-            <MudImage Src="img/admin.jpg" />
-        </MudAvatar>
-        <MudIconButton Typo="Typo.subtitle1" Class="ml-2">Admin</MudIconButton>
-        @* <MudIconButton Icon="@Icons.Material.Filled.ArrowDropDown" Size="Size.Small" /> *@
+        
+        @* Section profil cliquable *@
+        <div class="profile-section" @onclick="NavigateToProfile">
+            <MudAvatar Size="Size.Small">
+                <MudImage Src="img/admin.jpg" />
+            </MudAvatar>
+            <MudText Typo="Typo.subtitle1" Class="ml-2">Admin</MudText>
+        </div>
     </MudItem>
 </MudGrid>
 
 @code {
-
+    private void NavigateToProfile()
+    {
+        NavigationManager.NavigateTo("/profile");
+    }
 }

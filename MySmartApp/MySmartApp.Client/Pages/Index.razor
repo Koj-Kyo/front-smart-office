@@ -14,25 +14,25 @@
         <MudGrid>
             @* Ligne 1 : Carte "Hello, Scarlett!" *@
             <MudItem xs="12" Class="mb-4">
-                <MudPaper Class="pa-6 rounded-xl" Style="@($"color:{Colors.LightGreen.Accent3}; background:{Colors.BlueGray.Darken4};")">
+                <MudPaper Class="pa-6 rounded-xl" Style="background: linear-gradient(135deg, #14B8A6 0%, #06B6D4 100%); color: white;">
                     <MudGrid>
                         @* Colonne gauche : Le texte et la météo *@
                         <MudItem xs="12" sm="7" md="8" >
                            
-                            <MudText Typo="Typo.h5" GutterBottom="true" Color="Color.Primary">Hello, Scarlett!</MudText>
-                            <MudText Typo="Typo.body2" Class="mb-4" Color="Color.Secondary">
+                            <MudText Typo="Typo.h5" GutterBottom="true" Style="color: white; font-weight: bold;">Hello, Scarlett!</MudText>
+                            <MudText Typo="Typo.body2" Class="mb-4" Style="color: rgba(255, 255, 255, 0.9);">
                                 Welcome Home! The air quality is good & fresh you can go out today.
                             </MudText>
 
                             <div class="d-flex align-center mb-2">
-                                <MudIcon Icon="@Icons.Material.Filled.DeviceThermostat" Color="Color.Dark" Class="mr-2" />
-                                <MudText Typo="Typo.body1" Class="font-weight-bold" Color="Color.Dark">+25°C</MudText>
-                                <MudText Typo="Typo.body2" Class="ml-2" Color="Color.Dark">Outdoor temperature</MudText>
+                                <MudIcon Icon="@Icons.Material.Filled.DeviceThermostat" Style="color: rgba(255, 255, 255, 0.9);" Class="mr-2" />
+                                <MudText Typo="Typo.body1" Class="font-weight-bold" Style="color: white;">+25°C</MudText>
+                                <MudText Typo="Typo.body2" Class="ml-2" Style="color: rgba(255, 255, 255, 0.8);">Outdoor temperature</MudText>
                             </div>
 
                             <div class="d-flex align-center">
-                                <MudIcon Icon="@Icons.Material.Filled.Cloud" Color="Color.Dark" Class="mr-2" />
-                                <MudText Typo="Typo.body2" Color="Color.Dark">Fuzzy cloudy weather</MudText>
+                                <MudIcon Icon="@Icons.Material.Filled.Cloud" Style="color: rgba(255, 255, 255, 0.9);" Class="mr-2" />
+                                <MudText Typo="Typo.body2" Style="color: rgba(255, 255, 255, 0.8);">Fuzzy cloudy weather</MudText>
                             </div>
                         </MudItem>
 
@@ -129,7 +129,7 @@
                 <MudPaper Class="d-flex justify-space-between align-center pa-4 rounded-xl">
                     <div>
                         <MudStack Row="true" Spacing="4">
-                            <div class="d-flex flex-column align-center">
+                            <div class="d-flex flex-column align-center" style="cursor: pointer;" @onclick="NavigateToProfile">
                                 <MudAvatar Image="https://i.pravatar.cc/100?img=1" />
                                 <MudText Typo="Typo.body2">Scarlett</MudText>
                                 <MudText Typo="Typo.caption" Color="Color.Primary">Admin</MudText>
@@ -198,12 +198,15 @@
     {
         NavigationManager.NavigateTo("/analytics");
     }
-
+    private void NavigateToProfile()
+    {
+        NavigationManager.NavigateTo("/profile");
+    }
+    
     // Données pour le graphique
     private List<ChartSeries> _series = new List<ChartSeries>()
     {
         new ChartSeries() { Name = "Electricity Consumed", Data = new double[] { 70, 75, 80, 85, 90, 88, 92, 95, 90, 85, 80, 75 } }
     };
     private string[] _xAxisLabels = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
-
 }
