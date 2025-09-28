@@ -1,97 +1,333 @@
 ﻿@page "/profile"
 @using MudBlazor
 
-<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="my-8">
-    <MudText Typo="Typo.h4" Class="mb-4">Mon profil</MudText>
-    <MudText Typo="Typo.body1" Class="mb-8">Gérez ici les paramètres de votre compte et vos informations personnelles.</MudText>
+<style>
+    .profile-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        border: 1px solid #e5e7eb;
+    }
+    
+    .profile-header {
+        display: flex;
+        align-items: center;
+        padding: 2rem;
+        background: #f9fafb;
+        border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .profile-avatar {
+        width: 70px;
+        height: 70px;
+        border-radius: 50%;
+        margin-right: 1.5rem;
+        object-fit: cover;
+    }
+    
+    .profile-info h2 {
+        margin: 0 0 0.25rem 0;
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #111827;
+    }
+    
+    .profile-info p {
+        margin: 0;
+        color: #6b7280;
+        font-size: 0.875rem;
+    }
+    
+    .edit-btn {
+        margin-left: auto;
+        background: #3b82f6;
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        cursor: pointer;
+    }
+    
+    .edit-btn:hover {
+        background: #2563eb;
+    }
+    
+    .profile-form {
+        padding: 2rem;
+    }
+    
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-field {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .form-field label {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #374151;
+        margin-bottom: 0.5rem;
+    }
+    
+    .form-field input, .form-field select {
+        padding: 0.75rem;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        font-size: 0.875rem;
+    }
+    
+    .form-field input:focus, .form-field select:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    
+    .form-field input[readonly], .form-field select[disabled] {
+        background: #f9fafb;
+        color: #6b7280;
+    }
+    
+    .email-section {
+        border-top: 1px solid #e5e7eb;
+        padding-top: 1.5rem;
+        margin-top: 1.5rem;
+    }
+    
+    .email-section h3 {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #111827;
+        margin-bottom: 1rem;
+    }
+    
+    .email-item {
+        display: flex;
+        align-items: center;
+        padding: 1rem;
+        background: #f9fafb;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        margin-bottom: 0.75rem;
+    }
+    
+    .email-icon {
+        width: 18px;
+        height: 18px;
+        margin-right: 0.75rem;
+        color: #3b82f6;
+    }
+    
+    .email-details .email-address {
+        font-weight: 500;
+        color: #111827;
+        font-size: 0.875rem;
+    }
+    
+    .email-details .email-date {
+        font-size: 0.75rem;
+        color: #6b7280;
+        margin-top: 0.25rem;
+    }
+    
+    .add-email-btn {
+        background: none;
+        border: none;
+        color: #3b82f6;
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        padding: 0.5rem 0;
+    }
+    
+    .add-email-btn:hover {
+        color: #2563eb;
+    }
+    
+    .save-section {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 2rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid #e5e7eb;
+    }
+</style>
 
-    <MudPaper Class="pa-8 rounded-xl" Elevation="6">
-        <MudForm>
-            <MudGrid>
-                <MudItem xs="12" sm="6">
-                    <MudTextField T="string"
-                                  @bind-Value="adminProfile.Name"
-                                  Label="Nom complet"
-                                  ReadOnly />
-                </MudItem>
-                <MudItem xs="12" sm="6">
-                    <MudTextField T="string"
-                                  @bind-Value="adminProfile.Email"
-                                  Label="Adresse email"
-                                  ReadOnly />
-                </MudItem>
-                <MudItem xs="12">
-                    <MudTextField T="string"
-                                  @bind-Value="adminProfile.Role"
-                                  Label="Rôle"
-                                  ReadOnly />
-                </MudItem>
-
-                <MudItem xs="12">
-                    <MudText Typo="Typo.h6" Class="mt-8 mb-4">Changer le mot de passe</MudText>
-                </MudItem>
-                <MudItem xs="12" sm="6">
-                    <MudTextField T="string"
-                                  InputType="InputType.Password"
-                                  Label="Nouveau mot de passe"
-                                  @bind-Value="newPassword"
-                                  Required />
-                </MudItem>
-                <MudItem xs="12" sm="6">
-                    <MudTextField T="string"
-                                  InputType="InputType.Password"
-                                  Label="Confirmer le mot de passe"
-                                  @bind-Value="confirmPassword"
-                                  Required />
-                </MudItem>
-            </MudGrid>
-
-            <div class="d-flex justify-end mt-8">
-                <MudButton OnClick="SaveChanges" Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large">
-                    Sauvegarder les changements
-                </MudButton>
+<MudContainer MaxWidth="MaxWidth.Medium">
+    <div class="profile-card">
+        <div class="profile-header">
+            <img src="@userProfile.AvatarUrl" alt="Profile Picture" class="profile-avatar" />
+            <div class="profile-info">
+                <h2>@userProfile.FullName</h2>
+                <p>@userProfile.Email</p>
             </div>
-        </MudForm>
-    </MudPaper>
+            <button class="edit-btn" @onclick="ToggleEdit">
+                @(isEditing ? "Cancel" : "Edit")
+            </button>
+        </div>
+
+        <div class="profile-form">
+            <div class="form-row">
+                <div class="form-field">
+                    <label>Full Name</label>
+                    <input type="text" @bind="userProfile.FullName" placeholder="Your First Name" readonly="@(!isEditing)" />
+                </div>
+                <div class="form-field">
+                    <label>Nick Name</label>
+                    <input type="text" @bind="userProfile.NickName" placeholder="Your First Name" readonly="@(!isEditing)" />
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-field">
+                    <label>Gender</label>
+                    <select @bind="userProfile.Gender" disabled="@(!isEditing)">
+                        <option value="">Your First Name</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-field">
+                    <label>Country</label>
+                    <select @bind="userProfile.Country" disabled="@(!isEditing)">
+                        <option value="">Togo</option>
+                        <option value="France">France</option>
+                        <option value="Canada">Canada</option>
+                        <option value="USA">USA</option>
+                        <option value="UK">UK</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-field">
+                    <label>Language</label>
+                    <select @bind="userProfile.Language" disabled="@(!isEditing)">
+                        <option value="">Your First Name</option>
+                        <option value="French">Français</option>
+                        <option value="English">English</option>
+                        <option value="Spanish">Español</option>
+                    </select>
+                </div>
+                <div class="form-field">
+                    <label>Time Zone</label>
+                    <select @bind="userProfile.TimeZone" disabled="@(!isEditing)">
+                        <option value="">Your First Name</option>
+                        <option value="Europe/Paris">Europe/Paris</option>
+                        <option value="America/New_York">America/New_York</option>
+                        <option value="America/Los_Angeles">America/Los_Angeles</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="email-section">
+                <h3>My email Address</h3>
+                @foreach (var email in userProfile.EmailAddresses)
+                {
+                    <div class="email-item">
+                        <svg class="email-icon" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path>
+                            <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path>
+                        </svg>
+                        <div class="email-details">
+                            <div class="email-address">@email.Address</div>
+                            <div class="email-date">@email.AddedDate</div>
+                        </div>
+                    </div>
+                }
+                <button class="add-email-btn" @onclick="AddEmailAddress">
+                    +Add Email Address
+                </button>
+            </div>
+
+            @if (isEditing)
+            {
+                <div class="save-section">
+                    <MudButton OnClick="SaveChanges" 
+                               Variant="Variant.Filled" 
+                               Color="Color.Primary">
+                        Save Changes
+                    </MudButton>
+                </div>
+            }
+        </div>
+    </div>
 </MudContainer>
 
 @code {
-    private UserModel adminProfile = new UserModel();
-    private string newPassword;
-    private string confirmPassword;
+    private UserProfileModel userProfile = new UserProfileModel();
+    private bool isEditing = false;
 
-    // Modèle de données pour l'utilisateur
-    public class UserModel
+    public class UserProfileModel
     {
-        public string Name { get; set; }
-        public string Email { get; set; }
-        public string Role { get; set; }
-        public string Password { get; set; }
+        public string FullName { get; set; } = string.Empty;
+        public string NickName { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string Gender { get; set; } = string.Empty;
+        public string Country { get; set; } = string.Empty;
+        public string Language { get; set; } = string.Empty;
+        public string TimeZone { get; set; } = string.Empty;
+        public string AvatarUrl { get; set; } = string.Empty;
+        public List<EmailAddress> EmailAddresses { get; set; } = new List<EmailAddress>();
+    }
+
+    public class EmailAddress
+    {
+        public string Address { get; set; } = string.Empty;
+        public string AddedDate { get; set; } = string.Empty;
     }
 
     protected override void OnInitialized()
     {
-        // Données fictives de l'administrateur
-        adminProfile = new UserModel
+        userProfile = new UserProfileModel
         {
-            Name = "Scarlett",
-            Email = "scarlett@example.com",
-            Role = "Administrateur"
+            FullName = "Alexa Rawles",
+            NickName = "Alexa",
+            Email = "alexarawles@gmail.com",
+            Gender = "Female",
+            Country = "France",
+            Language = "English",
+            TimeZone = "Europe/Paris",
+            AvatarUrl = "/img/admin.jpg",
+            EmailAddresses = new List<EmailAddress>
+            {
+                new EmailAddress 
+                { 
+                    Address = "alexarawles@gmail.com", 
+                    AddedDate = "1 month ago" 
+                }
+            }
         };
+    }
+
+    private void ToggleEdit()
+    {
+        isEditing = !isEditing;
+        StateHasChanged();
     }
 
     private void SaveChanges()
     {
-        // Logique pour sauvegarder les changements
-        // (Par exemple, un appel à une API)
-        if (newPassword == confirmPassword)
+        isEditing = false;
+        StateHasChanged();
+    }
+
+    private void AddEmailAddress()
+    {
+        var newEmail = new EmailAddress
         {
-            adminProfile.Password = newPassword;
-            // Affiche un message de succès (à implémenter)
-        }
-        else
-        {
-            // Affiche un message d'erreur (à implémenter)
-        }
+            Address = "new@example.com",
+            AddedDate = "Just now"
+        };
+        
+        userProfile.EmailAddresses.Add(newEmail);
+        StateHasChanged();
     }
 }
