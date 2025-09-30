@@ -1,9 +1,9 @@
-﻿<MudPaper Class="d-flex flex-column pa-4 rounded-xl" Style="@($"background-color: {GetColor(DeviceColor, IsOn)};")">
+﻿<MudPaper Class="d-flex flex-column pa-4 rounded-xl" Style="@($"background-color: {GetColor(DeviceColor, IsOn)}; cursor: pointer; border: {(IsSelected ? "2px solid #5850EC" : "2px solid transparent")};")"
+          @onclick="OnCardClick">
 
-    @* En-tête avec l'icône et l'interrupteur *@
-    <div class="d-flex justify-space-between align-center">
-        <MudIconButton Icon="@Icon" Color="@(IsOn? Color.Surface: Color.Primary)" />
-        <MudSwitch MudSwitch @bind-Value="@IsOn" Color="@(IsOn? GetMudColor(DeviceColor) : Color.Primary)"/>
+    @* En-tête avec l'icône *@
+    <div class="d-flex justify-center align-center">
+        <MudIcon Icon="@Icon" Color="@(IsOn? Color.Surface: Color.Primary)" Size="Size.Large" />
     </div>
 
     @* Nom de l'appareil et statut *@
@@ -29,6 +29,12 @@
 
     [Parameter]
     public bool IsOn { get; set; } = false;
+
+    [Parameter]
+    public bool IsSelected { get; set; } = false;
+
+    [Parameter]
+    public EventCallback<string> OnDeviceSelected { get; set; }
 
     private string GetColor(string color, bool isOn)
     {
@@ -59,5 +65,12 @@
             "Cyan" => MudBlazor.Color.Info,
             _ => MudBlazor.Color.Primary,
         };
+    }
+
+    private async Task OnCardClick()
+    {
+        IsOn = !IsOn;
+        await OnDeviceSelected.InvokeAsync(DeviceName);
+        StateHasChanged();
     }
 }
