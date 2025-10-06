@@ -68,8 +68,8 @@
         width: 80%;
         height: 80%;
         border-radius: 50%;
-        background: conic-gradient(from 120deg at 50% 50%, #5850EC 0%, #F94A29 60%, transparent 60%);
         -webkit-mask: radial-gradient(circle at 50% 50%, transparent 65%, black 66%);
+        transition: background 0.3s ease;
     }
 
     .gauge-inner-circle {
@@ -114,16 +114,6 @@
         width: 60px;
         height: 60px;
     }
-@* 
-    .icon-button:disabled {
-        background-color: #f5f5f5 !important;
-        color: #ccc !important;
-    }
-
-    .icon-button-add:disabled {
-        background-color: #ccc !important;
-        color: #888 !important;
-    } *@
 </style>
 
 <MudPaper Class="d-flex flex-column pa-6 rounded-xl gauge-card">
@@ -150,7 +140,7 @@
         <div class="gauge-container">
             <div class="gauge-background"></div>
             <div class="gauge-ticks"></div>
-            <div class="gauge-ring"></div>
+            <div class="gauge-ring" style="@GetGaugeStyle()"></div>
             <div class="gauge-inner-circle">
                 <MudText Typo="Typo.h3" Class="current-temp-text">
                     @(IsOn ? $"{Temperature}°C" : "--°C")
@@ -193,5 +183,24 @@
             Temperature--;
             await TemperatureChanged.InvokeAsync(Temperature);
         }
+    }
+
+    private string GetGaugeStyle()
+    {
+        if (!IsOn)
+        {
+            return "background: conic-gradient(from 120deg at 50% 50%, transparent 0%, transparent 100%);";
+        }
+
+        // Calculer le pourcentage de remplissage (0% à 100%)
+        double percentage = (double)(Temperature - MinTemperature) / (MaxTemperature - MinTemperature);
+        
+        // Convertir en degrés (0° à 240° pour un arc de 240°)
+        double degrees = percentage * 240;
+        
+        // Interpolation de couleur entre bleu (#5850EC) et rouge (#F94A29)
+        string color = percentage < 0.5 ? "#5850EC" : "#F94A29";
+        
+        return $"background: conic-gradient(from 120deg at 50% 50%, #5850EC 0deg, {color} {degrees}deg, transparent {degrees}deg);";
     }
 }
