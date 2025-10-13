@@ -116,16 +116,20 @@
                 <DeviceCard Icon="@Icons.Material.Filled.Lightbulb" DeviceName="Lamps" DeviceColor="Cyan" IsOn="false" />
             </MudItem>
             
-            <MudItem xs="12" Class="d-flex justify-space-between align-center pa-4 rounded-xl">
+            @* <MudItem xs="12" Class="d-flex justify-space-between align-center pa-4 rounded-xl"> *@
                 
-                    <MudText Typo="Typo.h6">Members</MudText>
-                    @* <div> *@
-                        <MudIconButton OnClick="NavigateToMembers" Icon="@Icons.Material.Filled.ArrowForwardIos" Color="Color.Dark" Class="d-inline-flex mr-2" />
+                    @* <MudText Typo="Typo.h6">Members</MudText>
+                    
+                        <MudIconButton OnClick="NavigateToMembers" Icon="@Icons.Material.Filled.ArrowForwardIos" Color="Color.Dark" Class="d-inline-flex mr-2" />            *@
+            @* </MudItem> *@
 
-                    @* </div> *@
-                
-            </MudItem>
-            <MudItem xs="12" Class="mt-4">
+
+            
+            <MudItem xs="12" Class="mt-4 d-flex justify-space-between align-center pa-4 rounded-xl">
+            
+                    <MudText Typo="Typo.h6">Members</MudText>
+                    
+                             <MudIconButton OnClick="NavigateToMembers" Icon="@Icons.Material.Filled.ArrowForwardIos" Color="Color.Dark" Class="d-inline-flex mr-2" />     
                 <MudPaper Class="d-flex justify-space-between align-center pa-4 rounded-xl">
                     <div>
                         <MudStack Row="true" Spacing="4">
