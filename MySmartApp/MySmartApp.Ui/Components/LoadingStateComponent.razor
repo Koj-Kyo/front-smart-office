@@ -1,0 +1,160 @@
+@using MySmartApp.Ui.Services
+@inject IAppStateService AppState
+@inject ILogger<LoadingStateComponent> Logger
+@implements IDisposable
+
+@if (ShowLoading && (AppState.IsLoading || IsLocalLoading))
+{
+    <div class="loading-overlay @GetOverlayClass()" style="@OverlayStyle">
+        <div class="loading-content">
+            @if (ShowProgressIndicator)
+            {
+                <MudProgressCircular Size="@ProgressSize" 
+                                   Color="@ProgressColor" 
+                                   Indeterminate="@(!HasProgress)"
+                                   Value="@ProgressValue" />
+            }
+            
+            @if (!string.IsNullOrEmpty(LoadingMessage))
+            {
+                <MudText Typo="Typo.body1" Class="loading-message mt-3">
+                    @LoadingMessage
+                </MudText>
+            }
+            
+            @if (ShowCancelButton && CancelAction != null)
+            {
+                <MudButton Variant="Variant.Text" 
+                          Color="Color.Secondary" 
+                          Class="mt-3"
+                          OnClick="@HandleCancel">
+                    Annuler
+                </MudButton>
+            }
+        </div>
+    </div>
+}
+
+<style>
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        backdrop-filter: blur(2px);
+    }
+
+    .loading-overlay.inline {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(255, 255, 255, 0.8);
+    }
+
+    .loading-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        padding: 24px;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        max-width: 300px;
+    }
+
+    .loading-overlay.inline .loading-content {
+        background: transparent;
+        box-shadow: none;
+    }
+
+    .loading-message {
+        color: var(--mud-palette-text-primary);
+        font-weight: 500;
+    }
+
+    .loading-overlay.inline .loading-message {
+        color: var(--mud-palette-primary);
+    }
+</style>
+
+@code {
+    private bool _isLocalLoading;
+    private string? _localLoadingMessage;
+
+    [Parameter] public bool ShowLoading { get; set; } = true;
+    [Parameter] public bool IsLocalLoading 
+    { 
+        get => _isLocalLoading;
+        set 
+        {
+            if (_isLocalLoading != value)
+            {
+                _isLocalLoading = value;
+                StateHasChanged();
+            }
+        }
+    }
+
+    [Parameter] public string? LoadingMessage 
+    { 
+        get => _localLoadingMessage ?? "Chargement...";
+        set => _localLoadingMessage = value;
+    }
+
+    [Parameter] public bool ShowProgressIndicator { get; set; } = true;
+    [Parameter] public MudBlazor.Size ProgressSize { get; set; } = MudBlazor.Size.Large;
+    [Parameter] public MudBlazor.Color ProgressColor { get; set; } = MudBlazor.Color.Primary;
+    
+    [Parameter] public bool HasProgress { get; set; } = false;
+    [Parameter] public double ProgressValue { get; set; } = 0;
+    
+    [Parameter] public bool ShowCancelButton { get; set; } = false;
+    [Parameter] public Func<Task>? CancelAction { get; set; }
+    
+    [Parameter] public bool IsInline { get; set; } = false;
+    [Parameter] public string? OverlayClass { get; set; }
+    [Parameter] public string? OverlayStyle { get; set; }
+    
+    private string GetOverlayClass() => IsInline ? "inline" : "";
+
+    protected override void OnInitialized()
+    {
+        AppState.OnStateChanged += HandleStateChanged;
+        Logger.LogDebug("LoadingStateComponent initialisé");
+    }
+
+    private void HandleStateChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    private async Task HandleCancel()
+    {
+        if (CancelAction != null)
+        {
+            try
+            {
+                Logger.LogDebug("Annulation demandée par l'utilisateur");
+                await CancelAction();
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Erreur lors de l'annulation");
+            }
+        }
+    }
+
+    public void Dispose()
+    {
+        AppState.OnStateChanged -= HandleStateChanged;
+        Logger.LogDebug("LoadingStateComponent disposé");
+        GC.SuppressFinalize(this);
+    }
+}

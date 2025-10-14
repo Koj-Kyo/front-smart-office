@@ -1,0 +1,54 @@
+@* Application web réservée aux Admins - ProtectedContent simplifié *@
+@using Microsoft.AspNetCore.Components.Authorization
+
+<AuthorizeView>
+    <Authorized>
+        @ChildContent
+    </Authorized>
+    <NotAuthorized>
+        @if (CustomNotAuthorized != null)
+        {
+            @CustomNotAuthorized
+        }
+        else
+        {
+            <div class="d-flex justify-center align-center" style="height: 50vh;">
+                <MudAlert Severity="Severity.Info" Class="ma-4">
+                    <div class="d-flex align-center">
+                        <MudIcon Icon="@Icons.Material.Filled.AdminPanelSettings" Class="mr-3" />
+                        <div>
+                            <MudText Typo="Typo.h6">Application d'Administration</MudText>
+                            <MudText Typo="Typo.body2">
+                                Cette application est réservée aux administrateurs. Veuillez vous connecter.
+                            </MudText>
+                        </div>
+                    </div>
+                </MudAlert>
+            </div>
+        }
+    </NotAuthorized>
+    <Authorizing>
+        @if (CustomAuthorizing != null)
+        {
+            @CustomAuthorizing
+        }
+        else
+        {
+            <div class="d-flex justify-center align-center" style="height: 50vh;">
+                <MudProgressCircular Size="Size.Large" Indeterminate="true" />
+                <MudText Class="ml-3">Connexion en cours...</MudText>
+            </div>
+        }
+    </Authorizing>
+</AuthorizeView>
+
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public RenderFragment? CustomNotAuthorized { get; set; }
+    [Parameter] public RenderFragment? CustomAuthorizing { get; set; }
+    
+    // Paramètres gardés pour compatibilité mais ignorés car app Admin uniquement
+    [Parameter] public string? Policy { get; set; }
+    [Parameter] public string? Roles { get; set; }
+    [Parameter] public bool ShowAdminBypass { get; set; } = true;
+}

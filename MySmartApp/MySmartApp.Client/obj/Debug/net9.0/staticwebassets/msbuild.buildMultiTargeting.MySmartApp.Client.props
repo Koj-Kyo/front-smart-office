@@ -1,3 +1,0 @@
-﻿<Project>
-  <Import Project="../build/MySmartApp.Client.props" />
-</Project>

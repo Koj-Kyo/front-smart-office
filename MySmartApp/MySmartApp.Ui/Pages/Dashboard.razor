@@ -1,0 +1,279 @@
+@page "/dashboard"
+@using MySmartApp.Ui.Layout
+@using MySmartApp.Ui.Services
+@inject IAuthService AuthService
+@inject ILogger<Dashboard> Logger
+@attribute [Authorize]
+
+<PageTitle>Dashboard</PageTitle>
+
+<RequireAuth>
+@* Header avec barre de recherche et navigation *@
+<DashBoardHeader />
+
+    @* Le contenu principal est un MudGrid qui divise la page en deux colonnes *@
+    <MudGrid Class="pa-4">
+        @* Colonne de gauche (contenu principal) *@
+        <MudItem xs="12" md="8">
+            @* La grille de gauche contiendra les cartes 'Hello Scarlett' et les appareils *@
+            <MudGrid>
+                @* Ligne 1 : Carte "Hello, Scarlett!" *@
+                <MudItem xs="12" Class="mb-4">
+                    <MudPaper Class="pa-6 rounded-xl" Style="background: linear-gradient(135deg, #14B8A6 0%, #06B6D4 100%); color: white;">
+                        <MudGrid>
+                            @* Colonne gauche : Le texte et la météo *@
+                            <MudItem xs="12" sm="7" md="8" >
+                               
+                                <MudText Typo="Typo.h5" GutterBottom="true" Style="color: white; font-weight: bold;">Hello, @(_currentUserName ?? "User")!</MudText>
+                                <MudText Typo="Typo.body2" Class="mb-4" Style="color: rgba(255, 255, 255, 0.9);">
+                                    Welcome Home! The air quality is good & fresh you can go out today.
+                                </MudText>
+
+                                <div class="d-flex align-center mb-2">
+                                    <MudIcon Icon="@Icons.Material.Filled.DeviceThermostat" Style="color: rgba(255, 255, 255, 0.9);" Class="mr-2" />
+                                    <MudText Typo="Typo.body1" Class="font-weight-bold" Style="color: white;">+25°C</MudText>
+                                    <MudText Typo="Typo.body2" Class="ml-2" Style="color: rgba(255, 255, 255, 0.8);">Outdoor temperature</MudText>
+                                </div>
+
+                                <div class="d-flex align-center">
+                                    <MudIcon Icon="@Icons.Material.Filled.Cloud" Style="color: rgba(255, 255, 255, 0.9);" Class="mr-2" />
+                                    <MudText Typo="Typo.body2" Style="color: rgba(255, 255, 255, 0.8);">Fuzzy cloudy weather</MudText>
+                                </div>
+                            </MudItem>
+
+                            @* Colonne droite : L'image de l'illustration *@
+                            <MudItem xs="12" sm="5" md="4" Class="d-flex justify-center">
+                                <MudImage Src="img/Humaaan.png" Style="max-height: 200px; width: auto;" />
+                            </MudItem>
+                        </MudGrid>
+                    </MudPaper>
+                </MudItem>
+               @* Ligne 2 : Titre "Smart Home" et les commandes en ligne *@
+                <MudItem xs="12">
+                    <MudGrid Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                        <MudItem xs="12" md="4">
+                            <MudText Typo="Typo.h6">@(_currentUserName ?? "User")'s Smart Office</MudText>
+                        </MudItem>
+                        <MudItem xs="12" md="8">
+                            <div class="d-flex align-center justify-end">
+                                <MudText Typo="Typo.subtitle2" Class="mr-4">35%</MudText>
+                                <MudText Typo="Typo.subtitle2" Class="mr-4">15°C</MudText>
+                                <MudSelect T="string" Label="Living Room" Class="mr-4 rounded-pill">
+                                    <MudSelectItem Value="@("Living Room")" />
+                                    <MudSelectItem Value="@("Bedroom")" />
+                                    <MudSelectItem Value="@("Kitchen")" />
+                                </MudSelect>
+                                <div class="d-flex align-center">
+                                    <MudText Class="mr-2">OFF</MudText>
+                                    <MudSwitch T="bool" @bind-Checked="_mainSwitch" Color="Color.Primary" />
+                                </div>
+                            </div>
+                        </MudItem>
+                    </MudGrid>
+                </MudItem>
+
+                @* Ligne 2 (suite) : Les cartes des appareils *@
+                <MudItem xs="6" sm="3">
+                    <DeviceCard Icon="@Icons.Material.Filled.AcUnit" DeviceName="A/C" />
+                </MudItem>
+                <MudItem xs="6" sm="3">
+                    <DeviceCard Icon="@Icons.Material.Filled.Lightbulb" DeviceName="Lights" />
+                </MudItem>
+                <MudItem xs="6" sm="3">
+                    <DeviceCard Icon="@Icons.Material.Filled.Thermostat" DeviceName="Temperature" />
+                </MudItem>
+                <MudItem xs="6" sm="3">
+                    <DeviceCard Icon="@Icons.Material.Filled.Kitchen" DeviceName="Refrigerator" />
+                </MudItem>
+
+                @* Ligne 3 : Jauge de température *@
+                <MudItem xs="12" Class="mt-4">
+                    <TemperatureGauge />
+                </MudItem>
+            </MudGrid>
+        </MudItem>
+
+        @* Colonne de droite (barre latérale) *@
+        <MudItem xs="12" md="4">
+            @* La grille de droite contiendra les listes et le graphique *@
+            <MudGrid>
+                <MudItem xs="12" Class="d-flex justify-space-between align-center pa-4 rounded-xl">
+                    
+                        <MudText Typo="Typo.h6">My Devices</MudText>
+                        <div>
+                            <MudSwitch T="bool" @bind-Checked="switchb" Color="Color.Primary" Class="d-inline-flex mr-2" />
+                            <MudIconButton OnClick="NavigateToDevices" Icon="@Icons.Material.Filled.ArrowForwardIos" Color="Color.Dark" />
+                        </div>
+                    
+                </MudItem>
+
+                <MudItem xs="6" sm="6">
+                    <DeviceCard Icon="@Icons.Material.Filled.AcUnit" DeviceName="A/C" DeviceColor="Purple" IsOn="true" />
+                </MudItem>
+                <MudItem xs="6" sm="6">
+                    <DeviceCard Icon="@Icons.Material.Filled.Router" DeviceName="Router" DeviceColor="Yellow" IsOn="false" />
+                </MudItem>
+                <MudItem xs="6" sm="6">
+                    <DeviceCard Icon="@Icons.Material.Filled.MusicNote" DeviceName="Music System" DeviceColor="Orange" IsOn="true" />
+                </MudItem>
+                <MudItem xs="6" sm="6">
+                    <DeviceCard Icon="@Icons.Material.Filled.Lightbulb" DeviceName="Lamps" DeviceColor="Cyan" IsOn="false" />
+                </MudItem>
+                
+                <MudItem xs="12" Class="mt-4 d-flex justify-space-between align-center pa-4 rounded-xl">
+                    <MudText Typo="Typo.h6">Members</MudText>
+                    <div class="d-flex align-center">
+                        <MudIconButton Icon="@Icons.Material.Filled.Add" 
+                                      Color="Color.Primary" 
+                                      Size="Size.Small"
+                                      OnClick="NavigateToMembers"
+                                      Variant="Variant.Filled"
+                                      Class="mr-2"
+                                      Title="Gérer les utilisateurs" />
+                        <MudIconButton OnClick="NavigateToMembers" Icon="@Icons.Material.Filled.ArrowForwardIos" Color="Color.Dark" Class="d-inline-flex" />     
+                    </div>
+                </MudItem>
+
+                <MudItem xs="12">
+                    <MudPaper Class="pa-4 rounded-xl">
+                        <MudStack Row="true" Spacing="4" Class="flex-wrap">
+                            <div class="d-flex flex-column align-center" style="cursor: pointer;" @onclick="NavigateToProfile">
+                                <MudAvatar Image="https://i.pravatar.cc/100?img=1" />
+                                <MudText Typo="Typo.body2">@(_currentUserName ?? "User")</MudText>
+                                <MudChip T="string" Size="Size.Small" Color="@GetRoleColor(_currentUserRole)">
+                                    @(_currentUserRole ?? "User")
+                                </MudChip>
+                            </div>
+                            <div class="d-flex flex-column align-center">
+                                <MudAvatar Image="https://i.pravatar.cc/100?img=2" />
+                                <MudText Typo="Typo.body2">Team Member</MudText>
+                                <MudChip T="string" Size="Size.Small" Color="Color.Info">User</MudChip>
+                            </div>
+                            <div class="d-flex flex-column align-center">
+                                <MudAvatar Image="https://i.pravatar.cc/100?img=3" />
+                                <MudText Typo="Typo.body2">Manager</MudText>
+                                <MudChip T="string" Size="Size.Small" Color="Color.Warning">Manager</MudChip>
+                            </div>
+                            <div class="d-flex flex-column align-center">
+                                <MudAvatar Image="https://i.pravatar.cc/100?img=4" />
+                                <MudText Typo="Typo.body2">System Admin</MudText>
+                                <MudChip T="string" Size="Size.Small" Color="Color.Error">Admin</MudChip>
+                            </div>
+                        </MudStack>
+                        
+                        <!-- Outils Admin -->
+                        <MudDivider Class="my-4" />
+                        <div class="d-flex justify-space-between align-center">
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                ?? Outils d'administration
+                            </MudText>
+                            <div>
+                                <MudIconButton Icon="@Icons.Material.Filled.AdminPanelSettings" 
+                                              Color="Color.Warning"
+                                              Size="Size.Small"
+                                              OnClick="@(() => NavigateToMembers())"
+                                              Title="Panel d'administration" />
+                                <MudIconButton Icon="@Icons.Material.Filled.BugReport" 
+                                              Color="Color.Info"
+                                              Size="Size.Small"
+                                              OnClick="@(() => NavigationManager.NavigateTo("/diagnostics"))"
+                                              Title="Diagnostics système" />
+                            </div>
+                        </div>
+                    </MudPaper>
+                </MudItem>
+
+              <MudItem xs="12" Class="mt-4">
+                    <MudPaper Class="pa-4 rounded-xl">
+                        <div class="d-flex justify-space-between align-center">
+                            <div class="d-flex align-center">
+                                <MudText Typo="Typo.h6">Power Consumed</MudText>
+                            </div>
+                            <div class="d-flex align-center">
+                                <MudSelect T="string" Label="Month" Variant="Variant.Outlined" Class="rounded-pill pa-2" Style="width: 150px;">
+                                    <MudSelectItem Value="@("Month")" />
+                                    <MudSelectItem Value="@("Week")" />
+                                    <MudSelectItem Value="@("Day")" />
+                                </MudSelect>
+                                <MudText Typo="Typo.body2" Class="ml-2">73% Spending</MudText>
+                                <MudIconButton OnClick="NavigateToAnalytics" Icon="@Icons.Material.Filled.ArrowForwardIos" Color="Color.Primary" />
+                            </div>
+                        </div>
+                        <MudChart ChartType="ChartType.Line" ChartSeries="@_series" XAxisLabels="@_xAxisLabels" Width="100%" Height="300px" Class="mt-4" />
+                    </MudPaper>
+                </MudItem>
+            </MudGrid>
+        </MudItem>
+    </MudGrid>
+</RequireAuth>
+
+@code{
+    [Parameter] public bool switchb { get; set; } = true;
+    @inject NavigationManager NavigationManager
+
+    private string? _currentUserName;
+    private string? _currentUserRole;
+    private bool _mainSwitch = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            // Charger le profil utilisateur pour afficher son nom
+            var currentUser = await AuthService.GetCurrentUserAsync();
+            if (currentUser != null)
+            {
+                _currentUserName = currentUser.FirstName ?? currentUser.Email?.Split('@')[0] ?? "User";
+                _currentUserRole = currentUser.Roles.FirstOrDefault() ?? "User";
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Erreur lors du chargement du profil utilisateur");
+            _currentUserName = "User";
+            _currentUserRole = "User";
+        }
+    }
+
+    private void NavigateToDevices()
+    {
+        NavigationManager.NavigateTo("/devices");
+    }
+    private void NavigateToMembers()
+    {
+        NavigationManager.NavigateTo("/utilisateurs");
+    }
+    private void NavigateToAnalytics()
+    {
+        NavigationManager.NavigateTo("/analytics");
+    }
+    private void NavigateToProfile()
+    {
+        NavigationManager.NavigateTo("/profile");
+    }
+    
+    // Données pour le graphique
+    private List<ChartSeries> _series = new List<ChartSeries>()
+    {
+        new ChartSeries() { Name = "Electricity Consumed", Data = new double[] { 70, 75, 80, 85, 90, 88, 92, 95, 90, 85, 80, 75 } }
+    };
+    private string[] _xAxisLabels = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
+
+    /// <summary>
+    /// Retourne la couleur associée à un rôle
+    /// </summary>
+    private Color GetRoleColor(string? role)
+    {
+        return role?.ToLower() switch
+        {
+            "admin" => Color.Error,      // Rouge pour Admin (pouvoir maximum)
+            "manager" => Color.Warning,   // Orange pour Manager
+            "membre" => Color.Info,      // Bleu pour Membre
+            "user" => Color.Primary,     // Bleu primaire pour User
+            "visiteur" => Color.Secondary, // Gris pour Visiteur
+            _ => Color.Default
+        };
+    }
+
+    // Application Admin - Accès complet à toutes les fonctionnalités
+}

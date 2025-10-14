@@ -1,0 +1,231 @@
+@page "/register"
+@using MySmartApp.Ui.Services
+@using MySmartApp.Ui.Models
+@inject IAuthService AuthService
+@inject NavigationManager Navigation
+@inject ILogger<Register> Logger
+
+<MudContainer Fixed="true" Class="d-flex align-center justify-center flex-column" Style="height: 100vh;">
+    <MudPaper Class="pa-8 rounded-xl" Width="450px" Elevation="6">
+        
+        <!-- Logo et Titre -->
+        <div class="text-center mb-6">
+            <MudIcon Icon="@Icons.Material.Filled.Business" Size="Size.Large" Color="Color.Primary" Class="mb-2" />
+            <MudText Typo="Typo.h4" Color="Color.Primary">Smart Office</MudText>
+            <MudText Typo="Typo.body2" Class="text-muted">Créer votre compte</MudText>
+        </div>
+
+        <!-- Formulaire d'inscription -->
+        <EditForm Model="@_registerModel" OnValidSubmit="@HandleRegister">
+            <DataAnnotationsValidator />
+            
+            <!-- Prénom et Nom -->
+            <MudGrid>
+                <MudItem xs="6">
+                    <MudTextField @bind-Value="_registerModel.FirstName"
+                                 Label="Prénom"
+                                 Variant="Variant.Outlined"
+                                 Class="mb-3"
+                                 For="@(() => _registerModel.FirstName)"
+                                 Disabled="@_isLoading" />
+                </MudItem>
+                <MudItem xs="6">
+                    <MudTextField @bind-Value="_registerModel.LastName"
+                                 Label="Nom"
+                                 Variant="Variant.Outlined"
+                                 Class="mb-3"
+                                 For="@(() => _registerModel.LastName)"
+                                 Disabled="@_isLoading" />
+                </MudItem>
+            </MudGrid>
+
+            <!-- Email -->
+            <MudTextField @bind-Value="_registerModel.Email"
+                         Label="Adresse email"
+                         Variant="Variant.Outlined"
+                         InputType="InputType.Email"
+                         Class="mb-3"
+                         For="@(() => _registerModel.Email)"
+                         Disabled="@_isLoading"
+                         Adornment="Adornment.Start"
+                         AdornmentIcon="@Icons.Material.Filled.Email" />
+
+            <!-- Mot de passe -->
+            <MudTextField @bind-Value="_registerModel.Password"
+                         Label="Mot de passe"
+                         Variant="Variant.Outlined"
+                         InputType="@(_showPassword ? InputType.Text : InputType.Password)"
+                         Class="mb-3"
+                         For="@(() => _registerModel.Password)"
+                         Disabled="@_isLoading"
+                         Adornment="Adornment.End"
+                         AdornmentIcon="@(_showPassword ? Icons.Material.Filled.VisibilityOff : Icons.Material.Filled.Visibility)"
+                         OnAdornmentClick="@(() => _showPassword = !_showPassword)" />
+
+            <!-- Confirmation mot de passe -->
+            <MudTextField @bind-Value="_registerModel.ConfirmPassword"
+                         Label="Confirmer le mot de passe"
+                         Variant="Variant.Outlined"
+                         InputType="@(_showConfirmPassword ? InputType.Text : InputType.Password)"
+                         Class="mb-4"
+                         For="@(() => _registerModel.ConfirmPassword)"
+                         Disabled="@_isLoading"
+                         Adornment="Adornment.End"
+                         AdornmentIcon="@(_showConfirmPassword ? Icons.Material.Filled.VisibilityOff : Icons.Material.Filled.Visibility)"
+                         OnAdornmentClick="@(() => _showConfirmPassword = !_showConfirmPassword)" />
+
+            <!-- Conditions d'utilisation -->
+            <MudCheckBox @bind-Value="_acceptTerms" 
+                        Label="J'accepte les conditions d'utilisation" 
+                        Color="Color.Primary" 
+                        Class="mb-4"
+                        Disabled="@_isLoading" />
+
+            <!-- Bouton d'inscription -->
+            <MudButton ButtonType="ButtonType.Submit"
+                      Variant="Variant.Filled"
+                      Color="Color.Primary"
+                      Size="Size.Large"
+                      FullWidth="true"
+                      Class="mb-4"
+                      Disabled="@(_isLoading || !_acceptTerms)">
+                @if (_isLoading)
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+                    <span class="ml-2">Création...</span>
+                }
+                else
+                {
+                    <MudIcon Icon="@Icons.Material.Filled.PersonAdd" Class="mr-2" />
+                    <span>Créer le compte</span>
+                }
+            </MudButton>
+
+        </EditForm>
+
+        <!-- Affichage des erreurs -->
+        @if (!string.IsNullOrEmpty(_errorMessage))
+        {
+            <MudAlert Severity="Severity.Error" Class="mb-4" ShowCloseIcon="true" CloseIconClicked="@(() => _errorMessage = null)">
+                @_errorMessage
+            </MudAlert>
+        }
+
+        @if (_validationErrors != null && _validationErrors.Any())
+        {
+            <MudAlert Severity="Severity.Warning" Class="mb-4">
+                <MudText Typo="Typo.body2" Class="mb-2">Veuillez corriger les erreurs suivantes :</MudText>
+                @foreach (var error in _validationErrors)
+                {
+                    @foreach (var message in error.Value)
+                    {
+                        <MudText Typo="Typo.caption">• @error.Key: @message</MudText>
+                    }
+                }
+            </MudAlert>
+        }
+
+        <!-- Message de succès -->
+        @if (_showSuccessMessage)
+        {
+            <MudAlert Severity="Severity.Success" Class="mb-4">
+                <MudText Typo="Typo.body2">Compte créé avec succès ! Vous pouvez maintenant vous connecter.</MudText>
+            </MudAlert>
+        }
+
+        <!-- Lien vers connexion -->
+        <div class="text-center">
+            <MudText Typo="Typo.body2">Vous avez déjà un compte ?</MudText>
+            <MudLink Href="/login" Color="Color.Primary">Se connecter</MudLink>
+        </div>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private RegisterModel _registerModel = new();
+    private bool _isLoading = false;
+    private bool _showPassword = false;
+    private bool _showConfirmPassword = false;
+    private bool _acceptTerms = false;
+    private string? _errorMessage;
+    private Dictionary<string, string[]>? _validationErrors;
+    private bool _showSuccessMessage = false;
+
+    private async Task HandleRegister()
+    {
+        if (_isLoading) return;
+
+        try
+        {
+            _isLoading = true;
+            _errorMessage = null;
+            _validationErrors = null;
+            _showSuccessMessage = false;
+            StateHasChanged();
+
+            Logger.LogInformation("?? Tentative d'inscription pour {Email}", _registerModel.Email);
+
+            var request = new RegisterDto(
+                _registerModel.Email!,
+                _registerModel.Password!,
+                _registerModel.ConfirmPassword!,
+                _registerModel.FirstName,
+                _registerModel.LastName
+            );
+
+            var result = await AuthService.RegisterAsync(request);
+
+            if (result.Success)
+            {
+                Logger.LogInformation("? Inscription réussie pour {Email}", _registerModel.Email);
+                _showSuccessMessage = true;
+                
+                // Optionnel: redirection automatique après 3 secondes
+                _ = Task.Delay(3000).ContinueWith(_ =>
+                {
+                    InvokeAsync(() => Navigation.NavigateTo("/login"));
+                });
+            }
+            else
+            {
+                _errorMessage = result.ErrorMessage;
+                _validationErrors = result.ValidationErrors;
+                Logger.LogWarning("? Échec d'inscription pour {Email}: {Error}", _registerModel.Email, _errorMessage);
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = "Une erreur inattendue s'est produite. Veuillez réessayer.";
+            Logger.LogError(ex, "? Erreur lors de l'inscription pour {Email}", _registerModel.Email);
+        }
+        finally
+        {
+            _isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    // Modèle de données pour le formulaire
+    public class RegisterModel
+    {
+        [Required(ErrorMessage = "Le prénom est requis")]
+        public string? FirstName { get; set; }
+
+        [Required(ErrorMessage = "Le nom est requis")]
+        public string? LastName { get; set; }
+
+        [Required(ErrorMessage = "L'adresse email est requise")]
+        [EmailAddress(ErrorMessage = "Format d'email invalide")]
+        public string? Email { get; set; }
+
+        [Required(ErrorMessage = "Le mot de passe est requis")]
+        [MinLength(6, ErrorMessage = "Le mot de passe doit contenir au moins 6 caractères")]
+        [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\da-zA-Z]).{6,}$", 
+            ErrorMessage = "Le mot de passe doit contenir au moins une majuscule, une minuscule, un chiffre et un caractère spécial")]
+        public string? Password { get; set; }
+
+        [Required(ErrorMessage = "La confirmation du mot de passe est requise")]
+        [Compare(nameof(Password), ErrorMessage = "Les mots de passe ne correspondent pas")]
+        public string? ConfirmPassword { get; set; }
+    }
+}

@@ -1,0 +1,99 @@
+@* Composant DeviceCard pour afficher les appareils *@
+
+<MudPaper Class="pa-4 rounded-xl device-card" 
+          Style="@GetCardStyle()" 
+          Elevation="2">
+    <div class="d-flex flex-column align-center text-center">
+        <!-- Icône de l'appareil -->
+        <div class="device-icon-container mb-3">
+            <MudIcon Icon="@Icon" 
+                    Color="@(IsOn ? Color.Inherit : Color.Default)"
+                    Size="Size.Large"
+                    Style="@GetIconStyle()" />
+        </div>
+        
+        <!-- Nom de l'appareil -->
+        <MudText Typo="Typo.body1" 
+                Class="font-weight-medium"
+                Style="@GetTextStyle()">
+            @DeviceName
+        </MudText>
+        
+        <!-- État ON/OFF -->
+        <MudChip T="string" 
+                Size="Size.Small"
+                Color="@(IsOn ? Color.Success : Color.Default)"
+                Class="mt-2">
+            @(IsOn ? "ON" : "OFF")
+        </MudChip>
+        
+        <!-- Bouton toggle si l'appareil est contrôlable -->
+        @if (OnToggle.HasDelegate)
+        {
+            <MudSwitch T="bool" 
+                      @bind-Value="IsOn"
+                      @bind-Value:after="OnToggleChanged"
+                      Color="Color.Primary" 
+                      Class="mt-2" />
+        }
+    </div>
+</MudPaper>
+
+<style>
+    .device-card {
+        transition: all 0.3s ease-in-out;
+        cursor: pointer;
+        min-height: 140px;
+    }
+
+    .device-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+
+    .device-icon-container {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+    }
+</style>
+
+@code {
+    [Parameter] public string Icon { get; set; } = Icons.Material.Filled.DeviceHub;
+    [Parameter] public string DeviceName { get; set; } = "Device";
+    [Parameter] public string DeviceColor { get; set; } = "#5850EC";
+    [Parameter] public bool IsOn { get; set; } = false;
+    [Parameter] public EventCallback<bool> OnToggle { get; set; }
+
+    private async Task OnToggleChanged()
+    {
+        if (OnToggle.HasDelegate)
+        {
+            await OnToggle.InvokeAsync(IsOn);
+        }
+    }
+
+    private string GetCardStyle()
+    {
+        var backgroundColor = IsOn ? DeviceColor : "#f5f5f5";
+        var opacity = IsOn ? "1" : "0.7";
+        
+        return $"background-color: {backgroundColor}; opacity: {opacity}; border: 2px solid {(IsOn ? DeviceColor : "transparent")};";
+    }
+
+    private string GetIconStyle()
+    {
+        var color = IsOn ? "white" : "#666";
+        return $"color: {color}; font-size: 28px;";
+    }
+
+    private string GetTextStyle()
+    {
+        var color = IsOn ? "white" : "#333";
+        return $"color: {color};";
+    }
+}

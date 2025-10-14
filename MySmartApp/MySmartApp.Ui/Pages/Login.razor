@@ -1,0 +1,210 @@
+﻿@page "/login"
+@using MySmartApp.Ui.Services
+@using MySmartApp.Ui.Models
+@using Microsoft.AspNetCore.Components.Authorization
+@inject IAuthService AuthService
+@inject NavigationManager Navigation
+@inject ILogger<Login> Logger
+@inject IJSRuntime JSRuntime
+
+<MudContainer Fixed="true" Class="d-flex align-center justify-center flex-column" Style="height: 100vh;">
+    <MudPaper Class="pa-8 rounded-xl" Width="400px" Elevation="6">
+        
+        <!-- Logo et Titre -->
+        <div class="text-center mb-6">
+            <MudIcon Icon="@Icons.Material.Filled.Business" Size="Size.Large" Color="Color.Primary" Class="mb-2" />
+            <MudText Typo="Typo.h4" Color="Color.Primary">Smart Office</MudText>
+            <MudText Typo="Typo.body2" Class="text-muted">Connectez-vous à votre compte</MudText>
+        </div>
+
+        <!-- Formulaire de connexion -->
+        <EditForm Model="@_loginModel" OnValidSubmit="@HandleLogin">
+            <DataAnnotationsValidator />
+            
+            <!-- Email -->
+            <MudTextField @bind-Value="_loginModel.Email"
+                         Label="Adresse email"
+                         Variant="Variant.Outlined"
+                         InputType="InputType.Email"
+                         Class="mb-4"
+                         For="@(() => _loginModel.Email)"
+                         Disabled="@_isLoading"
+                         Adornment="Adornment.Start"
+                         AdornmentIcon="@Icons.Material.Filled.Email" />
+
+            <!-- Mot de passe -->
+            <MudTextField @bind-Value="_loginModel.Password"
+                         Label="Mot de passe"
+                         Variant="Variant.Outlined"
+                         InputType="@(_showPassword ? InputType.Text : InputType.Password)"
+                         Class="mb-4"
+                         For="@(() => _loginModel.Password)"
+                         Disabled="@_isLoading"
+                         Adornment="Adornment.End"
+                         AdornmentIcon="@(_showPassword ? Icons.Material.Filled.VisibilityOff : Icons.Material.Filled.Visibility)"
+                         OnAdornmentClick="@(() => _showPassword = !_showPassword)" />
+
+            <!-- Se souvenir de moi -->
+            <MudCheckBox @bind-Value="_rememberMe" 
+                        Label="Se souvenir de moi" 
+                        Color="Color.Primary" 
+                        Class="mb-4"
+                        Disabled="@_isLoading" />
+
+            <!-- Bouton de connexion -->
+            <MudButton ButtonType="ButtonType.Submit"
+                      Variant="Variant.Filled"
+                      Color="Color.Primary"
+                      Size="Size.Large"
+                      FullWidth="true"
+                      Class="mb-4"
+                      Disabled="@_isLoading">
+                @if (_isLoading)
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+                    <span class="ml-2">Connexion...</span>
+                }
+                else
+                {
+                    <MudIcon Icon="@Icons.Material.Filled.Login" Class="mr-2" />
+                    <span>Se connecter</span>
+                }
+            </MudButton>
+
+        </EditForm>
+
+        <!-- Affichage des erreurs -->
+        @if (!string.IsNullOrEmpty(_errorMessage))
+        {
+            <MudAlert Severity="Severity.Error" Class="mb-4" ShowCloseIcon="true" CloseIconClicked="@(() => _errorMessage = null)">
+                @_errorMessage
+            </MudAlert>
+        }
+
+        <!-- Liens supplémentaires -->
+        <div class="text-center">
+            <MudLink Href="/register" Color="Color.Primary">Créer un compte</MudLink>
+            <span class="mx-2">•</span>
+            <MudLink Href="/forgot-password" Color="Color.Primary">Mot de passe oublié ?</MudLink>
+        </div>
+
+        <!-- Mode développement -->
+        @if (_isDevelopment)
+        {
+            <MudDivider Class="my-4" />
+            <MudText Typo="Typo.caption" Class="text-center mb-2">Mode développement</MudText>
+            <div class="d-flex gap-2">
+                <MudButton Size="Size.Small" Variant="Variant.Text" OnClick="@(() => FillDemoCredentials("admin"))" Disabled="@_isLoading">
+                    Admin Demo
+                </MudButton>
+                <MudButton Size="Size.Small" Variant="Variant.Text" OnClick="@(() => FillDemoCredentials("user"))" Disabled="@_isLoading">
+                    User Demo
+                </MudButton>
+            </div>
+        }
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private LoginModel _loginModel = new();
+    private bool _isLoading = false;
+    private bool _showPassword = false;
+    private bool _rememberMe = false;
+    private string? _errorMessage;
+    private bool _isDevelopment = false;
+
+    [Parameter, SupplyParameterFromQuery] public string? ReturnUrl { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Vérifier si l'utilisateur est déjà connecté
+        var isAuthenticated = await AuthService.IsAuthenticatedAsync();
+        if (isAuthenticated)
+        {
+            NavigateToReturnUrl();
+            return;
+        }
+
+        // Détecter le mode développement
+        _isDevelopment = Navigation.BaseUri.Contains("localhost");
+    }
+
+    private async Task HandleLogin()
+    {
+        if (_isLoading) return;
+
+        try
+        {
+            _isLoading = true;
+            _errorMessage = null;
+            StateHasChanged();
+
+            Logger.LogInformation("🔐 Tentative de connexion pour {Email}", _loginModel.Email);
+            
+            var result = await AuthService.LoginAsync(_loginModel.Email!, _loginModel.Password!);
+            
+            if (result.Success)
+            {
+                Logger.LogInformation("✅ Connexion réussie pour {Email}", _loginModel.Email);
+                
+                // Optionnel: sauvegarder les préférences
+                if (_rememberMe)
+                {
+                    await JSRuntime.InvokeVoidAsync("localStorage.setItem", "rememberMe", "true");
+                }
+
+                NavigateToReturnUrl();
+            }
+            else
+            {
+                _errorMessage = result.ErrorMessage ?? "Échec de la connexion";
+                Logger.LogWarning("❌ Échec de connexion pour {Email}: {Error}", _loginModel.Email, _errorMessage);
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = "Une erreur inattendue s'est produite. Veuillez réessayer.";
+            Logger.LogError(ex, "❌ Erreur lors de la connexion pour {Email}", _loginModel.Email);
+        }
+        finally
+        {
+            _isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void NavigateToReturnUrl()
+    {
+        var url = !string.IsNullOrEmpty(ReturnUrl) ? Uri.UnescapeDataString(ReturnUrl) : "/";
+        Navigation.NavigateTo(url, forceLoad: true);
+    }
+
+    private void FillDemoCredentials(string type)
+    {
+        // Utilisez les credentials qui correspondent à votre base de données backend
+        switch (type)
+        {
+            case "admin":
+                _loginModel.Email = "admin@smartoffice.com";
+                _loginModel.Password = "Admin123!";
+                break;
+            case "user":
+                _loginModel.Email = "user@smartoffice.com";
+                _loginModel.Password = "User123!";
+                break;
+        }
+        StateHasChanged();
+    }
+
+    // Modèle de données pour le formulaire
+    public class LoginModel
+    {
+        [Required(ErrorMessage = "L'adresse email est requise")]
+        [EmailAddress(ErrorMessage = "Format d'email invalide")]
+        public string? Email { get; set; }
+
+        [Required(ErrorMessage = "Le mot de passe est requis")]
+        [MinLength(6, ErrorMessage = "Le mot de passe doit contenir au moins 6 caractères")]
+        public string? Password { get; set; }
+    }
+}

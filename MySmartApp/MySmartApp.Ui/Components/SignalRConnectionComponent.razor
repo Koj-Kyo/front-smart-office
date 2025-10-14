@@ -1,0 +1,279 @@
+@using Microsoft.AspNetCore.SignalR.Client
+@using MySmartApp.Ui.Services
+@using MySmartApp.Ui.Models
+@inject ISignalRService SignalRService
+@inject IAppStateService AppState
+@inject ILogger<SignalRConnectionComponent> Logger
+@implements IAsyncDisposable
+
+<div class="signalr-status @GetStatusClass()">
+    <MudChip T="string"
+             Icon="@GetStatusIcon()" 
+             Color="@GetStatusColor()" 
+             Size="Size.Small"
+             Variant="Variant.Filled">
+        @GetStatusText()
+    </MudChip>
+    
+    @if (ShowDetails && ConnectionState != HubConnectionState.Connected)
+    {
+        <MudTooltip Text="@GetDetailedStatus()">
+            <MudIconButton Icon="@Icons.Material.Filled.Info" 
+                          Size="Size.Small" 
+                          Color="Color.Default" />
+        </MudTooltip>
+    }
+    
+    @if (ShowReconnectButton && CanReconnect)
+    {
+        <MudIconButton Icon="@Icons.Material.Filled.Refresh" 
+                      Size="Size.Small" 
+                      Color="Color.Primary"
+                      OnClick="@HandleReconnect"
+                      Disabled="@IsReconnecting">
+            @if (IsReconnecting)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+            }
+        </MudIconButton>
+    }
+</div>
+
+<style>
+    .signalr-status {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .signalr-status.connected {
+        animation: pulse-green 2s infinite;
+    }
+    
+    .signalr-status.reconnecting {
+        animation: pulse-orange 1s infinite;
+    }
+    
+    @@keyframes pulse-green {
+        0% { opacity: 1; }
+        50% { opacity: 0.7; }
+        100% { opacity: 1; }
+    }
+    
+    @@keyframes pulse-orange {
+        0% { opacity: 1; }
+        50% { opacity: 0.5; }
+        100% { opacity: 1; }
+    }
+</style>
+
+@code {
+    private HubConnectionState _connectionState = HubConnectionState.Disconnected;
+    private bool _isReconnecting = false;
+    private DateTime _lastConnectionAttempt = DateTime.MinValue;
+    private Timer? _statusTimer;
+
+    [Parameter] public bool ShowDetails { get; set; } = true;
+    [Parameter] public bool ShowReconnectButton { get; set; } = true;
+    [Parameter] public bool AutoReconnect { get; set; } = true;
+
+    public HubConnectionState ConnectionState => _connectionState;
+    public bool IsReconnecting => _isReconnecting;
+    public bool CanReconnect => _connectionState == HubConnectionState.Disconnected && 
+                               !_isReconnecting &&
+                               DateTime.UtcNow.Subtract(_lastConnectionAttempt).TotalSeconds > 5;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            Logger.LogDebug("?? Initialisation du composant SignalR...");
+            
+            // S'abonner aux événements du service SignalR
+            SignalRService.ConnectionStateChanged += HandleConnectionStateChanged;
+            
+            // Obtenir l'état actuel
+            _connectionState = SignalRService.ConnectionState;
+            
+            // Démarrer la connexion si demandé
+            if (AutoReconnect && _connectionState == HubConnectionState.Disconnected)
+            {
+                await StartConnectionAsync();
+            }
+            
+            // Timer pour vérifier périodiquement l'état
+            _statusTimer = new Timer(CheckConnectionStatus, null, 
+                TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(30));
+                
+            Logger.LogDebug("? Composant SignalR initialisé avec état: {State}", _connectionState);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "? Erreur lors de l'initialisation du composant SignalR");
+            await AppState.SetErrorAsync($"Erreur SignalR: {ex.Message}");
+        }
+    }
+
+    private void HandleConnectionStateChanged(HubConnectionState newState)
+    {
+        var oldState = _connectionState;
+        _connectionState = newState;
+        
+        Logger.LogInformation("?? État SignalR changé: {OldState} ? {NewState}", oldState, newState);
+        
+        // Notifications à l'utilisateur
+        _ = Task.Run(async () =>
+        {
+            switch (newState)
+            {
+                case HubConnectionState.Connected:
+                    await AppState.ShowNotificationAsync("Connexion temps réel établie", NotificationType.Success);
+                    break;
+                    
+                case HubConnectionState.Disconnected when oldState == HubConnectionState.Connected:
+                    await AppState.ShowNotificationAsync("Connexion temps réel perdue", NotificationType.Warning);
+                    
+                    // Tentative de reconnexion automatique
+                    if (AutoReconnect)
+                    {
+                        _ = Task.Delay(TimeSpan.FromSeconds(5)).ContinueWith(async _ => 
+                        {
+                            await StartConnectionAsync();
+                        });
+                    }
+                    break;
+                    
+                case HubConnectionState.Reconnecting:
+                    await AppState.ShowNotificationAsync("Reconnexion en cours...", NotificationType.Info);
+                    break;
+            }
+        });
+        
+        InvokeAsync(StateHasChanged);
+    }
+
+    private async Task StartConnectionAsync()
+    {
+        if (_isReconnecting || _connectionState == HubConnectionState.Connected)
+        {
+            return;
+        }
+
+        try
+        {
+            _isReconnecting = true;
+            _lastConnectionAttempt = DateTime.UtcNow;
+            StateHasChanged();
+            
+            Logger.LogInformation("?? Démarrage de la connexion SignalR...");
+            await SignalRService.StartAsync();
+            
+            Logger.LogInformation("? Connexion SignalR démarrée");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "? Erreur lors du démarrage de la connexion SignalR");
+            await AppState.ShowNotificationAsync($"Impossible de se connecter: {ex.Message}", NotificationType.Error);
+        }
+        finally
+        {
+            _isReconnecting = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task HandleReconnect()
+    {
+        await StartConnectionAsync();
+    }
+
+    private void CheckConnectionStatus(object? state)
+    {
+        var currentState = SignalRService.ConnectionState;
+        if (currentState != _connectionState)
+        {
+            HandleConnectionStateChanged(currentState);
+        }
+    }
+
+    private string GetStatusClass()
+    {
+        return _connectionState switch
+        {
+            HubConnectionState.Connected => "connected",
+            HubConnectionState.Reconnecting => "reconnecting",
+            _ => "disconnected"
+        };
+    }
+
+    private string GetStatusIcon()
+    {
+        return _connectionState switch
+        {
+            HubConnectionState.Connected => Icons.Material.Filled.Wifi,
+            HubConnectionState.Connecting => Icons.Material.Filled.WifiFind,
+            HubConnectionState.Reconnecting => Icons.Material.Filled.WifiFind,
+            _ => Icons.Material.Filled.WifiOff
+        };
+    }
+
+    private MudBlazor.Color GetStatusColor()
+    {
+        return _connectionState switch
+        {
+            HubConnectionState.Connected => MudBlazor.Color.Success,
+            HubConnectionState.Connecting => MudBlazor.Color.Warning,
+            HubConnectionState.Reconnecting => MudBlazor.Color.Warning,
+            _ => MudBlazor.Color.Error
+        };
+    }
+
+    private string GetStatusText()
+    {
+        return _connectionState switch
+        {
+            HubConnectionState.Connected => "Connecté",
+            HubConnectionState.Connecting => "Connexion...",
+            HubConnectionState.Reconnecting => "Reconnexion...",
+            HubConnectionState.Disconnected => "Déconnecté",
+            _ => "Inconnu"
+        };
+    }
+
+    private string GetDetailedStatus()
+    {
+        var lastAttempt = _lastConnectionAttempt == DateTime.MinValue 
+            ? "Aucune" 
+            : _lastConnectionAttempt.ToString("HH:mm:ss");
+            
+        return _connectionState switch
+        {
+            HubConnectionState.Connected => "Connexion temps réel active - Mises à jour automatiques",
+            HubConnectionState.Connecting => "Établissement de la connexion en cours...",
+            HubConnectionState.Reconnecting => "Tentative de reconnexion automatique...",
+            HubConnectionState.Disconnected => $"Pas de connexion temps réel. Dernière tentative: {lastAttempt}",
+            _ => "État de connexion inconnu"
+        };
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        try
+        {
+            _statusTimer?.Dispose();
+            
+            if (SignalRService != null)
+            {
+                SignalRService.ConnectionStateChanged -= HandleConnectionStateChanged;
+            }
+            
+            Logger.LogDebug("?? Composant SignalR disposé");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Erreur lors de la disposition du composant SignalR");
+        }
+        
+        GC.SuppressFinalize(this);
+    }
+}

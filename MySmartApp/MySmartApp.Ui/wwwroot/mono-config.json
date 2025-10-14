@@ -1,0 +1,10 @@
+{
+  "debugger": false,
+  "debug_level": 0,
+  "enable_debugging": false,
+  "globalization_mode": "invariant",
+  "resources": {
+    "jsModuleWorker": false,
+    "useWebcil": true
+  }
+}

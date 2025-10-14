@@ -1,0 +1,186 @@
+@using MySmartApp.Ui.Services
+@using MySmartApp.Ui.Models
+@inject IAppStateService AppState
+@inject ILogger<ErrorDisplayComponent> Logger
+@implements IDisposable
+
+@if (HasError)
+{
+    <MudAlert Severity="@GetSeverity()" 
+              Class="@($"error-alert {Class}")"
+              Style="@Style"
+              ShowCloseIcon="@ShowCloseIcon"
+              CloseIconClicked="@HandleCloseClicked">
+        <div class="d-flex align-center">
+            <MudIcon Icon="@GetIcon()" Class="mr-3" />
+            <div class="flex-grow-1">
+                @if (!string.IsNullOrEmpty(ErrorTitle))
+                {
+                    <MudText Typo="Typo.h6" Class="mb-1">@ErrorTitle</MudText>
+                }
+                
+                <MudText Typo="Typo.body2">
+                    @(ErrorMessage ?? AppState.CurrentError)
+                </MudText>
+                
+                @if (ShowDetails && ValidationErrors != null && ValidationErrors.Any())
+                {
+                    <MudExpansionPanels Class="mt-2">
+                        <MudExpansionPanel IsInitiallyExpanded="false" Title="Détails des erreurs">
+                            @foreach (var error in ValidationErrors)
+                            {
+                                <MudText Typo="Typo.caption" Class="mb-1">
+                                    <strong>@error.Key:</strong> @string.Join(", ", error.Value)
+                                </MudText>
+                            }
+                        </MudExpansionPanel>
+                    </MudExpansionPanels>
+                }
+                
+                @if (ShowRetryButton && RetryAction != null)
+                {
+                    <div class="mt-3">
+                        <MudButton Variant="Variant.Text" 
+                                  Color="Color.Primary" 
+                                  Size="Size.Small"
+                                  OnClick="@HandleRetry"
+                                  Disabled="@IsRetrying">
+                            @if (IsRetrying)
+                            {
+                                <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+                                <span class="ml-2">Nouvelle tentative...</span>
+                            }
+                            else
+                            {
+                                <MudIcon Icon="@Icons.Material.Filled.Refresh" Size="Size.Small" />
+                                <span class="ml-2">Réessayer</span>
+                            }
+                        </MudButton>
+                    </div>
+                }
+            </div>
+        </div>
+    </MudAlert>
+}
+
+<style>
+    .error-alert {
+        margin: 8px 0;
+    }
+    
+    .error-alert .mud-alert-message {
+        width: 100%;
+    }
+</style>
+
+@code {
+private bool _isRetrying = false;
+
+[Parameter] public string? ErrorMessage { get; set; }
+[Parameter] public string? ErrorTitle { get; set; }
+[Parameter] public Dictionary<string, string[]>? ValidationErrors { get; set; }
+    
+[Parameter] public ErrorSeverity Severity { get; set; } = ErrorSeverity.Error;
+    [Parameter] public bool ShowCloseIcon { get; set; } = true;
+    [Parameter] public bool ShowDetails { get; set; } = true;
+    [Parameter] public bool ShowRetryButton { get; set; } = false;
+    
+    [Parameter] public Func<Task>? RetryAction { get; set; }
+    [Parameter] public Action? CloseAction { get; set; }
+    
+    [Parameter] public string? Class { get; set; }
+    [Parameter] public string? Style { get; set; }
+
+    public bool IsRetrying => _isRetrying;
+    
+    private bool HasError => !string.IsNullOrEmpty(ErrorMessage) || !string.IsNullOrEmpty(AppState.CurrentError);
+
+    protected override void OnInitialized()
+    {
+        AppState.OnStateChanged += HandleStateChanged;
+        AppState.OnError += HandleGlobalError;
+        Logger.LogDebug("ErrorDisplayComponent initialisé");
+    }
+
+    private void HandleStateChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void HandleGlobalError(string error)
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    private async Task HandleRetry()
+    {
+        if (RetryAction == null || _isRetrying) return;
+
+        try
+        {
+            _isRetrying = true;
+            StateHasChanged();
+            
+            Logger.LogInformation("Nouvelle tentative demandée par l'utilisateur");
+            await RetryAction();
+            
+            // Effacer l'erreur après un retry réussi
+            await AppState.SetErrorAsync(null);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Erreur lors de la nouvelle tentative");
+            await AppState.SetErrorAsync($"Nouvelle tentative échouée: {ex.Message}");
+        }
+        finally
+        {
+            _isRetrying = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task HandleCloseClicked()
+    {
+        try
+        {
+            CloseAction?.Invoke();
+            await AppState.SetErrorAsync(null);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Erreur lors de la fermeture de l'alerte d'erreur");
+        }
+    }
+
+    private MudBlazor.Severity GetSeverity()
+    {
+        return Severity switch
+        {
+            ErrorSeverity.Info => MudBlazor.Severity.Info,
+            ErrorSeverity.Warning => MudBlazor.Severity.Warning,
+            ErrorSeverity.Error => MudBlazor.Severity.Error,
+            ErrorSeverity.Success => MudBlazor.Severity.Success,
+            _ => MudBlazor.Severity.Error
+        };
+    }
+
+    private string GetIcon()
+    {
+        return Severity switch
+        {
+            ErrorSeverity.Info => Icons.Material.Filled.Info,
+            ErrorSeverity.Warning => Icons.Material.Filled.Warning,
+            ErrorSeverity.Error => Icons.Material.Filled.Error,
+            ErrorSeverity.Success => Icons.Material.Filled.CheckCircle,
+            _ => Icons.Material.Filled.Error
+        };
+    }
+
+    public void Dispose()
+    {
+        AppState.OnStateChanged -= HandleStateChanged;
+        AppState.OnError -= HandleGlobalError;
+        Logger.LogDebug("ErrorDisplayComponent disposé");
+        GC.SuppressFinalize(this);
+    }
+}

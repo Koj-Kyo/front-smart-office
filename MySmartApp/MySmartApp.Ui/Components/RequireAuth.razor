@@ -1,0 +1,63 @@
+@using Microsoft.AspNetCore.Components.Authorization
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Navigation
+@inject ILogger<RequireAuth> Logger
+
+@if (IsAuthenticated)
+{
+    @ChildContent
+}
+else if (IsLoading)
+{
+    <div class="d-flex justify-center align-center" style="height: 100vh;">
+        <MudProgressCircular Size="Size.Large" Indeterminate="true" />
+        <MudText Class="ml-3">Vérification de l'authentification...</MudText>
+    </div>
+}
+else
+{
+    <RedirectToLogin />
+}
+
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public string? RedirectUrl { get; set; }
+
+    private bool IsAuthenticated { get; set; }
+    private bool IsLoading { get; set; } = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            IsAuthenticated = authState.User?.Identity?.IsAuthenticated == true;
+            
+            if (!IsAuthenticated)
+            {
+                Logger.LogInformation("?? Utilisateur non authentifié, redirection vers login");
+                
+                // Optionnel: sauvegarder l'URL actuelle pour redirection après login
+                if (!string.IsNullOrEmpty(RedirectUrl))
+                {
+                    Navigation.NavigateTo($"/login?returnUrl={Uri.EscapeDataString(RedirectUrl)}");
+                }
+                else
+                {
+                    var currentUrl = Navigation.Uri;
+                    Navigation.NavigateTo($"/login?returnUrl={Uri.EscapeDataString(currentUrl)}");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Erreur lors de la vérification d'authentification");
+            IsAuthenticated = false;
+        }
+        finally
+        {
+            IsLoading = false;
+            StateHasChanged();
+        }
+    }
+}

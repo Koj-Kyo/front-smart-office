@@ -1,0 +1,22 @@
+@inject NavigationManager Navigation
+@inject ILogger<RedirectToLogin> Logger
+
+@code {
+    protected override void OnInitialized()
+    {
+        try
+        {
+            var currentUrl = Navigation.ToBaseRelativePath(Navigation.Uri);
+            var returnUrl = string.IsNullOrEmpty(currentUrl) || currentUrl == "/" ? "/dashboard" : currentUrl;
+            
+            Logger.LogInformation("?? Redirection vers login depuis {CurrentUrl}", currentUrl);
+            
+            Navigation.NavigateTo($"/login?returnUrl={Uri.EscapeDataString(returnUrl)}", forceLoad: true);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Erreur lors de la redirection vers login");
+            Navigation.NavigateTo("/login", forceLoad: true);
+        }
+    }
+}

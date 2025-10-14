@@ -1,0 +1,160 @@
+﻿@page "/"
+@inject IAuthService AuthService
+@inject NavigationManager Navigation
+@inject ILogger<Home> Logger
+@rendermode InteractiveWebAssembly
+
+<PageTitle>Smart Office</PageTitle>
+
+@if (_isLoading)
+{
+    <div class="d-flex justify-center align-center" style="height: 100vh;">
+        <MudProgressCircular Size="Size.Large" Indeterminate="true" />
+        <MudText Class="ml-3">Chargement...</MudText>
+    </div>
+}
+else if (_isAuthenticated)
+{
+    <!-- L'utilisateur est authentifié, redirection vers le dashboard -->
+    <div class="d-flex justify-center align-center" style="height: 100vh;">
+        <MudProgressCircular Size="Size.Large" Indeterminate="true" />
+        <MudText Class="ml-3">Redirection vers le tableau de bord...</MudText>
+    </div>
+}
+else
+{
+    <!-- Page d'accueil pour utilisateurs non authentifiés -->
+    <MudContainer Fixed="true" Class="d-flex align-center justify-center flex-column text-center" Style="height: 100vh;">
+        @* Logo et présentation *@
+        <MudPaper Elevation="4" Class="pa-6 rounded-xl mb-8 home-icon-animation"
+                  @onmouseenter="(() => _isHovered = true)"
+                  @onmouseleave="(() => _isHovered = false)">
+            <MudIcon Icon="@(_isHovered? Icons.Material.Filled.Business : Icons.Material.Outlined.Business)"
+                     Size="Size.Large"
+                     Color="@(_isHovered ? Color.Primary : Color.Secondary)"
+                     Style="font-size: 80px;" />
+        </MudPaper>
+
+        <MudText Typo="Typo.h2" GutterBottom="true" Class="fade-in">Smart Office</MudText>
+        <MudText Typo="Typo.h6" Color="Color.Primary" Class="mb-4 fade-in">Gestion Intelligente de Votre Bureau</MudText>
+        <MudText Typo="Typo.body1" Class="mb-8 fade-in-delay-1" Style="max-width: 600px;">
+            Contrôlez tous vos appareils connectés, gérez les zones, surveillez la consommation énergétique 
+            et optimisez votre environnement de travail depuis une interface moderne et intuitive.
+        </MudText>
+
+        @* Fonctionnalités principales *@
+        <MudGrid Class="mb-8 fade-in-delay-1" Style="max-width: 800px;">
+            <MudItem xs="12" sm="4">
+                <div class="d-flex flex-column align-center">
+                    <MudIcon Icon="@Icons.Material.Filled.DeviceHub" Color="Color.Primary" Size="Size.Large" Class="mb-2" />
+                    <MudText Typo="Typo.h6">Appareils IoT</MudText>
+                    <MudText Typo="Typo.body2" Align="Align.Center">Contrôlez éclairage, climatisation, sécurité</MudText>
+                </div>
+            </MudItem>
+            <MudItem xs="12" sm="4">
+                <div class="d-flex flex-column align-center">
+                    <MudIcon Icon="@Icons.Material.Filled.Analytics" Color="Color.Success" Size="Size.Large" Class="mb-2" />
+                    <MudText Typo="Typo.h6">Analytics</MudText>
+                    <MudText Typo="Typo.body2" Align="Align.Center">Surveillez consommation et performances</MudText>
+                </div>
+            </MudItem>
+            <MudItem xs="12" sm="4">
+                <div class="d-flex flex-column align-center">
+                    <MudIcon Icon="@Icons.Material.Filled.Security" Color="Color.Warning" Size="Size.Large" Class="mb-2" />
+                    <MudText Typo="Typo.h6">Sécurité</MudText>
+                    <MudText Typo="Typo.body2" Align="Align.Center">Accès sécurisé et gestion des droits</MudText>
+                </div>
+            </MudItem>
+        </MudGrid>
+
+        @* Boutons d'action *@
+        <MudStack Row="true" Spacing="3" Justify="Justify.Center" Class="fade-in-delay-2">
+            <MudButton Href="/login" 
+                      Variant="Variant.Filled" 
+                      Color="Color.Primary" 
+                      Size="Size.Large"
+                      StartIcon="@Icons.Material.Filled.Login">
+                Se connecter
+            </MudButton>
+            <MudButton Href="/register" 
+                      Variant="Variant.Outlined" 
+                      Color="Color.Primary" 
+                      Size="Size.Large"
+                      StartIcon="@Icons.Material.Filled.PersonAdd">
+                Créer un compte
+            </MudButton>
+        </MudStack>
+
+        @* Informations supplémentaires *@
+        <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-8 fade-in-delay-3">
+            Une solution moderne pour la gestion de votre espace de travail intelligent
+        </MudText>
+    </MudContainer>
+}
+
+<style>
+    .home-icon-animation {
+        transition: all 0.3s ease-in-out;
+    }
+
+    .home-icon-animation:hover {
+        transform: scale(1.05);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+
+    .fade-in {
+        animation: fadeIn 1s ease-in;
+    }
+
+    .fade-in-delay-1 {
+        animation: fadeIn 1s ease-in 0.3s both;
+    }
+
+    .fade-in-delay-2 {
+        animation: fadeIn 1s ease-in 0.6s both;
+    }
+
+    .fade-in-delay-3 {
+        animation: fadeIn 1s ease-in 0.9s both;
+    }
+
+    @@keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+
+@code {
+    private bool _isHovered = false;
+    private bool _isLoading = true;
+    private bool _isAuthenticated = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            Logger.LogDebug("🏠 Initialisation de la page d'accueil");
+            
+            // Vérifier si l'utilisateur est authentifié
+            _isAuthenticated = await AuthService.IsAuthenticatedAsync();
+            
+            if (_isAuthenticated)
+            {
+                Logger.LogInformation("✅ Utilisateur authentifié, redirection vers dashboard");
+                Navigation.NavigateTo("/dashboard", replace: true);
+                return;
+            }
+            
+            Logger.LogDebug("👤 Utilisateur non authentifié, affichage page d'accueil");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "❌ Erreur lors de l'initialisation de la page d'accueil");
+        }
+        finally
+        {
+            _isLoading = false;
+            StateHasChanged();
+        }
+    }
+}
