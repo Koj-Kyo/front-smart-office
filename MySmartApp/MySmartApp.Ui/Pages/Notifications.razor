@@ -1,0 +1,440 @@
+@page "/notifications"
+@using MySmartApp.Ui.Services
+@using MySmartApp.Ui.Models
+@inject INotificationService NotificationService
+@inject IDialogService DialogService
+@inject ILogger<Notifications> Logger
+@attribute [Authorize]
+
+<RequireAuth>
+<MudContainer MaxWidth="MaxWidth.Large" Class="my-8">
+    <MudText Typo="Typo.h4" Class="mb-4"> Centre de Notifications</MudText>
+    <MudText Typo="Typo.body1" Class="mb-4">Gérez toutes vos notifications et restez informé des dernières activités.</MudText>
+
+    <!-- Statistiques rapides -->
+    @if (stats != null)
+    {
+        <MudGrid Class="mb-6">
+            <MudItem xs="6" sm="3">
+                <MudPaper Class="pa-4 text-center" Elevation="2">
+                    <MudText Typo="Typo.h4" Color="Color.Primary">@stats.TotalNotifications</MudText>
+                    <MudText Typo="Typo.body2">Total</MudText>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="6" sm="3">
+                <MudPaper Class="pa-4 text-center" Elevation="2">
+                    <MudText Typo="Typo.h4" Color="Color.Error">@stats.NotificationsNonLues</MudText>
+                    <MudText Typo="Typo.body2">Non lues</MudText>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="6" sm="3">
+                <MudPaper Class="pa-4 text-center" Elevation="2">
+                    <MudText Typo="Typo.h4" Color="Color.Success">@stats.NotificationsLues</MudText>
+                    <MudText Typo="Typo.body2">Lues</MudText>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="6" sm="3">
+                <MudPaper Class="pa-4 text-center" Elevation="2">
+                    <MudText Typo="Typo.h4" Color="@(stats.DerniereNotification.HasValue ? Color.Info : Color.Secondary)">
+                        @(stats.DerniereNotification?.ToString("HH:mm") ?? "--:--")
+                    </MudText>
+                    <MudText Typo="Typo.body2">Dernière</MudText>
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+    }
+
+    <!-- Actions principales -->
+    <div class="d-flex justify-space-between align-center mb-6">
+        <div class="d-flex gap-2">
+            <MudButton OnClick="RefreshNotifications" 
+                       Variant="Variant.Filled" 
+                       Color="Color.Primary" 
+                       StartIcon="@Icons.Material.Filled.Refresh"
+                       Disabled="@isLoading">
+                @if (isLoading)
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                }
+                Actualiser
+            </MudButton>
+            
+            @if (unreadCount > 0)
+            {
+                <MudButton OnClick="MarkAllAsRead" 
+                           Variant="Variant.Outlined" 
+                           Color="Color.Success" 
+                           StartIcon="@Icons.Material.Filled.DoneAll">
+                    Tout marquer comme lu
+                </MudButton>
+            }
+        </div>
+        
+        <div class="d-flex gap-2">
+            <MudTextField T="string" 
+                          @bind-Value="searchString"
+                          Placeholder="Rechercher..." 
+                          Adornment="Adornment.Start" 
+                          AdornmentIcon="@Icons.Material.Filled.Search" 
+                          IconSize="Size.Medium"
+                          Style="max-width: 300px;" />
+            
+            <MudSelect T="string?" @bind-Value="selectedFilter" Label="Filtrer" Clearable Style="min-width: 150px;">
+                <MudSelectItem Value="@("unread")">Non lues</MudSelectItem>
+                <MudSelectItem Value="@("read")">Lues</MudSelectItem>
+                <MudSelectItem Value="@("today")">Aujourd'hui</MudSelectItem>
+                <MudSelectItem Value="@("week")">Cette semaine</MudSelectItem>
+            </MudSelect>
+        </div>
+    </div>
+
+    @if (isLoading && notifications.Count == 0)
+    {
+        <div class="d-flex justify-center align-center pa-8">
+            <MudProgressCircular Size="Size.Large" Indeterminate="true" />
+            <MudText Class="ml-4">Chargement des notifications...</MudText>
+        </div>
+    }
+    else
+    {
+        <!-- Liste des notifications -->
+        <MudGrid>
+            <MudItem xs="12">
+                @if (filteredNotifications.Any())
+                {
+                    <MudPaper Elevation="2" Class="rounded-xl">
+                        <MudList T="string" Dense="false">
+                            @foreach (var notification in filteredNotifications)
+                            {
+                                <MudListItem T="string" 
+                                            Class="@GetNotificationClass(notification)"
+                                            Style="border-radius: 8px; margin: 4px 8px;">
+                                    <div class="d-flex align-start pa-3">
+                                        <!-- Indicateur non lu -->
+                                        <div class="mr-3 mt-1">
+                                            @if (!notification.EstLue)
+                                            {
+                                                <MudIcon Icon="@Icons.Material.Filled.Circle" 
+                                                         Color="Color.Primary" 
+                                                         Size="Size.Small" />
+                                            }
+                                            else
+                                            {
+                                                <MudIcon Icon="@Icons.Material.Filled.CheckCircle" 
+                                                         Color="Color.Success" 
+                                                         Size="Size.Small" />
+                                            }
+                                        </div>
+                                        
+                                        <!-- Contenu de la notification -->
+                                        <div class="flex-grow-1">
+                                            <div class="d-flex justify-space-between align-start mb-2">
+                                                <MudText Typo="Typo.h6" 
+                                                         Style="@(notification.EstLue ? "" : "font-weight: 600;")">
+                                                    @notification.Titre
+                                                </MudText>
+                                                
+                                                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                                    @GetRelativeTime(notification.Horodatage)
+                                                </MudText>
+                                            </div>
+                                            
+                                            <MudText Typo="Typo.body1" 
+                                                     Color="Color.Secondary" 
+                                                     Class="mb-3"
+                                                     Style="line-height: 1.5;">
+                                                @notification.Message
+                                            </MudText>
+                                            
+                                            <div class="d-flex align-center">
+                                                <MudChip T="string" 
+                                                         Size="Size.Small" 
+                                                         Color="@(notification.EstLue ? Color.Success : Color.Warning)">
+                                                    @(notification.EstLue ? "Lue" : "Non lue")
+                                                </MudChip>
+                                                
+                                                <MudText Typo="Typo.caption" Color="Color.Secondary" Class="ml-3">
+                                                    @notification.Horodatage.ToString("dd/MM/yyyy HH:mm:ss")
+                                                </MudText>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Actions -->
+                                        <div class="d-flex flex-column align-end ml-4">
+                                            @if (!notification.EstLue)
+                                            {
+                                                <MudIconButton Icon="@Icons.Material.Filled.MarkEmailRead" 
+                                                               Color="Color.Primary" 
+                                                               Size="Size.Small"
+                                                               OnClick="@(() => MarkAsRead(notification))"
+                                                               Title="Marquer comme lue" />
+                                            }
+                                            
+                                            <MudIconButton Icon="@Icons.Material.Filled.Delete" 
+                                                           Color="Color.Error" 
+                                                           Size="Size.Small"
+                                                           OnClick="@(() => DeleteNotification(notification))"
+                                                           Title="Supprimer" />
+                                        </div>
+                                    </div>
+                                </MudListItem>
+                                
+                                @if (notification != filteredNotifications.Last())
+                                {
+                                    <MudDivider Class="mx-4" />
+                                }
+                            }
+                        </MudList>
+                    </MudPaper>
+                }
+                else
+                {
+                    <div class="d-flex flex-column align-center pa-12">
+                        <MudIcon Icon="@GetEmptyStateIcon()" 
+                                 Size="Size.Large" 
+                                 Color="Color.Secondary" 
+                                 Class="mb-4" />
+                        <MudText Typo="Typo.h5" Color="Color.Secondary">
+                            @GetEmptyStateTitle()
+                        </MudText>
+                        <MudText Typo="Typo.body1" Color="Color.Secondary" Class="text-center">
+                            @GetEmptyStateMessage()
+                        </MudText>
+                        
+                        @if (!string.IsNullOrEmpty(searchString) || !string.IsNullOrEmpty(selectedFilter))
+                        {
+                            <MudButton OnClick="ClearFilters" 
+                                       Variant="Variant.Text"
+                                       Color="Color.Primary"
+                                       Class="mt-3">
+                                Effacer les filtres
+                            </MudButton>
+                        }
+                    </div>
+                }
+            </MudItem>
+        </MudGrid>
+    }
+</MudContainer>
+</RequireAuth>
+
+<style>
+.notification-unread {
+    background-color: rgba(var(--mud-palette-primary-rgb), 0.05);
+    border-left: 4px solid var(--mud-palette-primary);
+}
+
+.notification-read {
+    opacity: 0.85;
+}
+
+.notification-unread:hover, .notification-read:hover {
+    background-color: var(--mud-palette-action-hover);
+}
+</style>
+
+@code {
+    // État de la page
+    private bool isLoading = true;
+    private string searchString = "";
+    private string? selectedFilter;
+    
+    // Données
+    private List<UserNotificationDto> notifications = new();
+    private NotificationStatsDto? stats;
+    private int unreadCount = 0;
+
+    // Propriétés calculées
+    private IEnumerable<UserNotificationDto> filteredNotifications
+    {
+        get
+        {
+            var filtered = notifications.AsEnumerable();
+            
+            // Filtre par texte
+            if (!string.IsNullOrEmpty(searchString))
+            {
+                filtered = filtered.Where(n => 
+                    n.Titre.Contains(searchString, StringComparison.OrdinalIgnoreCase) ||
+                    n.Message.Contains(searchString, StringComparison.OrdinalIgnoreCase));
+            }
+            
+            // Filtre par type
+            if (!string.IsNullOrEmpty(selectedFilter))
+            {
+                filtered = selectedFilter switch
+                {
+                    "unread" => filtered.Where(n => !n.EstLue),
+                    "read" => filtered.Where(n => n.EstLue),
+                    "today" => filtered.Where(n => n.Horodatage.Date == DateTime.Today),
+                    "week" => filtered.Where(n => n.Horodatage >= DateTime.Now.AddDays(-7)),
+                    _ => filtered
+                };
+            }
+            
+            return filtered.OrderByDescending(n => n.Horodatage);
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        // S'abonner aux événements
+        NotificationService.NotificationsUpdated += OnNotificationsUpdated;
+        NotificationService.UnreadCountChanged += OnUnreadCountChanged;
+        
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        isLoading = true;
+        StateHasChanged();
+        
+        try
+        {
+            // Charger les notifications et statistiques en parallèle
+            var notificationsTask = NotificationService.GetUserNotificationsAsync();
+            var statsTask = NotificationService.GetNotificationStatsAsync();
+            
+            await Task.WhenAll(notificationsTask, statsTask);
+            
+            var notificationsResponse = await notificationsTask;
+            if (notificationsResponse.IsSuccess && notificationsResponse.Data != null)
+            {
+                notifications = notificationsResponse.Data;
+                unreadCount = notifications.Count(n => !n.EstLue);
+            }
+            
+            var statsResponse = await statsTask;
+            if (statsResponse.IsSuccess)
+            {
+                stats = statsResponse.Data;
+            }
+            
+            Logger.LogInformation("? {Count} notifications chargées", notifications.Count);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "? Erreur lors du chargement des données");
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task RefreshNotifications()
+    {
+        NotificationService.InvalidateCache();
+        await LoadData();
+    }
+
+    private async Task MarkAsRead(UserNotificationDto notification)
+    {
+        var result = await NotificationService.MarkAsReadAsync(notification.Id);
+        if (result.IsSuccess)
+        {
+            Logger.LogDebug("Notification {Id} marquée comme lue", notification.Id);
+        }
+    }
+
+    private async Task MarkAllAsRead()
+    {
+        var result = await NotificationService.MarkAllAsReadAsync();
+        if (result.IsSuccess)
+        {
+            Logger.LogInformation("Toutes les notifications marquées comme lues");
+        }
+    }
+
+    private async Task DeleteNotification(UserNotificationDto notification)
+    {
+        bool? result = await DialogService.ShowMessageBox(
+            "?? Confirmation de suppression",
+            $"Êtes-vous sûr de vouloir supprimer cette notification ?\n\n« {notification.Titre} »",
+            yesText: "Supprimer",
+            cancelText: "Annuler");
+
+        if (result == true)
+        {
+            var deleteResult = await NotificationService.DeleteNotificationAsync(notification.Id);
+            if (deleteResult.IsSuccess)
+            {
+                Logger.LogDebug("Notification {Id} supprimée", notification.Id);
+            }
+        }
+    }
+
+    private void ClearFilters()
+    {
+        searchString = "";
+        selectedFilter = null;
+        StateHasChanged();
+    }
+
+    // Événements de mise à jour
+    private void OnNotificationsUpdated(List<UserNotificationDto> updatedNotifications)
+    {
+        notifications = updatedNotifications;
+        unreadCount = notifications.Count(n => !n.EstLue);
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void OnUnreadCountChanged(int newUnreadCount)
+    {
+        unreadCount = newUnreadCount;
+        InvokeAsync(StateHasChanged);
+    }
+
+    // Méthodes utilitaires
+    private string GetNotificationClass(UserNotificationDto notification)
+    {
+        return notification.EstLue ? "notification-read" : "notification-unread";
+    }
+
+    private string GetRelativeTime(DateTime dateTime)
+    {
+        var timeSpan = DateTime.Now - dateTime;
+        
+        return timeSpan.TotalDays switch
+        {
+            >= 365 => $"il y a {(int)(timeSpan.TotalDays / 365)} an(s)",
+            >= 30 => $"il y a {(int)(timeSpan.TotalDays / 30)} mois",
+            >= 1 => $"il y a {(int)timeSpan.TotalDays} jour(s)",
+            _ => timeSpan.TotalHours switch
+            {
+                >= 1 => $"il y a {(int)timeSpan.TotalHours}h",
+                _ => timeSpan.TotalMinutes < 1 ? "à l'instant" : $"il y a {(int)timeSpan.TotalMinutes}min"
+            }
+        };
+    }
+
+    private string GetEmptyStateIcon()
+    {
+        if (!string.IsNullOrEmpty(searchString)) return Icons.Material.Filled.SearchOff;
+        if (selectedFilter == "unread") return Icons.Material.Filled.MarkEmailRead;
+        return Icons.Material.Filled.NotificationsNone;
+    }
+
+    private string GetEmptyStateTitle()
+    {
+        if (!string.IsNullOrEmpty(searchString)) return "Aucun résultat";
+        if (selectedFilter == "unread") return "Toutes les notifications sont lues";
+        return "Aucune notification";
+    }
+
+    private string GetEmptyStateMessage()
+    {
+        if (!string.IsNullOrEmpty(searchString)) return "Aucune notification ne correspond à votre recherche.";
+        if (selectedFilter == "unread") return "Félicitations ! Vous êtes à jour.";
+        return "Vous n'avez reçu aucune notification pour le moment.";
+    }
+
+    public void Dispose()
+    {
+        // Se désabonner des événements
+        NotificationService.NotificationsUpdated -= OnNotificationsUpdated;
+        NotificationService.UnreadCountChanged -= OnUnreadCountChanged;
+    }
+}

@@ -1,0 +1,316 @@
+@using MySmartApp.Ui.Services
+@using MySmartApp.Ui.Models
+@inject INotificationService NotificationService
+@inject ILogger<NotificationBadgeComponent> Logger
+@implements IDisposable
+
+<MudBadge Content="@unreadCount" 
+Color="Color.Error" 
+Visible="@(unreadCount > 0)"
+Max="99"
+Class="@($"notification-badge {Class}")">
+    <MudIconButton Icon="@Icons.Material.Filled.Notifications"
+                   Color="Color.Inherit"
+                   OnClick="ToggleNotifications"
+                   Title="@GetTooltipText()" />
+</MudBadge>
+
+<!-- Menu déroulant des notifications -->
+<MudPopover Open="@isPopoverOpen" 
+            AnchorOrigin="Origin.BottomCenter" 
+            TransformOrigin="Origin.TopCenter"
+            Paper="false"
+            Class="notification-popover">
+    <MudPaper Class="pa-0" Elevation="8" Style="max-width: 400px; max-height: 500px;">
+        <div class="pa-4 d-flex justify-space-between align-center border-bottom">
+            <MudText Typo="Typo.h6">
+                Notifications
+                @if (unreadCount > 0)
+                {
+                    <MudChip T="string" Size="Size.Small" Color="Color.Error" Class="ml-2">
+                        @unreadCount
+                    </MudChip>
+                }
+            </MudText>
+            
+            <div class="d-flex gap-1">
+                @if (unreadCount > 0)
+                {
+                    <MudIconButton Icon="@Icons.Material.Filled.DoneAll" 
+                                   Size="Size.Small"
+                                   Color="Color.Success"
+                                   OnClick="MarkAllAsRead"
+                                   Title="Tout marquer comme lu" />
+                }
+                
+                <MudIconButton Icon="@Icons.Material.Filled.Close" 
+                               Size="Size.Small"
+                               OnClick="CloseNotifications" />
+            </div>
+        </div>
+        
+        <div Class="notification-content" Style="max-height: 400px; overflow-y: auto;">
+            @if (isLoading)
+            {
+                <div class="d-flex align-center justify-center pa-6">
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                    <MudText>Chargement...</MudText>
+                </div>
+            }
+            else if (notifications.Any())
+            {
+                <MudList T="string" Dense="true">
+                    @foreach (var notification in notifications.Take(10))
+                    {
+                        <MudListItem T="string" 
+                                    Class="@GetNotificationClass(notification)"
+                                    OnClick="@(() => MarkAsReadAndClose(notification))">
+                            <div class="d-flex align-start pa-2">
+                                @if (!notification.EstLue)
+                                {
+                                    <MudIcon Icon="@Icons.Material.Filled.Circle" 
+                                             Color="Color.Primary" 
+                                             Size="Size.Small" 
+                                             Class="mr-2 mt-1" />
+                                }
+                                
+                                <div class="flex-grow-1">
+                                    <MudText Typo="Typo.body2" 
+                                             Style="@(notification.EstLue ? "" : "font-weight: 600;")">
+                                        @notification.Titre
+                                    </MudText>
+                                    
+                                    <MudText Typo="Typo.body2" 
+                                             Color="Color.Secondary" 
+                                             Class="mb-1"
+                                             Style="font-size: 0.875rem; line-height: 1.2;">
+                                        @GetTruncatedMessage(notification.Message)
+                                    </MudText>
+                                    
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                        @GetRelativeTime(notification.Horodatage)
+                                    </MudText>
+                                </div>
+                            </div>
+                        </MudListItem>
+                        
+                        @if (notification != notifications.Take(10).Last())
+                        {
+                            <MudDivider />
+                        }
+                    }
+                </MudList>
+                
+                @if (notifications.Count > 10)
+                {
+                    <div class="pa-3 text-center border-top">
+                        <MudButton Size="Size.Small" 
+                                   Variant="Variant.Text"
+                                   OnClick="ViewAllNotifications">
+                            Voir toutes les notifications (+@(notifications.Count - 10))
+                        </MudButton>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="d-flex flex-column align-center pa-6">
+                    <MudIcon Icon="@Icons.Material.Filled.NotificationsNone" 
+                             Size="Size.Large" 
+                             Color="Color.Secondary" 
+                             Class="mb-2" />
+                    <MudText Typo="Typo.body1" Color="Color.Secondary">
+                        Aucune notification
+                    </MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                        Vous êtes à jour !
+                    </MudText>
+                </div>
+            }
+        </div>
+    </MudPaper>
+</MudPopover>
+
+<style>
+.notification-badge .mud-badge-dot {
+    animation: pulse 2s infinite;
+}
+
+@@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+.notification-popover .mud-list-item {
+    border-radius: 4px;
+    margin: 2px 4px;
+}
+
+.notification-popover .mud-list-item:hover {
+    background-color: var(--mud-palette-action-hover);
+}
+
+.notification-unread {
+    background-color: rgba(var(--mud-palette-primary-rgb), 0.08);
+    border-left: 3px solid var(--mud-palette-primary);
+}
+
+.notification-read {
+    opacity: 0.8;
+}
+</style>
+
+@code {
+[Parameter] public EventCallback<UserNotificationDto> OnNotificationClicked { get; set; }
+[Parameter] public EventCallback OnViewAllClicked { get; set; }
+[Parameter] public string? Class { get; set; }
+
+    private bool isPopoverOpen = false;
+    private bool isLoading = true;
+    private List<UserNotificationDto> notifications = new();
+    private int unreadCount = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // S'abonner aux événements du service
+        NotificationService.NotificationsUpdated += OnNotificationsUpdated;
+        NotificationService.UnreadCountChanged += OnUnreadCountChanged;
+        NotificationService.NewNotificationReceived += OnNewNotificationReceived;
+        
+        await LoadNotifications();
+    }
+
+    private async Task LoadNotifications()
+    {
+        isLoading = true;
+        StateHasChanged();
+        
+        try
+        {
+            var response = await NotificationService.GetUserNotificationsAsync();
+            
+            if (response.IsSuccess && response.Data != null)
+            {
+                notifications = response.Data;
+                unreadCount = notifications.Count(n => !n.EstLue);
+                Logger.LogDebug("Badge notifications: {Count} total, {Unread} non lues", 
+                    notifications.Count, unreadCount);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "? Erreur lors du chargement des notifications pour le badge");
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void ToggleNotifications()
+    {
+        isPopoverOpen = !isPopoverOpen;
+        
+        if (isPopoverOpen && notifications.Count == 0)
+        {
+            _ = LoadNotifications();
+        }
+    }
+
+    private void CloseNotifications()
+    {
+        isPopoverOpen = false;
+        StateHasChanged();
+    }
+
+    private async Task MarkAsReadAndClose(UserNotificationDto notification)
+    {
+        if (!notification.EstLue)
+        {
+            await NotificationService.MarkAsReadAsync(notification.Id);
+        }
+        
+        await OnNotificationClicked.InvokeAsync(notification);
+        CloseNotifications();
+    }
+
+    private async Task MarkAllAsRead()
+    {
+        await NotificationService.MarkAllAsReadAsync();
+        // Les notifications seront mises à jour automatiquement via l'événement
+    }
+
+    private async Task ViewAllNotifications()
+    {
+        CloseNotifications();
+        await OnViewAllClicked.InvokeAsync();
+    }
+
+    // Événements de mise à jour
+    private void OnNotificationsUpdated(List<UserNotificationDto> updatedNotifications)
+    {
+        notifications = updatedNotifications;
+        unreadCount = notifications.Count(n => !n.EstLue);
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void OnUnreadCountChanged(int newUnreadCount)
+    {
+        unreadCount = newUnreadCount;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void OnNewNotificationReceived(UserNotificationDto notification)
+    {
+        // Animation ou effet visuel pour nouvelle notification
+        InvokeAsync(StateHasChanged);
+    }
+
+    // Méthodes utilitaires
+    private string GetTooltipText()
+    {
+        return unreadCount switch
+        {
+            0 => "Aucune nouvelle notification",
+            1 => "1 nouvelle notification",
+            _ => $"{unreadCount} nouvelles notifications"
+        };
+    }
+
+    private string GetNotificationClass(UserNotificationDto notification)
+    {
+        return notification.EstLue ? "notification-read" : "notification-unread";
+    }
+
+    private string GetTruncatedMessage(string message, int maxLength = 60)
+    {
+        return message.Length > maxLength 
+            ? message.Substring(0, maxLength) + "..."
+            : message;
+    }
+
+    private string GetRelativeTime(DateTime dateTime)
+    {
+        var timeSpan = DateTime.Now - dateTime;
+        
+        return timeSpan.TotalDays switch
+        {
+            >= 1 => $"{(int)timeSpan.TotalDays}j",
+            _ => timeSpan.TotalHours switch
+            {
+                >= 1 => $"{(int)timeSpan.TotalHours}h",
+                _ => timeSpan.TotalMinutes < 1 ? "maintenant" : $"{(int)timeSpan.TotalMinutes}min"
+            }
+        };
+    }
+
+    public void Dispose()
+    {
+        // Se désabonner des événements
+        NotificationService.NotificationsUpdated -= OnNotificationsUpdated;
+        NotificationService.UnreadCountChanged -= OnUnreadCountChanged;
+        NotificationService.NewNotificationReceived -= OnNewNotificationReceived;
+    }
+}

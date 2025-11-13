@@ -1,0 +1,291 @@
+@using MySmartApp.Ui.Services
+@using MySmartApp.Ui.Models
+@inject ITelemetrieService TelemetrieService
+@inject IDeviceService DeviceService
+@inject ILogger<TelemetrieWidgetComponent> Logger
+
+<MudPaper Class="pa-4 rounded-xl" Elevation="2">
+    <div class="d-flex justify-space-between align-center mb-4">
+        <div class="d-flex align-center">
+     <MudIcon Icon="@Icons.Material.Filled.Analytics" Color="Color.Primary" Class="mr-2" />
+      <MudText Typo="Typo.h6">Télémétrie Temps Réel</MudText>
+  </div>
+        <MudIconButton Icon="@Icons.Material.Filled.Refresh" 
+    Size="Size.Small"
+          OnClick="RefreshData"
+        Disabled="@isLoading" />
+    </div>
+    
+    @if (isLoading)
+    {
+        <div class="d-flex align-center pa-4">
+    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+      <MudText>Chargement...</MudText>
+        </div>
+    }
+    else if (recentTelemetries.Any())
+{
+        <!-- Statistiques rapides -->
+        <MudGrid Class="mb-4">
+      <MudItem xs="4">
+         <div class="text-center">
+   <MudText Typo="Typo.h6" Color="Color.Primary">@totalEventsToday</MudText>
+ <MudText Typo="Typo.caption">événements aujourd'hui</MudText>
+       </div>
+            </MudItem>
+            <MudItem xs="4">
+ <div class="text-center">
+             <MudText Typo="Typo.h6" Color="Color.Success">@averageValueToday.ToString("F1")</MudText>
+                    <MudText Typo="Typo.caption">Valeur moyenne</MudText>
+    </div>
+    </MudItem>
+            <MudItem xs="4">
+    <div class="text-center">
+   <MudText Typo="Typo.h6" Color="Color.Info">@activeDevicesCount</MudText>
+         <MudText Typo="Typo.caption">Devices actifs</MudText>
+         </div>
+   </MudItem>
+        </MudGrid>
+
+        <!-- Graphique mini -->
+      <div class="mb-4" style="height: 120px; background: linear-gradient(45deg, rgba(var(--mud-palette-primary-rgb), 0.05), rgba(var(--mud-palette-secondary-rgb), 0.05)); border-radius: 8px; position: relative;">
+    <div class="d-flex justify-center align-center" style="height: 100%;">
+             <div class="d-flex align-center">
+      <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Color="Color.Primary" Class="mr-2" />
+           <div>
+  <MudText Typo="Typo.body2" Style="font-weight: 500;">Activité dernières 24h</MudText>
+            <MudText Typo="Typo.caption" Color="Color.Secondary">
+@recentTelemetries.Count événements enregistrés
+    </MudText>
+    </div>
+       </div>
+     </div>
+            
+ <!-- Indicateurs de tendance -->
+            <div style="position: absolute; top: 8px; right: 8px;">
+         @if (trendPercentage > 5)
+           {
+ <MudChip T="string" Size="Size.Small" Color="Color.Success" Icon="@Icons.Material.Filled.TrendingUp">
+    +@trendPercentage.ToString("F1")%
+            </MudChip>
+     }
+     else if (trendPercentage < -5)
+             {
+            <MudChip T="string" Size="Size.Small" Color="Color.Error" Icon="@Icons.Material.Filled.TrendingDown">
+       @trendPercentage.ToString("F1")%
+      </MudChip>
+  }
+    else
+        {
+                    <MudChip T="string" Size="Size.Small" Color="Color.Default" Icon="@Icons.Material.Filled.TrendingFlat">
+                Stable
+             </MudChip>
+     }
+  </div>
+        </div>
+
+        <!-- Top événements -->
+        <MudText Typo="Typo.subtitle2" Class="mb-2">Types d'événements récents</MudText>
+        <div class="event-types-summary">
+            @foreach (var eventType in topEventTypes.Take(4))
+{
+              <div class="d-flex justify-space-between align-center mb-2">
+    <div class="d-flex align-center">
+  <MudIcon Icon="@GetEventTypeIcon(eventType.Key)" 
+               Color="@GetEventTypeColor(eventType.Key)" 
+      Size="Size.Small" 
+    Class="mr-2" />
+      <MudText Typo="Typo.body2">@eventType.Key</MudText>
+    </div>
+            <MudChip T="string" Size="Size.Small" Color="@GetEventTypeColor(eventType.Key)">
+         @eventType.Value
+          </MudChip>
+            </div>
+         }
+        </div>
+
+        <!-- Alertes récentes -->
+        @if (alerts.Any())
+        {
+            <MudDivider Class="my-3" />
+            <div class="d-flex align-center mb-2">
+        <MudIcon Icon="@Icons.Material.Filled.Warning" Color="Color.Warning" Size="Size.Small" Class="mr-2" />
+                <MudText Typo="Typo.subtitle2">Alertes actives</MudText>
+  </div>
+     @foreach (var alert in alerts.Take(2))
+    {
+        <MudAlert Severity="@GetAlertSeverity(alert.Severity)" 
+Dense="true" 
+        Class="mb-2">
+      <div>
+           <MudText Typo="Typo.body2" Style="font-weight: 500;">@alert.AlertType</MudText>
+     <MudText Typo="Typo.caption">@alert.PeripheriqueName - @alert.DetectedAt.ToString("HH:mm")</MudText>
+        </div>
+      </MudAlert>
+       }
+        }
+
+        <!-- Lien vers la page complète -->
+        <MudDivider Class="my-3" />
+   <div class="text-center">
+ <MudButton Variant="Variant.Text" 
+     Color="Color.Primary"
+      OnClick="@(() => OnViewDetails.InvokeAsync())"
+     Size="Size.Small">
+  Voir l'analyse complète
+            </MudButton>
+        </div>
+    }
+    else
+    {
+      <div class="d-flex flex-column align-center pa-6">
+            <MudIcon Icon="@Icons.Material.Filled.Analytics" Size="Size.Large" Color="Color.Secondary" Class="mb-2" />
+            <MudText Typo="Typo.h6" Color="Color.Secondary">Aucune donnée</MudText>
+    <MudText Typo="Typo.body2" Color="Color.Secondary" Class="text-center">
+    Aucune télémétrie récente disponible
+   </MudText>
+ </div>
+    }
+</MudPaper>
+
+@code {
+  [Parameter] public EventCallback OnViewDetails { get; set; }
+
+    private bool isLoading = true;
+    private List<TelemetrieDto> recentTelemetries = new();
+    private List<TelemetrieAlertDto> alerts = new();
+    
+    // Statistiques calculées
+    private int totalEventsToday = 0;
+    private double averageValueToday = 0;
+    private int activeDevicesCount = 0;
+    private double trendPercentage = 0;
+    private Dictionary<string, int> topEventTypes = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadTelemetrieData();
+     
+        // Actualiser toutes les 30 secondes
+        _ = Task.Run(async () =>
+        {
+         while (true)
+         {
+  await Task.Delay(30000); // 30 secondes
+      await InvokeAsync(async () =>
+         {
+          await RefreshData();
+   StateHasChanged();
+   });
+            }
+        });
+ }
+
+    private async Task LoadTelemetrieData()
+    {
+        isLoading = true;
+        StateHasChanged();
+
+        try
+        {
+          // Charger les données récentes (dernières 24h)
+ var recentResponse = await TelemetrieService.GetRecentTelemetriesAsync(null, 24);
+            
+     if (recentResponse.IsSuccess && recentResponse.Data != null)
+            {
+         recentTelemetries = recentResponse.Data.OrderByDescending(t => t.Horodatage).ToList();
+     
+            // Calculer les statistiques
+    CalculateStatistics();
+   }
+
+   // Charger les alertes
+            var alertsResponse = await TelemetrieService.GetTelemetrieAlertsAsync();
+   
+            if (alertsResponse.IsSuccess && alertsResponse.Data != null)
+{
+      alerts = alertsResponse.Data.Take(3).ToList();
+   }
+
+  Logger.LogDebug("Widget télémétrie actualisé: {Count} événements, {Alerts} alertes", 
+         recentTelemetries.Count, alerts.Count);
+        }
+     catch (Exception ex)
+        {
+     Logger.LogError(ex, "Erreur lors du chargement des données de télémétrie");
+}
+        finally
+        {
+    isLoading = false;
+      StateHasChanged();
+        }
+    }
+
+    private void CalculateStatistics()
+    {
+        if (!recentTelemetries.Any()) return;
+
+     var today = DateTime.Today;
+   var todayData = recentTelemetries.Where(t => t.Horodatage.Date == today).ToList();
+   var yesterdayData = recentTelemetries.Where(t => t.Horodatage.Date == today.AddDays(-1)).ToList();
+
+        // Statistiques du jour
+        totalEventsToday = todayData.Count;
+        averageValueToday = todayData.Any() ? todayData.Average(t => t.Valeur) : 0;
+        activeDevicesCount = recentTelemetries.Select(t => t.PeripheriqueLogiqueId).Distinct().Count();
+
+      // Calculer la tendance
+        var todayAverage = todayData.Any() ? todayData.Average(t => t.Valeur) : 0;
+        var yesterdayAverage = yesterdayData.Any() ? yesterdayData.Average(t => t.Valeur) : 0;
+      
+      if (yesterdayAverage > 0)
+        {
+     trendPercentage = ((todayAverage - yesterdayAverage) / yesterdayAverage) * 100;
+   }
+
+        // Top événements
+        topEventTypes = recentTelemetries
+     .GroupBy(t => t.TypeEvenement)
+  .ToDictionary(g => g.Key, g => g.Count())
+            .OrderByDescending(kvp => kvp.Value)
+        .Take(5)
+            .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+    }
+
+    private async Task RefreshData()
+    {
+    await LoadTelemetrieData();
+    }
+
+  // Méthodes utilitaires pour l'UI
+    private string GetEventTypeIcon(string eventType) => eventType.ToLower() switch
+    {
+        var type when type.Contains("consommation") => Icons.Material.Filled.ElectricBolt,
+        var type when type.Contains("impression") => Icons.Material.Filled.Print,
+        var type when type.Contains("scan") => Icons.Material.Filled.Scanner,
+        var type when type.Contains("activation") => Icons.Material.Filled.PowerSettingsNew,
+        var type when type.Contains("erreur") => Icons.Material.Filled.Error,
+        var type when type.Contains("température") => Icons.Material.Filled.Thermostat,
+        var type when type.Contains("humidité") => Icons.Material.Filled.Opacity,
+     _ => Icons.Material.Filled.Analytics
+    };
+
+    private Color GetEventTypeColor(string eventType) => eventType.ToLower() switch
+{
+        var type when type.Contains("consommation") => Color.Warning,
+     var type when type.Contains("impression") => Color.Info,
+        var type when type.Contains("scan") => Color.Success,
+        var type when type.Contains("activation") => Color.Primary,
+        var type when type.Contains("erreur") => Color.Error,
+        var type when type.Contains("température") => Color.Secondary,
+        var type when type.Contains("humidité") => Color.Tertiary,
+   _ => Color.Default
+    };
+
+    private Severity GetAlertSeverity(string severity) => severity.ToLower() switch
+    {
+   "critique" => Severity.Error,
+  "avertissement" => Severity.Warning,
+  _ => Severity.Info
+    };
+}

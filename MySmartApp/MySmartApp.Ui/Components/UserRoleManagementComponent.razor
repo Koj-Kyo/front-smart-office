@@ -1,0 +1,302 @@
+@using MySmartApp.Ui.Services
+@using MySmartApp.Ui.Models
+@inject IUserManagementService UserManagementService
+@inject IDialogService DialogService
+@inject ILogger<UserRoleManagementComponent> Logger
+@attribute [Authorize(Roles = "Admin")]
+
+<MudPaper Class="pa-4 rounded-xl" Elevation="2">
+    <div class="d-flex justify-space-between align-center mb-4">
+        <MudText Typo="Typo.h6"> Gestion des Rôles Utilisateur</MudText>
+        <MudIconButton Icon="@Icons.Material.Filled.Refresh" 
+                       Size="Size.Small"
+                       OnClick="RefreshData"
+                       Disabled="@isLoading" />
+    </div>
+    
+    @if (isLoading)
+    {
+        <div class="d-flex align-center pa-4">
+            <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+            <MudText>Chargement...</MudText>
+        </div>
+    }
+    else
+    {
+        <!-- Formulaire d'attribution de rôle -->
+        <MudGrid Class="mb-4">
+            <MudItem xs="12" sm="4">
+                <MudTextField @bind-Value="targetUserId"
+                              Label="ID Utilisateur"
+                              Placeholder="user-id-123"
+                              HelperText="ID de l'utilisateur cible"
+                              Required="true" />
+            </MudItem>
+            
+            <MudItem xs="12" sm="4">
+                <MudSelect @bind-Value="selectedRole"
+                           Label="Rôle"
+                           Required="true">
+                    @foreach (var role in availableRoles)
+                    {
+                        <MudSelectItem Value="@role">@role</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            
+            <MudItem xs="12" sm="4" Class="d-flex align-center">
+                <MudButton OnClick="AssignRole" 
+                           Variant="Variant.Filled" 
+                           Color="Color.Primary"
+                           Disabled="@(isProcessing || string.IsNullOrEmpty(targetUserId) || string.IsNullOrEmpty(selectedRole))"
+                           Class="mr-2">
+                    @if (isProcessing)
+                    {
+                        <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                    }
+                    Attribuer
+                </MudButton>
+                
+                <MudButton OnClick="RemoveRole" 
+                           Variant="Variant.Outlined" 
+                           Color="Color.Error"
+                           Disabled="@(isProcessing || string.IsNullOrEmpty(targetUserId) || string.IsNullOrEmpty(selectedRole))">
+                    Retirer
+                </MudButton>
+            </MudItem>
+        </MudGrid>
+
+        <!-- Historique des opérations -->
+        @if (roleOperations.Any())
+        {
+            <MudDivider Class="my-4" />
+            <MudText Typo="Typo.subtitle1" Class="mb-3"> Historique des Opérations</MudText>
+            
+            <MudList T="string" Dense="true">
+                @foreach (var operation in roleOperations.Take(5))
+                {
+                    <MudListItem T="string">
+                        <div class="d-flex align-center">
+                            <MudIcon Icon="@GetOperationIcon(operation)" 
+                                     Color="@GetOperationColor(operation)" 
+                                     Class="mr-3" />
+                            <div>
+                                <MudText Typo="Typo.body2" Style="font-weight: 500;">
+                                    @operation.Message
+                                </MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                    Utilisateur: @operation.UserId | Rôle: @operation.RoleName
+                                </MudText>
+                            </div>
+                        </div>
+                    </MudListItem>
+                    
+                    @if (operation != roleOperations.Take(5).Last())
+                    {
+                        <MudDivider />
+                    }
+                }
+            </MudList>
+        }
+
+        <!-- Rôles disponibles -->
+        <MudDivider Class="my-4" />
+        <MudText Typo="Typo.subtitle1" Class="mb-3"> Rôles Disponibles</MudText>
+        
+        <div class="d-flex flex-wrap gap-2">
+            @foreach (var role in availableRoles)
+            {
+                <MudChip T="string" 
+                         Color="@GetRoleColor(role)" 
+                         Variant="Variant.Outlined">
+                    @role
+                </MudChip>
+            }
+        </div>
+
+        <!-- Guide d'utilisation -->
+        <MudExpansionPanels Class="mt-4">
+            <MudExpansionPanel Text=" Guide d'utilisation">
+                <div class="pa-2">
+                    <MudText Typo="Typo.body2" Class="mb-2">
+                        <strong>Attribution d'un rôle :</strong>
+                    </MudText>
+                    <MudText Typo="Typo.body2" Class="mb-3">
+                        1. Saisissez l'ID de l'utilisateur cible<br/>
+                        2. Sélectionnez le rôle à attribuer<br/>
+                        3. Cliquez sur "Attribuer"
+                    </MudText>
+                    
+                    <MudText Typo="Typo.body2" Class="mb-2">
+                        <strong>Retrait d'un rôle :</strong>
+                    </MudText>
+                    <MudText Typo="Typo.body2">
+                        1. Saisissez l'ID de l'utilisateur cible<br/>
+                        2. Sélectionnez le rôle à retirer<br/>
+                        3. Cliquez sur "Retirer"
+                    </MudText>
+                </div>
+            </MudExpansionPanel>
+        </MudExpansionPanels>
+    }
+</MudPaper>
+
+@code {
+    [Parameter] public EventCallback OnRoleChanged { get; set; }
+
+    private bool isLoading = true;
+    private bool isProcessing = false;
+    private string targetUserId = "";
+    private string selectedRole = "";
+    private List<string> availableRoles = new();
+    private List<RoleOperationResultDto> roleOperations = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        isLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            var rolesResponse = await UserManagementService.GetAvailableRolesAsync();
+            
+            if (rolesResponse.IsSuccess && rolesResponse.Data != null)
+            {
+                availableRoles = rolesResponse.Data;
+                Logger.LogInformation(" {Count} rôles disponibles chargés", availableRoles.Count);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, " Erreur lors du chargement des données");
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task RefreshData()
+    {
+        await LoadData();
+    }
+
+    private async Task AssignRole()
+    {
+        if (string.IsNullOrEmpty(targetUserId) || string.IsNullOrEmpty(selectedRole))
+            return;
+
+        isProcessing = true;
+        StateHasChanged();
+
+        try
+        {
+            var result = await UserManagementService.AssignRoleAsync(targetUserId, selectedRole);
+            
+            if (result.IsSuccess && result.Data != null)
+            {
+                roleOperations.Insert(0, result.Data);
+                
+                // Limiter l'historique à 20 opérations
+                if (roleOperations.Count > 20)
+                {
+                    roleOperations = roleOperations.Take(20).ToList();
+                }
+                
+                // Réinitialiser le formulaire
+                targetUserId = "";
+                selectedRole = "";
+                
+                await OnRoleChanged.InvokeAsync();
+                Logger.LogInformation(" Rôle {Role} attribué à {UserId}", selectedRole, targetUserId);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, " Erreur lors de l'attribution du rôle");
+        }
+        finally
+        {
+            isProcessing = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task RemoveRole()
+    {
+        if (string.IsNullOrEmpty(targetUserId) || string.IsNullOrEmpty(selectedRole))
+            return;
+
+        bool? confirmed = await DialogService.ShowMessageBox(
+            " Confirmation",
+            $"Êtes-vous sûr de vouloir retirer le rôle '{selectedRole}' à l'utilisateur '{targetUserId}' ?",
+            yesText: "Confirmer",
+            cancelText: "Annuler");
+
+        if (confirmed != true)
+            return;
+
+        isProcessing = true;
+        StateHasChanged();
+
+        try
+        {
+            var result = await UserManagementService.RemoveRoleAsync(targetUserId, selectedRole);
+            
+            if (result.IsSuccess && result.Data != null)
+            {
+                roleOperations.Insert(0, result.Data);
+                
+                // Limiter l'historique à 20 opérations
+                if (roleOperations.Count > 20)
+                {
+                    roleOperations = roleOperations.Take(20).ToList();
+                }
+                
+                // Réinitialiser le formulaire
+                targetUserId = "";
+                selectedRole = "";
+                
+                await OnRoleChanged.InvokeAsync();
+                Logger.LogInformation(" Rôle {Role} retiré de {UserId}", selectedRole, targetUserId);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, " Erreur lors du retrait du rôle");
+        }
+        finally
+        {
+            isProcessing = false;
+            StateHasChanged();
+        }
+    }
+
+    // Méthodes utilitaires
+    private Color GetRoleColor(string role) => role.ToLower() switch
+    {
+        "admin" => Color.Error,
+        "manager" => Color.Warning,
+        "employee" => Color.Primary,
+        "viewer" => Color.Info,
+        _ => Color.Default
+    };
+
+    private string GetOperationIcon(RoleOperationResultDto operation)
+    {
+        return operation.Success 
+            ? Icons.Material.Filled.CheckCircle 
+            : Icons.Material.Filled.Error;
+    }
+
+    private Color GetOperationColor(RoleOperationResultDto operation)
+    {
+        return operation.Success ? Color.Success : Color.Error;
+    }
+}

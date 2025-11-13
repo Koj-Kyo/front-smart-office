@@ -1,0 +1,336 @@
+@using MySmartApp.Ui.Services
+@using MySmartApp.Ui.Models
+@inject INotificationService NotificationService
+@inject ILogger<NotificationsPanelComponent> Logger
+@implements IDisposable
+
+<MudPaper Class="pa-4 rounded-xl" Elevation="2">
+    <div class="d-flex justify-space-between align-center mb-4">
+      <div class="d-flex align-center">
+     <MudIcon Icon="@Icons.Material.Filled.Notifications" Color="Color.Info" Class="mr-2" />
+            <MudText Typo="Typo.h6">
+  Notifications
+       @if (unreadCount > 0)
+        {
+          <MudChip T="string" Size="Size.Small" Color="Color.Error" Class="ml-2">
+       @unreadCount
+            </MudChip>
+            }
+            </MudText>
+     </div>
+  
+        <div class="d-flex gap-1">
+            <MudIconButton Icon="@Icons.Material.Filled.Refresh" 
+        Size="Size.Small"
+        OnClick="RefreshNotifications"
+      Disabled="@isLoading"
+      Title="Actualiser" />
+     
+         @if (unreadCount > 0)
+            {
+<MudIconButton Icon="@Icons.Material.Filled.DoneAll" 
+   Size="Size.Small"
+   OnClick="MarkAllAsRead"
+                 Color="Color.Success"
+      Title="Tout marquer comme lu" />
+    }
+            
+    @if (ShowFullView)
+            {
+           <MudIconButton Icon="@(showOnlyUnread ? Icons.Material.Filled.VisibilityOff : Icons.Material.Filled.Visibility)" 
+      Size="Size.Small"
+    OnClick="ToggleUnreadFilter"
+     Title="@(showOnlyUnread ? "Afficher toutes" : "Afficher non lues seulement")" />
+   }
+        </div>
+    </div>
+    
+    @if (isLoading)
+  {
+        <div class="d-flex align-center pa-4">
+            <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+   <MudText>Chargement des notifications...</MudText>
+        </div>
+    }
+    else if (filteredNotifications.Any())
+    {
+        <MudList T="string" Dense="true" Class="notification-list">
+         @foreach (var notification in filteredNotifications.Take(MaxDisplayCount))
+            {
+                <MudListItem T="string" 
+    Class="@GetNotificationClass(notification)"
+           OnClick="@(() => MarkAsRead(notification))">
+      <div class="d-flex justify-space-between align-start">
+                <div class="flex-grow-1">
+        <div class="d-flex align-center mb-1">
+              @if (!notification.EstLue)
+    {
+ <MudIcon Icon="@Icons.Material.Filled.Circle" 
+    Color="Color.Primary" 
+            Size="Size.Small" 
+        Class="mr-2" />
+         }
+   <MudText Typo="Typo.body2" 
+      Style="@(notification.EstLue ? "" : "font-weight: 600;")">
+   @notification.Titre
+       </MudText>
+    </div>
+          
+                     <MudText Typo="Typo.body2" 
+          Color="Color.Secondary" 
+        Class="mb-2"
+        Style="@GetMessageStyle(notification)">
+        @GetTruncatedMessage(notification.Message)
+      </MudText>
+     
+    <MudText Typo="Typo.caption" Color="Color.Secondary">
+    @GetRelativeTime(notification.Horodatage)
+      </MudText>
+   </div>
+       
+  <div class="d-flex flex-column align-end ml-2">
+    @if (!notification.EstLue)
+      {
+                <MudIconButton Icon="@Icons.Material.Filled.MarkEmailRead" 
+     Size="Size.Small"
+      Color="Color.Primary"
+      OnClick="@(() => MarkAsRead(notification))"
+     Title="Marquer comme lu" />
+        }
+        
+       @if (ShowDeleteAction)
+      {
+           <MudIconButton Icon="@Icons.Material.Filled.Delete" 
+        Size="Size.Small"
+ Color="Color.Error"
+         OnClick="@(() => DeleteNotification(notification))"
+             Title="Supprimer" />
+  }
+     </div>
+    </div>
+           </MudListItem>
+  
+                @if (notification != filteredNotifications.Take(MaxDisplayCount).Last())
+        {
+          <MudDivider />
+         }
+            }
+        </MudList>
+      
+        @if (filteredNotifications.Count() > MaxDisplayCount)
+        {
+            <MudDivider Class="my-2" />
+            <div class="text-center">
+              <MudText Typo="Typo.caption" Color="Color.Secondary">
+              +@(filteredNotifications.Count() - MaxDisplayCount) notification(s) supplémentaire(s)
+                </MudText>
+          @if (OnViewAll.HasDelegate)
+          {
+         <MudButton Size="Size.Small" 
+      Variant="Variant.Text"
+      OnClick="OnViewAll"
+    Class="mt-1">
+    Voir toutes les notifications
+    </MudButton>
+                }
+            </div>
+     }
+    }
+    else
+    {
+        <div class="d-flex flex-column align-center pa-6">
+      <MudIcon Icon="@Icons.Material.Filled.Notifications" 
+     Size="Size.Large" 
+   Color="Color.Secondary" 
+     Class="mb-2" />
+          <MudText Typo="Typo.h6" Color="Color.Secondary">
+       @(showOnlyUnread ? "Aucune notification non lue" : "Aucune notification")
+  </MudText>
+    <MudText Typo="Typo.body2" Color="Color.Secondary" Class="text-center">
+            @(showOnlyUnread ? "Toutes vos notifications ont été lues !" : "Vous êtes à jour !")
+            </MudText>
+        </div>
+    }
+</MudPaper>
+
+<style>
+.notification-list .mud-list-item {
+    border-radius: 8px;
+    margin-bottom: 4px;
+}
+
+.notification-list .mud-list-item:hover {
+    background-color: var(--mud-palette-action-hover);
+}
+
+.notification-unread {
+    background-color: var(--mud-palette-primary-lighten);
+    border-left: 4px solid var(--mud-palette-primary);
+}
+
+.notification-read {
+    opacity: 0.8;
+}
+</style>
+
+@code {
+    [Parameter] public int MaxDisplayCount { get; set; } = 5;
+    [Parameter] public bool ShowFullView { get; set; } = false;
+    [Parameter] public bool ShowDeleteAction { get; set; } = false;
+[Parameter] public EventCallback OnViewAll { get; set; }
+
+  private bool isLoading = true;
+    private bool showOnlyUnread = false;
+  private List<UserNotificationDto> notifications = new();
+    private int unreadCount = 0;
+
+    private IEnumerable<UserNotificationDto> filteredNotifications =>
+        showOnlyUnread 
+   ? notifications.Where(n => !n.EstLue)
+          : notifications;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // S'abonner aux événements
+  NotificationService.NotificationsUpdated += OnNotificationsUpdated;
+        NotificationService.UnreadCountChanged += OnUnreadCountChanged;
+        NotificationService.NewNotificationReceived += OnNewNotificationReceived;
+     
+   await LoadNotifications();
+    }
+
+    private async Task LoadNotifications()
+    {
+    isLoading = true;
+        StateHasChanged();
+        
+        try
+        {
+            var response = await NotificationService.GetUserNotificationsAsync();
+     
+     if (response.IsSuccess && response.Data != null)
+            {
+    notifications = response.Data;
+                unreadCount = notifications.Count(n => !n.EstLue);
+       Logger.LogInformation("{Count} notifications chargées ({Unread} non lues)", 
+  notifications.Count, unreadCount);
+    }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Erreur lors du chargement des notifications");
+    }
+  finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task RefreshNotifications()
+    {
+        NotificationService.InvalidateCache();
+await LoadNotifications();
+    }
+
+    private async Task MarkAsRead(UserNotificationDto notification)
+    {
+  if (notification.EstLue) return;
+
+        var result = await NotificationService.MarkAsReadAsync(notification.Id);
+        if (result.IsSuccess)
+    {
+       // La mise à jour sera automatique via l'événement NotificationsUpdated
+     Logger.LogDebug("Notification {Id} marquée comme lue", notification.Id);
+        }
+    }
+
+    private async Task MarkAllAsRead()
+    {
+        var result = await NotificationService.MarkAllAsReadAsync();
+        if (result.IsSuccess)
+        {
+         Logger.LogInformation("Toutes les notifications marquées comme lues");
+        }
+    }
+
+    private async Task DeleteNotification(UserNotificationDto notification)
+    {
+    var result = await NotificationService.DeleteNotificationAsync(notification.Id);
+        if (result.IsSuccess)
+        {
+         Logger.LogDebug("Notification {Id} supprimée", notification.Id);
+        }
+    }
+
+    private void ToggleUnreadFilter()
+    {
+        showOnlyUnread = !showOnlyUnread;
+        StateHasChanged();
+    }
+
+ // Événements de mise à jour
+    private void OnNotificationsUpdated(List<UserNotificationDto> updatedNotifications)
+ {
+        notifications = updatedNotifications;
+    unreadCount = notifications.Count(n => !n.EstLue);
+        InvokeAsync(StateHasChanged);
+  }
+
+    private void OnUnreadCountChanged(int newUnreadCount)
+    {
+        unreadCount = newUnreadCount;
+      InvokeAsync(StateHasChanged);
+    }
+
+    private void OnNewNotificationReceived(UserNotificationDto notification)
+    {
+        // Les notifications sont déjà mises à jour via OnNotificationsUpdated
+        // Ici on peut ajouter des animations ou des effets visuels
+        InvokeAsync(StateHasChanged);
+    }
+
+    // Méthodes utilitaires
+    private string GetNotificationClass(UserNotificationDto notification)
+    {
+        return notification.EstLue ? "notification-read" : "notification-unread";
+    }
+
+    private string GetMessageStyle(UserNotificationDto notification)
+    {
+        return notification.EstLue ? "line-height: 1.2;" : "font-weight: 500; line-height: 1.2;";
+    }
+
+    private string GetTruncatedMessage(string message)
+    {
+  int maxLength = ShowFullView ? 150 : 80;
+      return message.Length > maxLength 
+  ? message.Substring(0, maxLength) + "..."
+       : message;
+    }
+
+ private string GetRelativeTime(DateTime dateTime)
+    {
+        var timeSpan = DateTime.Now - dateTime;
+   
+        return timeSpan.TotalDays switch
+        {
+            >= 365 => $"il y a {(int)(timeSpan.TotalDays / 365)} an(s)",
+  >= 30 => $"il y a {(int)(timeSpan.TotalDays / 30)} mois",
+      >= 1 => $"il y a {(int)timeSpan.TotalDays} jour(s)",
+         _ => timeSpan.TotalHours switch
+        {
+         >= 1 => $"il y a {(int)timeSpan.TotalHours}h",
+_ => timeSpan.TotalMinutes < 1 ? "à l'instant" : $"il y a {(int)timeSpan.TotalMinutes}min"
+      }
+        };
+    }
+
+    public void Dispose()
+    {
+     // Se désabonner des événements
+        NotificationService.NotificationsUpdated -= OnNotificationsUpdated;
+    NotificationService.UnreadCountChanged -= OnUnreadCountChanged;
+      NotificationService.NewNotificationReceived -= OnNewNotificationReceived;
+    }
+}

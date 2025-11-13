@@ -8,13 +8,22 @@ namespace MySmartApp.Ui.Services;
 /// </summary>
 public interface IDeviceService
 {
-    Task<IEnumerable<DeviceDto>> GetAllDevicesAsync();
-    Task<DeviceDto?> GetDeviceByIdAsync(int id);
-    Task<ApiResponse<DeviceDto>> CreateDeviceAsync(DeviceCreationRequest request);
-    Task<ApiResponse<DeviceDto>> UpdateDeviceAsync(int id, DeviceUpdateRequest request);
+    // API Backend Devices/PeripheriqueLogique
+    Task<IEnumerable<PeripheriqueLogiqueDto>> GetAllDevicesAsync();
+    Task<PeripheriqueLogiqueDto?> GetDeviceByIdAsync(int id);
+    Task<IEnumerable<PeripheriqueLogiqueDto>> GetDevicesByZoneAsync(int zoneId);
+    Task<ApiResponse<PeripheriqueLogiqueDto>> CreateDeviceAsync(PeripheriqueLogiqueCreationDto request);
+    Task<ApiResponse<PeripheriqueLogiqueDto>> UpdateDeviceAsync(int id, PeripheriqueLogiqueUpdateDto request);
     Task<ApiResponse> DeleteDeviceAsync(int id);
+    Task<ApiResponse> SetDesiredPropertiesAsync(string iotDeviceId, object desired);
     
-    // Commandes IoT
+    // Anciennes méthodes pour compatibilité UI
+    Task<IEnumerable<DeviceDto>> GetAllDevicesLegacyAsync();
+    Task<DeviceDto?> GetDeviceByIdLegacyAsync(int id);
+    Task<ApiResponse<DeviceDto>> CreateDeviceLegacyAsync(DeviceCreationRequest request);
+    Task<ApiResponse<DeviceDto>> UpdateDeviceLegacyAsync(int id, DeviceUpdateRequest request);
+    
+    // Commandes IoT Hub (anciennes)
     Task<IoTResponse> SendSmartCommandAsync(string deviceId, string command, object? parameters = null);
     Task<IoTResponse> InvokeMethodAsync(string deviceId, string methodName, object? parameters = null);
     Task<DeviceTwinDto?> GetDeviceTwinAsync(string deviceId);
@@ -30,10 +39,12 @@ public class DeviceService : IDeviceService, IDisposable
     private readonly IApiService _apiService;
     private readonly IAppStateService _appState;
     private readonly ILogger<DeviceService> _logger;
+    private readonly IIoTHubService _iotHubService;
     private readonly SemaphoreSlim _semaphore = new(1, 1);
     private readonly MemoryCache _cache = new(new MemoryCacheOptions { SizeLimit = 200 });
     
     private const string DEVICES_CACHE_KEY = "all_devices";
+    private const string PERIPHERIQUES_CACHE_KEY = "peripheriques_cache";
     private const int CACHE_DURATION_MINUTES = 3;
 
     public event Action<IEnumerable<DeviceDto>>? DevicesUpdated;
@@ -42,59 +53,57 @@ public class DeviceService : IDeviceService, IDisposable
     public DeviceService(
         IApiService apiService, 
         IAppStateService appState,
-        ILogger<DeviceService> logger)
+        ILogger<DeviceService> logger,
+        IIoTHubService iotHubService)
     {
         _apiService = apiService;
         _appState = appState;
         _logger = logger;
+        _iotHubService = iotHubService;
     }
 
-    public async Task<IEnumerable<DeviceDto>> GetAllDevicesAsync()
+    // ==========================================
+    // API BACKEND PERIPHERIQUE LOGIQUE
+    // ==========================================
+
+    public async Task<IEnumerable<PeripheriqueLogiqueDto>> GetAllDevicesAsync()
     {
         await _semaphore.WaitAsync();
         try
         {
-            // V�rifier le cache d'abord
-            if (_cache.TryGetValue(DEVICES_CACHE_KEY, out List<DeviceDto>? cachedDevices))
+            if (_cache.TryGetValue(PERIPHERIQUES_CACHE_KEY, out List<PeripheriqueLogiqueDto>? cachedDevices))
             {
-                _logger.LogDebug("?? Appareils r�cup�r�s depuis le cache ({Count})", cachedDevices?.Count ?? 0);
-                return cachedDevices ?? new List<DeviceDto>();
+                _logger.LogDebug("✅ Périphériques récupérés depuis le cache ({Count})", cachedDevices?.Count ?? 0);
+                return cachedDevices ?? new List<PeripheriqueLogiqueDto>();
             }
 
-            _logger.LogDebug("?? R�cup�ration des appareils depuis l'API...");
-            var response = await _apiService.GetAsync<List<DeviceDto>>("/Devices");
+            _logger.LogDebug("➡️ Récupération des périphériques depuis l'API backend...");
+            var response = await _apiService.GetAsync<List<PeripheriqueLogiqueDto>>("/api/Devices");
 
             if (response.IsSuccess && response.Data != null)
             {
-                // Mettre en cache
                 var cacheOptions = new MemoryCacheEntryOptions
                 {
                     AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(CACHE_DURATION_MINUTES),
                     Priority = CacheItemPriority.High,
                     Size = 1
                 };
-                _cache.Set(DEVICES_CACHE_KEY, response.Data, cacheOptions);
-
-                // Mettre � jour l'�tat global
-                await _appState.UpdateDevicesAsync(response.Data);
+                _cache.Set(PERIPHERIQUES_CACHE_KEY, response.Data, cacheOptions);
                 
-                // Notifier les abonn�s
-                DevicesUpdated?.Invoke(response.Data);
-
-                _logger.LogInformation("? {Count} appareils r�cup�r�s avec succ�s", response.Data.Count);
+                _logger.LogInformation("✅ {Count} périphériques récupérés avec succès", response.Data.Count);
                 return response.Data;
             }
 
-            var errorMessage = response.ErrorMessage ?? "Erreur inconnue lors de la r�cup�ration des appareils";
+            var errorMessage = response.ErrorMessage ?? "Erreur lors de la récupération des périphériques";
             await _appState.SetErrorAsync(errorMessage);
             
-            return new List<DeviceDto>();
+            return new List<PeripheriqueLogiqueDto>();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Erreur lors de la r�cup�ration des appareils");
+            _logger.LogError("❌ Erreur lors de la récupération des périphériques: {Message}", ex.Message);
             await _appState.SetErrorAsync($"Erreur: {ex.Message}");
-            return new List<DeviceDto>();
+            return new List<PeripheriqueLogiqueDto>();
         }
         finally
         {
@@ -102,104 +111,120 @@ public class DeviceService : IDeviceService, IDisposable
         }
     }
 
-    public async Task<DeviceDto?> GetDeviceByIdAsync(int id)
+    public async Task<PeripheriqueLogiqueDto?> GetDeviceByIdAsync(int id)
     {
         try
         {
-            _logger.LogDebug("?? R�cup�ration de l'appareil {DeviceId}...", id);
+            _logger.LogDebug("➡️ Récupération du périphérique {DeviceId}...", id);
             
-            var response = await _apiService.GetAsync<DeviceDto>($"/Devices/{id}");
+            var response = await _apiService.GetAsync<PeripheriqueLogiqueDto>($"/api/Devices/{id}");
             
             if (response.IsSuccess)
             {
-                _logger.LogDebug("? Appareil {DeviceId} r�cup�r�: {DeviceName}", id, response.Data?.Name);
+                _logger.LogDebug("✅ Périphérique {DeviceId} récupéré: {DeviceName}", id, response.Data?.Name);
                 return response.Data;
             }
 
             if (response.StatusCode == 404)
             {
-                _logger.LogWarning("?? Appareil {DeviceId} introuvable", id);
+                _logger.LogWarning("ℹ️ Périphérique {DeviceId} introuvable", id);
                 return null;
             }
 
-            await _appState.SetErrorAsync(response.ErrorMessage ?? $"Erreur lors de la r�cup�ration de l'appareil {id}");
+            await _appState.SetErrorAsync(response.ErrorMessage ?? $"Erreur lors de la récupération du périphérique {id}");
             return null;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Erreur lors de la r�cup�ration de l'appareil {DeviceId}", id);
+            _logger.LogError("❌ Erreur lors de la récupération du périphérique {DeviceId}: {Message}", id, ex.Message);
             await _appState.SetErrorAsync($"Erreur: {ex.Message}");
             return null;
         }
     }
 
-    public async Task<ApiResponse<DeviceDto>> CreateDeviceAsync(DeviceCreationRequest request)
+    public async Task<IEnumerable<PeripheriqueLogiqueDto>> GetDevicesByZoneAsync(int zoneId)
     {
         try
         {
-            _logger.LogInformation("? Cr�ation de l'appareil '{DeviceName}'...", request.Name);
+            _logger.LogDebug("➡️ Récupération des périphériques de la zone {ZoneId}...", zoneId);
             
-            var response = await _apiService.PostAsync<DeviceDto>("/Devices", request);
+            var response = await _apiService.GetAsync<List<PeripheriqueLogiqueDto>>($"/api/zones/{zoneId}/devices");
             
-            if (response.IsSuccess)
+            if (response.IsSuccess && response.Data != null)
             {
-                // Invalider le cache
-                _cache.Remove(DEVICES_CACHE_KEY);
-                
-                // Recharger les appareils
-                _ = Task.Run(async () => await GetAllDevicesAsync());
-                
-                await _appState.ShowNotificationAsync($"Appareil '{request.Name}' cr�� avec succ�s", NotificationType.Success);
-                _logger.LogInformation("? Appareil '{DeviceName}' cr�� avec l'ID {DeviceId}", request.Name, response.Data?.Id);
-            }
-            else
-            {
-                await _appState.ShowNotificationAsync($"Erreur lors de la cr�ation de l'appareil: {response.ErrorMessage}", NotificationType.Error);
+                _logger.LogInformation("✅ {Count} périphériques récupérés pour la zone {ZoneId}", response.Data.Count, zoneId);
+                return response.Data;
             }
 
-            return response;
+            var errorMessage = response.ErrorMessage ?? $"Erreur lors de la récupération des périphériques de la zone {zoneId}";
+            await _appState.SetErrorAsync(errorMessage);
+            return new List<PeripheriqueLogiqueDto>();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Erreur lors de la cr�ation de l'appareil '{DeviceName}'", request.Name);
-            var errorMessage = $"Erreur lors de la cr�ation: {ex.Message}";
-            await _appState.ShowNotificationAsync(errorMessage, NotificationType.Error);
-            return ApiResponse<DeviceDto>.Error(errorMessage);
+            _logger.LogError("❌ Erreur lors de la récupération des périphériques de la zone {ZoneId}: {Message}", zoneId, ex.Message);
+            await _appState.SetErrorAsync($"Erreur: {ex.Message}");
+            return new List<PeripheriqueLogiqueDto>();
         }
     }
 
-    public async Task<ApiResponse<DeviceDto>> UpdateDeviceAsync(int id, DeviceUpdateRequest request)
+    public async Task<ApiResponse<PeripheriqueLogiqueDto>> CreateDeviceAsync(PeripheriqueLogiqueCreationDto request)
     {
         try
         {
-            _logger.LogInformation("?? Mise � jour de l'appareil {DeviceId}...", id);
+            _logger.LogInformation("🛠️ Création du périphérique '{DeviceName}'...", request.Name);
             
-            var response = await _apiService.PutAsync<DeviceDto>($"/Devices/{id}", request);
+            var response = await _apiService.PostAsync<PeripheriqueLogiqueDto>("/api/Devices", request);
             
             if (response.IsSuccess)
             {
-                // Invalider le cache
-                _cache.Remove(DEVICES_CACHE_KEY);
-                
-                // Recharger les appareils
-                _ = Task.Run(async () => await GetAllDevicesAsync());
-                
-                await _appState.ShowNotificationAsync("Appareil mis � jour avec succ�s", NotificationType.Success);
-                _logger.LogInformation("? Appareil {DeviceId} mis � jour", id);
+                _cache.Remove(PERIPHERIQUES_CACHE_KEY);
+                    await _appState.ShowNotificationAsync($"Périphérique '{request.Name}' créé avec succès", NotificationType.Success);
+                _logger.LogInformation("✅ Périphérique '{DeviceName}' créé avec l'ID {DeviceId}", request.Name, response.Data?.Id);
             }
             else
             {
-                await _appState.ShowNotificationAsync($"Erreur lors de la mise � jour: {response.ErrorMessage}", NotificationType.Error);
+                await _appState.ShowNotificationAsync($"Erreur lors de la création: {response.ErrorMessage}", NotificationType.Error);
             }
 
             return response;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Erreur lors de la mise � jour de l'appareil {DeviceId}", id);
-            var errorMessage = $"Erreur lors de la mise � jour: {ex.Message}";
+            _logger.LogError("❌ Erreur lors de la création du périphérique '{DeviceName}': {Message}", request.Name, ex.Message);
+            var errorMessage = $"Erreur lors de la création: {ex.Message}";
             await _appState.ShowNotificationAsync(errorMessage, NotificationType.Error);
-            return ApiResponse<DeviceDto>.Error(errorMessage);
+            return ApiResponse<PeripheriqueLogiqueDto>.Error(errorMessage);
+        }
+    }
+
+    public async Task<ApiResponse<PeripheriqueLogiqueDto>> UpdateDeviceAsync(int id, PeripheriqueLogiqueUpdateDto request)
+    {
+        try
+        {
+            _logger.LogInformation("🛠️ Mise à jour du périphérique {DeviceId}...", id);
+            
+            var response = await _apiService.PutAsync<PeripheriqueLogiqueDto>($"/api/Devices/{id}", request);
+            
+            if (response.IsSuccess)
+            {
+                _cache.Remove(PERIPHERIQUES_CACHE_KEY);
+                await _appState.ShowNotificationAsync("Périphérique mis à jour avec succès", NotificationType.Success);
+                _logger.LogInformation("✅ Périphérique {DeviceId} mis à jour", id);
+            }
+            else
+            {
+                await _appState.ShowNotificationAsync($"Erreur lors de la mise à jour: {response.ErrorMessage}", NotificationType.Error);
+            }
+
+            return response;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError("❌ Erreur lors de la mise à jour du périphérique {DeviceId}: {Message}", id, ex.Message);
+            var errorMessage = $"Erreur lors de la mise à jour: {ex.Message}";
+            await _appState.ShowNotificationAsync(errorMessage, NotificationType.Error);
+            return ApiResponse<PeripheriqueLogiqueDto>.Error(errorMessage);
         }
     }
 
@@ -207,20 +232,15 @@ public class DeviceService : IDeviceService, IDisposable
     {
         try
         {
-            _logger.LogInformation("??? Suppression de l'appareil {DeviceId}...", id);
+            _logger.LogInformation("🗑️ Suppression du périphérique {DeviceId}...", id);
             
-            var response = await _apiService.DeleteAsync($"/Devices/{id}");
+            var response = await _apiService.DeleteAsync($"/api/Devices/{id}");
             
             if (response.IsSuccess)
             {
-                // Invalider le cache
-                _cache.Remove(DEVICES_CACHE_KEY);
-                
-                // Recharger les appareils
-                _ = Task.Run(async () => await GetAllDevicesAsync());
-                
-                await _appState.ShowNotificationAsync("Appareil supprim� avec succ�s", NotificationType.Success);
-                _logger.LogInformation("? Appareil {DeviceId} supprim�", id);
+                _cache.Remove(PERIPHERIQUES_CACHE_KEY);
+                await _appState.ShowNotificationAsync("Périphérique supprimé avec succès", NotificationType.Success);
+                _logger.LogInformation("✅ Périphérique {DeviceId} supprimé", id);
             }
             else
             {
@@ -231,35 +251,161 @@ public class DeviceService : IDeviceService, IDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Erreur lors de la suppression de l'appareil {DeviceId}", id);
+            _logger.LogError("❌ Erreur lors de la suppression du périphérique {DeviceId}: {Message}", id, ex.Message);
             var errorMessage = $"Erreur lors de la suppression: {ex.Message}";
             await _appState.ShowNotificationAsync(errorMessage, NotificationType.Error);
             return ApiResponse.Error(errorMessage);
         }
     }
 
-    // === COMMANDES IOT ===
+    public async Task<ApiResponse> SetDesiredPropertiesAsync(string iotDeviceId, object desired)
+    {
+        try
+        {
+            _logger.LogInformation("⚙️ Mise à jour des desired properties IoT Device {DeviceId}...", iotDeviceId);
+            
+            var response = await _apiService.PostAsync<object>($"/api/Devices/{iotDeviceId}/desired", desired);
+            
+            if (response.IsSuccess)
+            {
+                await _appState.ShowNotificationAsync("Propriétés IoT mises à jour avec succès", NotificationType.Success);
+                _logger.LogInformation("✅ Desired properties mises à jour pour {DeviceId}", iotDeviceId);
+                return ApiResponse.Success(response.StatusCode);
+            }
+            else
+            {
+                await _appState.ShowNotificationAsync($"Erreur lors de la mise à jour IoT: {response.ErrorMessage}", NotificationType.Error);
+                return ApiResponse.Error(response.ErrorMessage ?? "Erreur lors de la mise à jour", response.StatusCode);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError("❌ Erreur lors de la mise à jour des desired properties {DeviceId}: {Message}", iotDeviceId, ex.Message);
+            var errorMessage = $"Erreur: {ex.Message}";
+            await _appState.ShowNotificationAsync(errorMessage, NotificationType.Error);
+            return ApiResponse.Error(errorMessage);
+        }
+    }
+
+    // ==========================================
+    // MÉTHODES LEGACY POUR COMPATIBILITÉ UI
+    // ==========================================
+
+    public async Task<IEnumerable<DeviceDto>> GetAllDevicesLegacyAsync()
+    {
+        var peripheriques = await GetAllDevicesAsync();
+        
+        return peripheriques.Select(p => new DeviceDto(
+            p.Id,
+            p.Name,
+            $"Périphérique IoT - {p.Type}",
+            p.Type,
+            p.ZoneId,
+            null,
+            true,
+            DateTime.Now
+        ));
+    }
+
+    public async Task<DeviceDto?> GetDeviceByIdLegacyAsync(int id)
+    {
+        var peripherique = await GetDeviceByIdAsync(id);
+        if (peripherique == null) return null;
+
+        return new DeviceDto(
+            peripherique.Id,
+            peripherique.Name,
+            $"Périphérique IoT - {peripherique.Type}",
+            peripherique.Type,
+            peripherique.ZoneId,
+            null,
+            true,
+            DateTime.Now
+        );
+    }
+
+    public async Task<ApiResponse<DeviceDto>> CreateDeviceLegacyAsync(DeviceCreationRequest request)
+    {
+        var creationDto = new PeripheriqueLogiqueCreationDto(
+            request.Name,
+            request.DeviceType ?? "Generic",
+            $"iot-{request.Name.ToLower().Replace(" ", "-")}-{DateTime.Now.Ticks}",
+            request.ZoneId ?? 1
+        );
+
+        var response = await CreateDeviceAsync(creationDto);
+        
+        if (response.IsSuccess && response.Data != null)
+        {
+            var deviceDto = new DeviceDto(
+                response.Data.Id,
+                response.Data.Name,
+                $"Périphérique IoT - {response.Data.Type}",
+                response.Data.Type,
+                response.Data.ZoneId,
+                null,
+                true,
+                DateTime.Now
+            );
+            
+            return ApiResponse<DeviceDto>.Success(deviceDto, response.StatusCode);
+        }
+
+        return ApiResponse<DeviceDto>.Error(response.ErrorMessage ?? "Erreur lors de la création", response.StatusCode);
+    }
+
+    public async Task<ApiResponse<DeviceDto>> UpdateDeviceLegacyAsync(int id, DeviceUpdateRequest request)
+    {
+        var updateDto = new PeripheriqueLogiqueUpdateDto(
+            request.Name,
+            request.DeviceType ?? "Generic"
+        );
+
+        var response = await UpdateDeviceAsync(id, updateDto);
+        
+        if (response.IsSuccess && response.Data != null)
+        {
+            var deviceDto = new DeviceDto(
+                response.Data.Id,
+                response.Data.Name,
+                $"Périphérique IoT - {response.Data.Type}",
+                response.Data.Type,
+                response.Data.ZoneId,
+                null,
+                true,
+                DateTime.Now
+            );
+            
+            return ApiResponse<DeviceDto>.Success(deviceDto, response.StatusCode);
+        }
+
+        return ApiResponse<DeviceDto>.Error(response.ErrorMessage ?? "Erreur lors de la mise à jour", response.StatusCode);
+    }
+
+    // ==========================================
+    // MÉTHODES IOT HUB (LEGACY)
+    // ==========================================
 
     public async Task<IoTResponse> SendSmartCommandAsync(string deviceId, string command, object? parameters = null)
     {
         try
         {
-            _logger.LogInformation("?? Envoi de la commande '{Command}' � l'appareil {DeviceId}...", command, deviceId);
+            _logger.LogInformation("➡️ Envoi de la commande '{Command}' à l'appareil {DeviceId}...", command, deviceId);
             
-            var endpoint = $"/IoTHub/device/{deviceId}/smart-commands/{command}";
+            var endpoint = $"/api/IoTHub/device/{deviceId}/smart-commands/{command}";
             var response = await _apiService.PostAsync<IoTResponse>(endpoint, parameters ?? new { });
             
             if (response.IsSuccess && response.Data != null)
             {
                 if (response.Data.Success)
                 {
-                    await _appState.ShowNotificationAsync($"Commande '{command}' ex�cut�e avec succ�s", NotificationType.Success);
-                    _logger.LogInformation("? Commande '{Command}' ex�cut�e sur {DeviceId}: {Message}", command, deviceId, response.Data.Message);
+                    await _appState.ShowNotificationAsync($"Commande '{command}' exécutée avec succès", NotificationType.Success);
+                    _logger.LogInformation("✅ Commande '{Command}' exécutée sur {DeviceId}: {Message}", command, deviceId, response.Data.Message);
                 }
                 else
                 {
-                    await _appState.ShowNotificationAsync($"�chec de la commande: {response.Data.Message}", NotificationType.Warning);
-                    _logger.LogWarning("?? �chec de la commande '{Command}' sur {DeviceId}: {Message}", command, deviceId, response.Data.Message);
+                    await _appState.ShowNotificationAsync($"Échec de la commande: {response.Data.Message}", NotificationType.Warning);
+                    _logger.LogWarning("⚠️ Échec de la commande '{Command}' sur {DeviceId}: {Message}", command, deviceId, response.Data.Message);
                 }
                 
                 return response.Data;
@@ -271,7 +417,7 @@ public class DeviceService : IDeviceService, IDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Erreur lors de l'envoi de la commande '{Command}' � {DeviceId}", command, deviceId);
+            _logger.LogError("❌ Erreur lors de l'envoi de la commande '{Command}' à {DeviceId}: {Message}", command, deviceId, ex.Message);
             var errorMessage = $"Erreur: {ex.Message}";
             await _appState.ShowNotificationAsync(errorMessage, NotificationType.Error);
             return new IoTResponse(false, errorMessage);
@@ -282,34 +428,34 @@ public class DeviceService : IDeviceService, IDisposable
     {
         try
         {
-            _logger.LogInformation("?? Invocation de la m�thode '{MethodName}' sur l'appareil {DeviceId}...", methodName, deviceId);
+            _logger.LogInformation("➡️ Invocation de la méthode '{MethodName}' sur l'appareil {DeviceId}...", methodName, deviceId);
             
-            var endpoint = $"/IoTHub/device/{deviceId}/method/{methodName}";
+            var endpoint = $"/api/IoTHub/device/{deviceId}/method/{methodName}";
             var response = await _apiService.PostAsync<IoTResponse>(endpoint, parameters ?? new { });
             
             if (response.IsSuccess && response.Data != null)
             {
                 if (response.Data.Success)
                 {
-                    await _appState.ShowNotificationAsync($"M�thode '{methodName}' invoqu�e avec succ�s", NotificationType.Success);
-                    _logger.LogInformation("? M�thode '{MethodName}' invoqu�e sur {DeviceId}: {Message}", methodName, deviceId, response.Data.Message);
+                    await _appState.ShowNotificationAsync($"Méthode '{methodName}' invoquée avec succès", NotificationType.Success);
+                    _logger.LogInformation("✅ Méthode '{MethodName}' invoquée sur {DeviceId}: {Message}", methodName, deviceId, response.Data.Message);
                 }
                 else
                 {
-                    await _appState.ShowNotificationAsync($"�chec de la m�thode: {response.Data.Message}", NotificationType.Warning);
-                    _logger.LogWarning("?? �chec de la m�thode '{MethodName}' sur {DeviceId}: {Message}", methodName, deviceId, response.Data.Message);
+                    await _appState.ShowNotificationAsync($"Échec de la méthode: {response.Data.Message}", NotificationType.Warning);
+                    _logger.LogWarning("⚠️ Échec de la méthode '{MethodName}' sur {DeviceId}: {Message}", methodName, deviceId, response.Data.Message);
                 }
                 
                 return response.Data;
             }
 
-            var errorMessage = response.ErrorMessage ?? "Erreur lors de l'invocation de la m�thode";
+            var errorMessage = response.ErrorMessage ?? "Erreur lors de l'invocation de la méthode";
             await _appState.ShowNotificationAsync(errorMessage, NotificationType.Error);
             return new IoTResponse(false, errorMessage);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Erreur lors de l'invocation de la m�thode '{MethodName}' sur {DeviceId}", methodName, deviceId);
+            _logger.LogError("❌ Erreur lors de l'invocation de la méthode '{MethodName}' sur {DeviceId}: {Message}", methodName, deviceId, ex.Message);
             var errorMessage = $"Erreur: {ex.Message}";
             await _appState.ShowNotificationAsync(errorMessage, NotificationType.Error);
             return new IoTResponse(false, errorMessage);
@@ -320,26 +466,26 @@ public class DeviceService : IDeviceService, IDisposable
     {
         try
         {
-            _logger.LogDebug("?? R�cup�ration du twin de l'appareil {DeviceId}...", deviceId);
+            _logger.LogDebug("➡️ Récupération du twin de l'appareil {DeviceId}...", deviceId);
             
-            var response = await _apiService.GetAsync<DeviceTwinDto>($"/IoTHub/device/{deviceId}/twin");
+            var response = await _apiService.GetAsync<DeviceTwinDto>($"/api/IoTHub/device/{deviceId}/twin");
             
             if (response.IsSuccess)
             {
-                _logger.LogDebug("? Twin r�cup�r� pour {DeviceId}", deviceId);
+                _logger.LogDebug("✅ Twin récupéré pour {DeviceId}", deviceId);
                 return response.Data;
             }
 
             if (response.StatusCode != 404)
             {
-                await _appState.SetErrorAsync(response.ErrorMessage ?? $"Erreur lors de la r�cup�ration du twin de {deviceId}");
+                await _appState.SetErrorAsync(response.ErrorMessage ?? $"Erreur lors de la récupération du twin de {deviceId}");
             }
             
             return null;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Erreur lors de la r�cup�ration du twin de {DeviceId}", deviceId);
+            _logger.LogError("❌ Erreur lors de la récupération du twin de {DeviceId}: {Message}", deviceId, ex.Message);
             await _appState.SetErrorAsync($"Erreur: {ex.Message}");
             return null;
         }
@@ -349,25 +495,25 @@ public class DeviceService : IDeviceService, IDisposable
     {
         try
         {
-            _logger.LogInformation("?? Mise � jour du twin de l'appareil {DeviceId}...", deviceId);
+            _logger.LogInformation("🛠️ Mise à jour du twin de l'appareil {DeviceId}...", deviceId);
             
-            var response = await _apiService.PutAsync<object>($"/IoTHub/device/{deviceId}/twin/desired", desiredProperties);
+            var response = await _apiService.PutAsync<object>($"/api/IoTHub/device/{deviceId}/twin/desired", desiredProperties);
             
             if (response.IsSuccess)
             {
-                await _appState.ShowNotificationAsync("Propri�t�s du twin mises � jour avec succ�s", NotificationType.Success);
-                _logger.LogInformation("? Twin mis � jour pour {DeviceId}", deviceId);
+                await _appState.ShowNotificationAsync("Propriétés du twin mises à jour avec succès", NotificationType.Success);
+                _logger.LogInformation("✅ Twin mis à jour pour {DeviceId}", deviceId);
                 return ApiResponse.Success(response.StatusCode);
             }
             else
             {
-                await _appState.ShowNotificationAsync($"Erreur lors de la mise � jour du twin: {response.ErrorMessage}", NotificationType.Error);
-                return ApiResponse.Error(response.ErrorMessage ?? "Erreur lors de la mise � jour", response.StatusCode);
+                await _appState.ShowNotificationAsync($"Erreur lors de la mise à jour du twin: {response.ErrorMessage}", NotificationType.Error);
+                return ApiResponse.Error(response.ErrorMessage ?? "Erreur lors de la mise à jour", response.StatusCode);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Erreur lors de la mise � jour du twin de {DeviceId}", deviceId);
+            _logger.LogError("❌ Erreur lors de la mise à jour du twin de {DeviceId}: {Message}", deviceId, ex.Message);
             var errorMessage = $"Erreur: {ex.Message}";
             await _appState.ShowNotificationAsync(errorMessage, NotificationType.Error);
             return ApiResponse.Error(errorMessage);
@@ -378,14 +524,14 @@ public class DeviceService : IDeviceService, IDisposable
     {
         try
         {
-            _logger.LogInformation("?? Envoi de message � l'appareil {DeviceId}...", deviceId);
+            _logger.LogInformation("➡️ Envoi de message à l'appareil {DeviceId}...", deviceId);
             
-            var response = await _apiService.PostAsync<object>($"/IoTHub/device/{deviceId}/message", new { message });
+            var response = await _apiService.PostAsync<object>($"/api/IoTHub/device/{deviceId}/message", new { message });
             
             if (response.IsSuccess)
             {
-                await _appState.ShowNotificationAsync("Message envoy� avec succ�s", NotificationType.Success);
-                _logger.LogInformation("? Message envoy� � {DeviceId}", deviceId);
+                await _appState.ShowNotificationAsync("Message envoyé avec succès", NotificationType.Success);
+                _logger.LogInformation("✅ Message envoyé à {DeviceId}", deviceId);
                 return ApiResponse.Success(response.StatusCode);
             }
             else
@@ -396,7 +542,7 @@ public class DeviceService : IDeviceService, IDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Erreur lors de l'envoi de message � {DeviceId}", deviceId);
+            _logger.LogError("❌ Erreur lors de l'envoi de message à {DeviceId}: {Message}", deviceId, ex.Message);
             var errorMessage = $"Erreur: {ex.Message}";
             await _appState.ShowNotificationAsync(errorMessage, NotificationType.Error);
             return ApiResponse.Error(errorMessage);
@@ -411,7 +557,7 @@ public class DeviceService : IDeviceService, IDisposable
     }
 }
 
-// DTOs pour les requ�tes
+// DTOs pour les requêtes legacy
 public record DeviceCreationRequest(
     string Name, 
     string? Description = null, 

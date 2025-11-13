@@ -1,0 +1,290 @@
+@using MySmartApp.Ui.Services
+@using MySmartApp.Ui.Models
+@inject IDeviceStatusService DeviceStatusService
+@inject NavigationManager Navigation
+@inject ILogger<ActiveAlarmsWidget> Logger
+
+<MudCard Elevation="2">
+    <MudCardHeader>
+        <CardHeaderContent>
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                <MudIcon Icon="@Icons.Material.Filled.Warning" Color="Color.Error" />
+                <MudText Typo="Typo.h6">Alarmes Fumée Actives</MudText>
+            </MudStack>
+        </CardHeaderContent>
+        <CardHeaderActions>
+            @if (_alarms?.Any() == true)
+            {
+                <MudChip T="string" Size="Size.Small" Color="Color.Error">@_alarms.Count</MudChip>
+            }
+            <MudIconButton Icon="@Icons.Material.Filled.Refresh" 
+                          Size="Size.Small" 
+                          OnClick="LoadAlarmsAsync"
+                          Disabled="@_isLoading" />
+        </CardHeaderActions>
+    </MudCardHeader>
+    <MudCardContent>
+        @if (_isLoading)
+        {
+            <MudProgressLinear Indeterminate="true" Color="Color.Error" />
+        }
+        else if (_errorMessage != null)
+        {
+            <MudAlert Severity="Severity.Error" Dense="true">@_errorMessage</MudAlert>
+        }
+        else if (_alarms?.Any() == true)
+        {
+            <MudStack Spacing="2">
+                @foreach (var alarm in _alarms.Take(MaxAlarmsDisplayed))
+                {
+                    <MudPaper Elevation="1" Class="pa-3" Style="border-left: 4px solid var(--mud-palette-error);">
+                        <MudStack Spacing="1">
+                            <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                                <MudStack Spacing="1">
+                                    <MudText Typo="Typo.subtitle1" Style="font-weight: 600;">
+                                        ?? @alarm.ZoneName
+                                    </MudText>
+                                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                        Device: @alarm.IotDeviceId
+                                    </MudText>
+                                </MudStack>
+                                <MudButton Size="Size.Small" 
+                                          Variant="Variant.Filled" 
+                                          Color="Color.Warning"
+                                          OnClick="@(() => DeactivateAlarm(alarm))">
+                                    Désactiver
+                                </MudButton>
+                            </MudStack>
+                            <MudDivider />
+                            <MudStack Row="true" Spacing="3">
+                                <MudStack Spacing="0">
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">Déclenchée</MudText>
+                                    <MudText Typo="Typo.body2">@alarm.StartTime.ToString("dd/MM HH:mm")</MudText>
+                                </MudStack>
+                                <MudStack Spacing="0">
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">Durée</MudText>
+                                    <MudText Typo="Typo.body2">@GetAlarmDuration(alarm.StartTime)</MudText>
+                                </MudStack>
+                            </MudStack>
+                        </MudStack>
+                    </MudPaper>
+                }
+                
+                @if (_alarms.Count > MaxAlarmsDisplayed)
+                {
+                    <MudText Typo="Typo.caption" Align="Align.Center" Color="Color.Secondary">
+                        +@(_alarms.Count - MaxAlarmsDisplayed) alarme(s) supplémentaire(s)
+                    </MudText>
+                }
+            </MudStack>
+        }
+        else
+        {
+            <MudStack AlignItems="AlignItems.Center" Spacing="2" Class="py-4">
+                <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Large" />
+                <MudText Typo="Typo.body1" Color="Color.Success">Aucune alarme active</MudText>
+                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                    Tous les systèmes fonctionnent normalement
+                </MudText>
+            </MudStack>
+        }
+    </MudCardContent>
+    @if (_alarms?.Any() == true)
+    {
+        <MudCardActions>
+            <MudButton StartIcon="@Icons.Material.Filled.List" 
+                      OnClick="ViewAllAlarms"
+                      Size="Size.Small">
+                Voir toutes les alarmes
+            </MudButton>
+        </MudCardActions>
+    }
+</MudCard>
+
+<!-- Dialog Désactivation -->
+<MudDialog @bind-IsVisible="_showDeactivateDialog" Options="_dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Désactiver l'alarme</MudText>
+    </TitleContent>
+    <DialogContent>
+        @if (_alarmToDeactivate != null)
+        {
+            <MudStack Spacing="3">
+                <MudAlert Severity="Severity.Warning">
+                    <strong>Zone:</strong> @_alarmToDeactivate.ZoneName<br />
+                    <strong>Device:</strong> @_alarmToDeactivate.IotDeviceId<br />
+                    <strong>Déclenchée:</strong> @_alarmToDeactivate.StartTime.ToString("dd/MM/yyyy HH:mm:ss")
+                </MudAlert>
+                <MudTextField @bind-Value="_deactivationReason" 
+                             Label="Raison de la désactivation" 
+                             Variant="Variant.Outlined" 
+                             Lines="3"
+                             Required="true"
+                             HelperText="Veuillez expliquer pourquoi l'alarme est désactivée" />
+            </MudStack>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@(() => _showDeactivateDialog = false)">Annuler</MudButton>
+        <MudButton Color="Color.Warning" 
+                  Variant="Variant.Filled" 
+                  OnClick="ConfirmDeactivate"
+                  Disabled="@(string.IsNullOrWhiteSpace(_deactivationReason) || _isProcessing)">
+            @if (_isProcessing)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+                <span class="ml-2">Désactivation...</span>
+            }
+            else
+            {
+                <span>Confirmer</span>
+            }
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [Parameter] public int MaxAlarmsDisplayed { get; set; } = 5;
+    [Parameter] public int RefreshIntervalSeconds { get; set; } = 60;
+    [Parameter] public bool AutoRefresh { get; set; } = true;
+
+    private List<SmokeAlarmEventDto>? _alarms;
+    private bool _isLoading;
+    private bool _isProcessing;
+    private string? _errorMessage;
+
+    private bool _showDeactivateDialog;
+    private SmokeAlarmEventDto? _alarmToDeactivate;
+    private string _deactivationReason = string.Empty;
+
+    private System.Threading.Timer? _refreshTimer;
+
+    private DialogOptions _dialogOptions = new() 
+    { 
+        MaxWidth = MaxWidth.Small, 
+        FullWidth = true,
+        CloseButton = true
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAlarmsAsync();
+
+        if (AutoRefresh)
+        {
+            StartAutoRefresh();
+        }
+    }
+
+    private async Task LoadAlarmsAsync()
+    {
+        _isLoading = true;
+        _errorMessage = null;
+        StateHasChanged();
+
+        try
+        {
+            var response = await DeviceStatusService.GetAllActiveAlarmsAsync();
+
+            if (response.IsSuccess && response.Data != null)
+            {
+                _alarms = response.Data;
+                Logger.LogInformation("? {Count} alarme(s) active(s) chargée(s)", _alarms.Count);
+            }
+            else
+            {
+                _errorMessage = response.ErrorMessage ?? "Erreur lors du chargement";
+                Logger.LogError("? Erreur chargement alarmes: {Error}", _errorMessage);
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Erreur technique: {ex.Message}";
+            Logger.LogError(ex, "? Exception chargement alarmes");
+        }
+        finally
+        {
+            _isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void DeactivateAlarm(SmokeAlarmEventDto alarm)
+    {
+        _alarmToDeactivate = alarm;
+        _deactivationReason = string.Empty;
+        _showDeactivateDialog = true;
+    }
+
+    private async Task ConfirmDeactivate()
+    {
+        if (_alarmToDeactivate == null) return;
+
+        try
+        {
+            _isProcessing = true;
+            StateHasChanged();
+
+            var request = new DeactivateSmokeAlarmRequest
+            {
+                DeactivatedBy = "admin@example.com", // TODO: Get from auth context
+                Reason = _deactivationReason
+            };
+
+            var response = await DeviceStatusService.DeactivateSmokeAlarmAsync(
+                _alarmToDeactivate.IotDeviceId, request);
+
+            if (response.IsSuccess)
+            {
+                _showDeactivateDialog = false;
+                await LoadAlarmsAsync();
+                Logger.LogInformation("? Alarme désactivée pour {IotDeviceId}", _alarmToDeactivate.IotDeviceId);
+            }
+            else
+            {
+                _errorMessage = response.ErrorMessage ?? "Erreur lors de la désactivation";
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Erreur technique: {ex.Message}";
+            Logger.LogError(ex, "? Exception désactivation alarme");
+        }
+        finally
+        {
+            _isProcessing = false;
+            StateHasChanged();
+        }
+    }
+
+    private void ViewAllAlarms()
+    {
+        Navigation.NavigateTo("/devices?filter=alarms");
+    }
+
+    private string GetAlarmDuration(DateTime startTime)
+    {
+        var duration = DateTime.Now - startTime;
+        
+        if (duration.TotalDays >= 1)
+            return $"{(int)duration.TotalDays}j {duration.Hours}h";
+        if (duration.TotalHours >= 1)
+            return $"{(int)duration.TotalHours}h {duration.Minutes}m";
+        return $"{duration.Minutes}m";
+    }
+
+    private void StartAutoRefresh()
+    {
+        _refreshTimer = new System.Threading.Timer(async _ =>
+        {
+            await InvokeAsync(async () => await LoadAlarmsAsync());
+        }, null, TimeSpan.FromSeconds(RefreshIntervalSeconds), TimeSpan.FromSeconds(RefreshIntervalSeconds));
+
+        Logger.LogInformation("?? Auto-refresh alarmes activé ({Interval}s)", RefreshIntervalSeconds);
+    }
+
+    public void Dispose()
+    {
+        _refreshTimer?.Dispose();
+    }
+}

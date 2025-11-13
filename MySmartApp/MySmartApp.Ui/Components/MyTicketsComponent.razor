@@ -1,0 +1,200 @@
+@using MySmartApp.Ui.Services
+@using MySmartApp.Ui.Models
+@inject IIncidentTicketService IncidentTicketService
+@inject NavigationManager NavigationManager
+@inject ILogger<MyTicketsComponent> Logger
+
+<MudPaper Class="pa-4 rounded-xl" Elevation="2">
+    <div class="d-flex justify-space-between align-center mb-4">
+        <div class="d-flex align-center">
+            <MudIcon Icon="@Icons.Material.Filled.ConfirmationNumber" Color="Color.Warning" Class="mr-2" />
+            <MudText Typo="Typo.h6">Mes Tickets d'Incidents</MudText>
+        </div>
+        <MudButton OnClick="GoToIncidentsPage" 
+                   Size="Size.Small"
+                   Variant="Variant.Text"
+                   Color="Color.Primary"
+                   EndIcon="@Icons.Material.Filled.ArrowForward">
+            Voir tout
+        </MudButton>
+    </div>
+    
+    @if (isLoading)
+    {
+        <div class="d-flex align-center pa-4">
+            <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+            <MudText>Chargement de mes tickets...</MudText>
+        </div>
+    }
+    else if (myTickets.Any())
+    {
+        <MudList T="string" Dense="true">
+            @foreach (var ticket in myTickets.Take(MaxDisplayCount))
+            {
+                <MudListItem T="string" OnClick="@(() => ViewTicket(ticket.Id))">
+                    <div class="d-flex justify-space-between align-center">
+                        <div>
+                            <MudText Typo="Typo.body2" Style="font-weight: 500;">
+                                #@ticket.Id - @ticket.Sujet
+                            </MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                @(ticket.Description.Length > 60 ? ticket.Description.Substring(0, 60) + "..." : ticket.Description)
+                            </MudText>
+                        </div>
+                        <div class="d-flex flex-column align-end">
+                            <MudChip T="string" Size="Size.Small" Color="@GetStatusColor(ticket.Statut)">
+                                @ticket.Statut
+                            </MudChip>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-1">
+                                @GetRelativeTime(ticket.CreatedAt)
+                            </MudText>
+                        </div>
+                    </div>
+                </MudListItem>
+                
+                @if (ticket != myTickets.Take(MaxDisplayCount).Last())
+                {
+                    <MudDivider />
+                }
+            }
+        </MudList>
+        
+        @if (myTickets.Count > MaxDisplayCount)
+        {
+            <MudDivider Class="my-2" />
+            <div class="text-center">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                    +@(myTickets.Count - MaxDisplayCount) ticket(s) supplémentaire(s)
+                </MudText>
+            </div>
+        }
+  
+        <!-- Statistiques rapides -->
+        <MudDivider Class="my-4" />
+        <div class="d-flex justify-space-around">
+            <div class="text-center">
+                <MudText Typo="Typo.h6" Color="Color.Warning">@myTickets.Count(t => t.Statut == "Ouvert")</MudText>
+                <MudText Typo="Typo.caption">Ouvert(s)</MudText>
+            </div>
+            <div class="text-center">
+                <MudText Typo="Typo.h6" Color="Color.Info">@myTickets.Count(t => t.Statut == "En cours")</MudText>
+                <MudText Typo="Typo.caption">En cours</MudText>
+            </div>
+            <div class="text-center">
+                <MudText Typo="Typo.h6" Color="Color.Success">@myTickets.Count(t => t.Statut == "Résolu")</MudText>
+                <MudText Typo="Typo.caption">Résolu(s)</MudText>
+            </div>
+            <div class="text-center">
+                <MudText Typo="Typo.h6" Color="Color.Primary">@myTickets.Count</MudText>
+                <MudText Typo="Typo.caption">Total</MudText>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="d-flex flex-column align-center pa-8">
+            <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Large" Color="Color.Success" Class="mb-2" />
+            <MudText Typo="Typo.h6" Color="Color.Success">Aucun ticket ouvert</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="text-center">
+                Parfait ! Vous n'avez aucun incident en cours. 
+            </MudText>
+            <MudButton OnClick="CreateNewTicket" 
+                       Color="Color.Primary" 
+                       Variant="Variant.Text"
+                       StartIcon="@Icons.Material.Filled.Add"
+                       Class="mt-2">
+                Créer un ticket
+            </MudButton>
+        </div>
+    }
+</MudPaper>
+
+@code {
+    [Parameter] public int MaxDisplayCount { get; set; } = 5;
+
+    private bool isLoading = true;
+    private List<IncidentTicketDto> myTickets = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadMyTickets();
+    }
+
+    private async Task LoadMyTickets()
+    {
+        isLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            var response = await IncidentTicketService.GetMyTicketsAsync();
+            
+            if (response.IsSuccess && response.Data != null)
+            {
+                // Trier par date de création (plus récent en premier)
+                myTickets = response.Data
+                    .OrderByDescending(t => t.CreatedAt)
+                    .ToList();
+                
+                Logger.LogInformation("{Count} tickets personnels chargés", myTickets.Count);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Erreur lors du chargement des tickets personnels");
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    public async Task RefreshTickets()
+    {
+        await LoadMyTickets();
+    }
+
+    private void GoToIncidentsPage()
+    {
+        NavigationManager.NavigateTo("/incidents?filter=mine");
+    }
+
+    private void ViewTicket(int ticketId)
+    {
+        NavigationManager.NavigateTo($"/incidents?ticket={ticketId}");
+    }
+
+    private void CreateNewTicket()
+    {
+        NavigationManager.NavigateTo("/incidents?action=create");
+    }
+
+    private Color GetStatusColor(string status) => status switch
+    {
+        "Ouvert" => Color.Warning,
+        "En cours" => Color.Info,
+        "En attente" => Color.Secondary,
+        "Résolu" => Color.Success,
+        "Fermé" => Color.Default,
+        "Annulé" => Color.Error,
+        _ => Color.Default
+    };
+
+    private string GetRelativeTime(DateTime dateTime)
+    {
+        var timeSpan = DateTime.Now - dateTime;
+        
+        return timeSpan.TotalDays switch
+        {
+            >= 365 => $"il y a {(int)(timeSpan.TotalDays / 365)} an(s)",
+            >= 30 => $"il y a {(int)(timeSpan.TotalDays / 30)} mois",
+            >= 1 => $"il y a {(int)timeSpan.TotalDays} jour(s)",
+            _ => timeSpan.TotalHours switch
+            {
+                >= 1 => $"il y a {(int)timeSpan.TotalHours}h",
+                _ => $"il y a {(int)timeSpan.TotalMinutes}min"
+            }
+        };
+    }
+}

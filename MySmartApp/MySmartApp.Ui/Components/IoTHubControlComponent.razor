@@ -1,0 +1,345 @@
+@using MySmartApp.Ui.Services
+@using MySmartApp.Ui.Models
+@inject IIoTHubService IoTHubService
+@inject ILogger<IoTHubControlComponent> Logger
+
+<MudPaper Class="pa-4 rounded-xl" Elevation="2">
+    <div class="d-flex justify-space-between align-center mb-4">
+        <MudText Typo="Typo.h6">?? Contrôles IoT Hub</MudText>
+        <MudIconButton Icon="@Icons.Material.Filled.Refresh" 
+                       Size="Size.Small"
+                       OnClick="RefreshStatus"
+                       Disabled="@isRefreshing" />
+    </div>
+    
+    @if (DeviceId != null)
+    {
+        <!-- État de connexion -->
+        <div class="mb-4">
+            <MudText Typo="Typo.caption" Color="Color.Secondary">État de connexion</MudText>
+            <div class="d-flex align-center">
+                @if (isConnected.HasValue)
+                {
+                    <MudIcon Icon="@(isConnected.Value ? Icons.Material.Filled.CloudDone : Icons.Material.Filled.CloudOff)" 
+                             Color="@(isConnected.Value ? Color.Success : Color.Error)" 
+                             Class="mr-2" />
+                    <MudText Typo="Typo.body2" Color="@(isConnected.Value ? Color.Success : Color.Error)">
+                        @(isConnected.Value ? "Connecté" : "Déconnecté")
+                    </MudText>
+                }
+                else
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                    <MudText Typo="Typo.body2">Vérification...</MudText>
+                }
+            </div>
+        </div>
+
+        <!-- Commandes rapides -->
+        <div class="mb-4">
+            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-2">Commandes rapides</MudText>
+            <div class="d-flex gap-2 flex-wrap">
+                <MudButton Size="Size.Small" 
+                           Color="Color.Success" 
+                           Variant="Variant.Filled"
+                           OnClick="@(() => ExecuteCommand("turn-on"))"
+                           Disabled="@(!CanExecuteCommands)"
+                           StartIcon="@Icons.Material.Filled.PowerSettingsNew">
+                    ON
+                </MudButton>
+                
+                <MudButton Size="Size.Small" 
+                           Color="Color.Error" 
+                           Variant="Variant.Filled"
+                           OnClick="@(() => ExecuteCommand("turn-off"))"
+                           Disabled="@(!CanExecuteCommands)"
+                           StartIcon="@Icons.Material.Filled.PowerOff">
+                    OFF
+                </MudButton>
+                
+                <MudButton Size="Size.Small" 
+                           Color="Color.Info" 
+                           Variant="Variant.Outlined"
+                           OnClick="@(() => ExecuteCommand("get-status"))"
+                           Disabled="@(!CanExecuteCommands)"
+                           StartIcon="@Icons.Material.Filled.Info">
+                    Status
+                </MudButton>
+                
+                <MudButton Size="Size.Small" 
+                           Color="Color.Warning" 
+                           Variant="Variant.Outlined"
+                           OnClick="@(() => ExecuteCommand("reset"))"
+                           Disabled="@(!CanExecuteCommands)"
+                           StartIcon="@Icons.Material.Filled.Refresh">
+                    Reset
+                </MudButton>
+            </div>
+        </div>
+
+        <!-- Contrôles avancés -->
+        @if (ShowAdvancedControls)
+        {
+            <MudExpansionPanels>
+                <MudExpansionPanel Text="?? Contrôles avancés">
+                    <div class="pa-2">
+                        <!-- Luminosité (si applicable) -->
+                        <div class="mb-4">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Luminosité</MudText>
+                            <div class="d-flex align-center gap-2">
+                                <MudSlider @bind-Value="brightnessValue" 
+                                           Min="0" 
+                                           Max="100" 
+                                           Step="10"
+                                           Color="Color.Primary"
+                                           Style="flex: 1;" />
+                                <MudButton Size="Size.Small" 
+                                           OnClick="SetBrightness"
+                                           Disabled="@(!CanExecuteCommands)">
+                                    Appliquer
+                                </MudButton>
+                            </div>
+                        </div>
+
+                        <!-- Température (si applicable) -->
+                        <div class="mb-4">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Température</MudText>
+                            <div class="d-flex align-center gap-2">
+                                <MudSlider @bind-Value="temperatureValue" 
+                                           Min="10" 
+                                           Max="35" 
+                                           Step="1"
+                                           Color="Color.Secondary"
+                                           Style="flex: 1;" />
+                                <MudText Typo="Typo.body2" Style="min-width: 50px;">@(temperatureValue)°C</MudText>
+                                <MudButton Size="Size.Small" 
+                                           OnClick="SetTemperature"
+                                           Disabled="@(!CanExecuteCommands)">
+                                    Appliquer
+                                </MudButton>
+                            </div>
+                        </div>
+
+                        <!-- Méthode personnalisée -->
+                        <div class="mb-4">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Méthode personnalisée</MudText>
+                            <div class="d-flex gap-2">
+                                <MudTextField @bind-Value="customMethodName" 
+                                              Label="Nom de la méthode"
+                                              Placeholder="ex: customCommand"
+                                              Style="flex: 1;" />
+                                <MudButton OnClick="ExecuteCustomMethod"
+                                           Disabled="@(!CanExecuteCommands || string.IsNullOrEmpty(customMethodName))">
+                                    Exécuter
+                                </MudButton>
+                            </div>
+                        </div>
+                    </div>
+                </MudExpansionPanel>
+            </MudExpansionPanels>
+        }
+
+        <!-- Dernier résultat -->
+        @if (!string.IsNullOrEmpty(lastResult))
+        {
+            <MudDivider Class="my-4" />
+            <div>
+                <MudText Typo="Typo.caption" Color="Color.Secondary">Dernier résultat</MudText>
+                <MudAlert Severity="@lastResultSeverity" Dense="true" Class="mt-2">
+                    @lastResult
+                </MudAlert>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="d-flex flex-column align-center pa-4">
+            <MudIcon Icon="@Icons.Material.Filled.DeviceUnknown" Size="Size.Large" Color="Color.Secondary" Class="mb-2" />
+            <MudText Color="Color.Secondary">Device ID non spécifié</MudText>
+        </div>
+    }
+</MudPaper>
+
+@code {
+    [Parameter] public string? DeviceId { get; set; }
+    [Parameter] public bool ShowAdvancedControls { get; set; } = true;
+    [Parameter] public EventCallback<string> OnCommandExecuted { get; set; }
+
+    private bool isRefreshing = false;
+    private bool? isConnected = null;
+    private double brightnessValue = 50;
+    private double temperatureValue = 22;
+    private string customMethodName = "";
+    private string lastResult = "";
+    private Severity lastResultSeverity = Severity.Info;
+
+    private bool CanExecuteCommands => !isRefreshing && isConnected == true && !string.IsNullOrEmpty(DeviceId);
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!string.IsNullOrEmpty(DeviceId))
+        {
+            await CheckConnectionStatus();
+        }
+    }
+
+    private async Task CheckConnectionStatus()
+    {
+        if (string.IsNullOrEmpty(DeviceId)) return;
+
+        try
+        {
+            isConnected = await IoTHubService.IsDeviceConnectedAsync(DeviceId);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Erreur lors de la vérification de connexion pour {DeviceId}", DeviceId);
+            isConnected = false;
+        }
+        
+        StateHasChanged();
+    }
+
+    private async Task RefreshStatus()
+    {
+        isRefreshing = true;
+        StateHasChanged();
+
+        try
+        {
+            await CheckConnectionStatus();
+        }
+        finally
+        {
+            isRefreshing = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task ExecuteCommand(string command)
+    {
+        if (string.IsNullOrEmpty(DeviceId)) return;
+
+        try
+        {
+            var result = await IoTHubService.ExecuteSmartCommandAsync(DeviceId, command);
+            
+            if (result.IsSuccess && result.Data != null)
+            {
+                lastResult = result.Data.Message;
+                lastResultSeverity = result.Data.Success ? Severity.Success : Severity.Warning;
+                
+                await OnCommandExecuted.InvokeAsync(command);
+            }
+            else
+            {
+                lastResult = result.ErrorMessage ?? "Erreur lors de l'exécution";
+                lastResultSeverity = Severity.Error;
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Erreur lors de l'exécution de la commande {Command}", command);
+            lastResult = $"Erreur: {ex.Message}";
+            lastResultSeverity = Severity.Error;
+        }
+        
+        StateHasChanged();
+    }
+
+    private async Task SetBrightness()
+    {
+        if (string.IsNullOrEmpty(DeviceId)) return;
+
+        try
+        {
+            var payload = new SmartCommandPayloadDto(brightnessValue);
+            var result = await IoTHubService.ExecuteSmartCommandAsync(DeviceId, "set-brightness", payload);
+            
+            if (result.IsSuccess && result.Data != null)
+            {
+                lastResult = $"Luminosité réglée à {brightnessValue}%";
+                lastResultSeverity = result.Data.Success ? Severity.Success : Severity.Warning;
+                
+                await OnCommandExecuted.InvokeAsync("set-brightness");
+            }
+            else
+            {
+                lastResult = result.ErrorMessage ?? "Erreur lors du réglage";
+                lastResultSeverity = Severity.Error;
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Erreur lors du réglage de luminosité");
+            lastResult = $"Erreur: {ex.Message}";
+            lastResultSeverity = Severity.Error;
+        }
+        
+        StateHasChanged();
+    }
+
+    private async Task SetTemperature()
+    {
+        if (string.IsNullOrEmpty(DeviceId)) return;
+
+        try
+        {
+            var payload = new SmartCommandPayloadDto(temperatureValue);
+            var result = await IoTHubService.ExecuteSmartCommandAsync(DeviceId, "set-temperature", payload);
+            
+            if (result.IsSuccess && result.Data != null)
+            {
+                lastResult = $"Température réglée à {temperatureValue}°C";
+                lastResultSeverity = result.Data.Success ? Severity.Success : Severity.Warning;
+                
+                await OnCommandExecuted.InvokeAsync("set-temperature");
+            }
+            else
+            {
+                lastResult = result.ErrorMessage ?? "Erreur lors du réglage";
+                lastResultSeverity = Severity.Error;
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Erreur lors du réglage de température");
+            lastResult = $"Erreur: {ex.Message}";
+            lastResultSeverity = Severity.Error;
+        }
+        
+        StateHasChanged();
+    }
+
+    private async Task ExecuteCustomMethod()
+    {
+        if (string.IsNullOrEmpty(DeviceId) || string.IsNullOrEmpty(customMethodName)) return;
+
+        try
+        {
+            var result = await IoTHubService.InvokeDeviceMethodAsync(DeviceId, customMethodName, "{}");
+            
+            if (result.IsSuccess && result.Data != null)
+            {
+                lastResult = $"Méthode {customMethodName} exécutée: {result.Data.Message}";
+                lastResultSeverity = result.Data.Success ? Severity.Success : Severity.Warning;
+                
+                customMethodName = ""; // Reset after successful execution
+                await OnCommandExecuted.InvokeAsync(customMethodName);
+            }
+            else
+            {
+                lastResult = result.ErrorMessage ?? "Erreur lors de l'exécution";
+                lastResultSeverity = Severity.Error;
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Erreur lors de l'exécution de la méthode personnalisée");
+            lastResult = $"Erreur: {ex.Message}";
+            lastResultSeverity = Severity.Error;
+        }
+        
+        StateHasChanged();
+    }
+}

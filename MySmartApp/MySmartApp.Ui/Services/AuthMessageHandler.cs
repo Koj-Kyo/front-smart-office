@@ -70,14 +70,14 @@ public class AuthMessageHandler : DelegatingHandler
         }
         catch (HttpRequestException ex)
         {
-            _logger.LogError(ex, "? Erreur de requête HTTP pour {Method} {Uri}", 
-                request.Method, request.RequestUri?.ToString());
+            _logger.LogError("? Erreur de requête HTTP pour {Method} {Uri}: {Message}", 
+                request.Method, request.RequestUri?.ToString(), ex.Message);
             throw;
         }
         catch (TaskCanceledException ex) when (ex.InnerException is TimeoutException)
         {
-            _logger.LogWarning("?? Timeout de la requête {Method} {Uri}", 
-                request.Method, request.RequestUri?.ToString());
+            _logger.LogWarning("?? Timeout de la requête {Method} {Uri}: {Message}", 
+                request.Method, request.RequestUri?.ToString(), ex.Message);
             throw;
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -88,8 +88,8 @@ public class AuthMessageHandler : DelegatingHandler
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Erreur inattendue dans AuthMessageHandler pour {Method} {Uri}", 
-                request.Method, request.RequestUri?.ToString());
+            _logger.LogError("? Erreur inattendue dans AuthMessageHandler pour {Method} {Uri}: {Message}", 
+                request.Method, request.RequestUri?.ToString(), ex.Message);
             throw;
         }
     }

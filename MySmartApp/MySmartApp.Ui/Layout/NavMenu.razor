@@ -6,46 +6,49 @@
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
 
 <style>
-    /* Container principal - empêche le débordement */
-    .navigation-container {
-        height: 100vh;
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
-    }
+/* Container principal - empêche le débordement */
+.navigation-container {
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    width: 95px;
+}
 
-    /* Zone de navigation principale avec scroll interne si nécessaire */
-    .nav-content {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        overflow-y: auto;
-        scrollbar-width: none; /* Firefox */
-        -ms-overflow-style: none; /* Internet Explorer 10+ */
-    }
+/* Zone de navigation principale avec scroll interne si nécessaire */
+.nav-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* Internet Explorer 10+ */
+    padding: 8px 0;
+}
 
-    .nav-content::-webkit-scrollbar { /* WebKit */
-        display: none;
-    }
+.nav-content::-webkit-scrollbar { /* WebKit */
+    display: none;
+}
 
-    /* Style pour les boutons icônes de navigation */
-    .mud-icon-button.nav-link-item {
-        border-radius: 50%;
-        margin: 6px auto; /* Réduit la marge pour économiser l'espace */
-        padding: 0;
-        transition: all 0.3s ease-in-out;
-        width: 44px; /* Légèrement réduit */
-        height: 44px; /* Légèrement réduit */
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: rgba(255, 255, 255, 0.7);
-        flex-shrink: 0; /* Empêche la compression */
-    }
+/* Style pour les boutons icônes de navigation */
+.mud-icon-button.nav-link-item {
+    border-radius: 50%;
+    margin: 8px auto; /* Espacement vertical suffisant */
+    padding: 0;
+    transition: all 0.3s ease-in-out;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.7);
+    flex-shrink: 0; /* Empêche la compression */
+    position: relative;
+}
 
     /* Style de l'icône par défaut */
     .mud-icon-button.nav-link-item .mud-icon {
-        font-size: 22px !important; /* Légèrement réduit */
+        font-size: 24px !important;
         color: rgba(255, 255, 255, 0.7);
         transition: all 0.3s ease;
     }
@@ -54,11 +57,11 @@
     .mud-icon-button.nav-link-item.active {
         background-color: white !important;
         color: var(--mud-palette-primary) !important;
-        border-radius: 18px; /* Ajusté proportionnellement */
-        width: 56px; /* Ajusté proportionnellement */
-        height: 44px;
-        transform: scale(1.1); /* Réduit légèrement l'agrandissement */
-        box-shadow: 0 6px 16px rgba(255, 255, 255, 0.3); /* Réduit l'ombre */
+        border-radius: 20px;
+        width: 60px;
+        height: 48px;
+        transform: scale(1.05);
+        box-shadow: 0 4px 12px rgba(255, 255, 255, 0.3);
         border: 2px solid rgba(255, 255, 255, 0.9);
     }
 
@@ -90,9 +93,9 @@
     .mud-icon-button.nav-link-item:hover:not(.active) {
         background-color: rgba(255, 255, 255, 0.1);
         cursor: pointer;
-        border-radius: 18px;
-        width: 56px;
-        transform: scale(1.02); /* Réduit l'effet hover */
+        border-radius: 20px;
+        width: 52px;
+        transform: scale(1.05);
     }
 
     .mud-icon-button.nav-link-item:hover:not(.active) .mud-icon {
@@ -102,27 +105,32 @@
     /* Header et footer fixes */
     .nav-header {
         flex-shrink: 0;
-        padding: 12px 0; /* Réduit le padding */
+        padding: 16px 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
     .nav-footer {
         flex-shrink: 0;
-        padding: 8px 0; /* Réduit le padding */
+        padding: 12px 0 16px 0;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
     }
 
     /* Section navigation principale */
     .nav-main {
-        flex: 1;
         display: flex;
         flex-direction: column;
-        justify-content: flex-start;
-        padding: 0 16px;
-        min-height: 0; /* Important pour permettre la compression */
+        gap: 4px;
+        padding: 0;
     }
 
     /* Section footer */
     .nav-footer-content {
-        padding: 0 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 0;
     }
 </style>
 
@@ -138,56 +146,79 @@
         <div class="nav-main">
             <MudIconButton Icon="@Icons.Material.Outlined.Home" 
                            Class="@GetNavLinkClass("")" 
-                           OnClick="GoHome" />
+                           OnClick="GoHome" 
+                           Title="Accueil" />
             
             <MudIconButton Icon="@Icons.Material.Outlined.Dashboard" 
                            Class="@GetNavLinkClass("dashboard")" 
-                           OnClick="GoDashboard" />
+                           OnClick="GoDashboard"
+                           Title="Tableau de bord" />
             
             <MudIconButton Icon="@Icons.Material.Outlined.Devices" 
                            Class="@GetNavLinkClass("devices")" 
-                           OnClick="GoDevices" />
-            
-            <MudIconButton Icon="@Icons.Material.Outlined.Security" 
-                           Class="@GetNavLinkClass("access")" 
-                           OnClick="GoAccess" />
+                           OnClick="GoDevices"
+                           Title="Périphériques" />
             
             <MudIconButton Icon="@Icons.Material.Outlined.LocationOn" 
                            Class="@GetNavLinkClass("zones")" 
-                           OnClick="GoZones" />
+                           OnClick="GoZones"
+                           Title="Zones" />
+            
+            <MudIconButton Icon="@Icons.Material.Outlined.Security" 
+                           Class="@GetNavLinkClass("access")" 
+                           OnClick="GoAccess"
+                           Title="Droits d'accès" />
             
             <MudIconButton Icon="@Icons.Material.Outlined.PeopleOutline" 
                            Class="@GetNavLinkClass("utilisateurs")" 
-                           OnClick="GoUsers" />
+                           OnClick="GoUsers"
+                           Title="Utilisateurs" />
             
             <MudIconButton Icon="@Icons.Material.Outlined.Analytics" 
                            Class="@GetNavLinkClass("analytics")" 
-                           OnClick="GoAnalytics" />
+                           OnClick="GoAnalytics"
+                           Title="Analytics" />
+            
+            <MudIconButton Icon="@Icons.Material.Outlined.Timeline" 
+                           Class="@GetNavLinkClass("telemetrie")" 
+                           OnClick="GoTelemetrie"
+                           Title="Télémétrie" />
+            
+            <MudIconButton Icon="@Icons.Material.Outlined.ConfirmationNumber" 
+                           Class="@GetNavLinkClass("incidents")" 
+                           OnClick="GoIncidents"
+                           Title="Incidents" />
+            
+            <MudIconButton Icon="@Icons.Material.Outlined.Notifications" 
+                           Class="@GetNavLinkClass("notifications")" 
+                           OnClick="GoNotifications"
+                           Title="Notifications" />
             
             <MudIconButton Icon="@Icons.Material.Outlined.BugReport" 
                            Class="@GetNavLinkClass("diagnostics")" 
-                           OnClick="GoDiagnostics" />
+                           OnClick="GoDiagnostics"
+                           Title="Diagnostics" />
         </div>
-
-        <!-- Spacer pour pousser le footer vers le bas -->
-        <div style="flex-grow: 1;" />
     </div>
 
     <!-- Footer fixe -->
     <div class="nav-footer">
-        <div class="nav-footer-content d-flex flex-column">
+        <div class="nav-footer-content d-flex flex-column align-center">
             <MudIconButton Icon="@DarkLightModeButtonIcon" 
-                           OnClick="OnToggleDarkMode" 
+                           OnClick="@HandleToggleDarkMode" 
                            Color="Color.Inherit" 
-                           Class="nav-link-item" />
+                           Class="nav-link-item"
+                           Title="Changer le thème" />
             
             <MudIconButton Icon="@Icons.Material.Outlined.Person" 
                            Class="@GetNavLinkClass("profile")" 
-                           OnClick="GoProfile" />
+                           OnClick="GoProfile"
+                           Title="Mon profil" />
             
             <MudIconButton Icon="@Icons.Material.Outlined.ExitToApp" 
                            Class="nav-link-item" 
-                           OnClick="Logout" />
+                           OnClick="Logout"
+                           Title="Se déconnecter" />
         </div>
     </div>
 </div>
@@ -200,6 +231,11 @@
     public EventCallback OnToggleDarkMode { get; set; }
 
     public string DarkLightModeButtonIcon => IsDarkMode ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode;
+
+    private async Task HandleToggleDarkMode()
+    {
+        await OnToggleDarkMode.InvokeAsync();
+    }
 
     private async Task Logout()
     {
@@ -227,6 +263,9 @@
     private void GoZones() => NavigationManager.NavigateTo("zones");
     private void GoUsers() => NavigationManager.NavigateTo("utilisateurs");
     private void GoAnalytics() => NavigationManager.NavigateTo("analytics");
+    private void GoTelemetrie() => NavigationManager.NavigateTo("telemetrie");
+    private void GoIncidents() => NavigationManager.NavigateTo("incidents");
+    private void GoNotifications() => NavigationManager.NavigateTo("notifications");
     private void GoDiagnostics() => NavigationManager.NavigateTo("diagnostics");
     private void GoProfile() => NavigationManager.NavigateTo("profile");
 

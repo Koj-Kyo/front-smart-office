@@ -25,7 +25,7 @@ public class BrowserCompatibleSignalRService : ISignalRService, IAsyncDisposable
     public event Action<HubConnectionState>? ConnectionStateChanged;
     public event Action<TelemetryData>? OnTelemetryUpdate;
     public event Action<DeviceStatusUpdate>? OnDeviceStatusUpdate;
-    public event Action<NotificationDto>? OnNotificationReceived;
+    public event Action<SignalRNotificationDto>? OnNotificationReceived;
     public event Action<string>? OnIncidentAlert;
     public event Action<string>? OnCommandExecutionResult;
 
@@ -103,7 +103,7 @@ public class BrowserCompatibleSignalRService : ISignalRService, IAsyncDisposable
                 }
             });
 
-            _hubConnection.On<NotificationDto>("ReceiveNotification", notification =>
+            _hubConnection.On<SignalRNotificationDto>("ReceiveNotification", notification =>
             {
                 try
                 {

@@ -4,25 +4,25 @@ using MySmartApp.Ui.Models;
 namespace MySmartApp.Ui.Services;
 
 /// <summary>
-/// Service d'état global de l'application avec gestion des erreurs et notifications
+/// Service d'ï¿½tat global de l'application avec gestion des erreurs et notifications
 /// </summary>
 public interface IAppStateService
 {
-    // États généraux
+    // ï¿½tats gï¿½nï¿½raux
     bool IsLoading { get; }
     bool IsOnline { get; }
     string? CurrentError { get; }
     
-    // Données utilisateur
+    // Donnï¿½es utilisateur
     UserProfileDto? CurrentUser { get; }
     List<string> UserRoles { get; }
     bool IsAdmin { get; }
     
-    // Données métier
+    // Donnï¿½es mï¿½tier
     IReadOnlyList<ZoneDto> Zones { get; }
     IReadOnlyList<DeviceDto> Devices { get; }
     
-    // Événements
+    // ï¿½vï¿½nements
     event Action? OnStateChanged;
     event Action<string>? OnError;
     event Action<string>? OnNotification;
@@ -45,7 +45,7 @@ public class AppStateService : IAppStateService, IDisposable
     private readonly SemaphoreSlim _semaphore = new(1, 1);
     private readonly ConcurrentDictionary<string, object> _cache = new();
     
-    // États internes
+    // ï¿½tats internes
     private bool _isLoading;
     private bool _isOnline = true;
     private string? _currentError;
@@ -58,7 +58,7 @@ public class AppStateService : IAppStateService, IDisposable
         _logger = logger;
     }
 
-    // Propriétés publiques
+    // Propriï¿½tï¿½s publiques
     public bool IsLoading => _isLoading;
     public bool IsOnline => _isOnline;
     public string? CurrentError => _currentError;
@@ -68,7 +68,7 @@ public class AppStateService : IAppStateService, IDisposable
     public IReadOnlyList<ZoneDto> Zones => _zones.AsReadOnly();
     public IReadOnlyList<DeviceDto> Devices => _devices.AsReadOnly();
 
-    // Événements
+    // ï¿½vï¿½nements
     public event Action? OnStateChanged;
     public event Action<string>? OnError;
     public event Action<string>? OnNotification;
@@ -78,22 +78,22 @@ public class AppStateService : IAppStateService, IDisposable
         await _semaphore.WaitAsync();
         try
         {
-            _logger.LogInformation("?? Initialisation de l'état de l'application...");
+            _logger.LogInformation("?? Initialisation de l'ï¿½tat de l'application...");
             
-            // Initialisation des états par défaut
+            // Initialisation des ï¿½tats par dï¿½faut
             _isLoading = false;
             _isOnline = true;
             _currentError = null;
             
-            // Vérification de la connectivité
+            // Vï¿½rification de la connectivitï¿½
             await CheckConnectivityAsync();
             
-            _logger.LogInformation("? État de l'application initialisé");
+            _logger.LogInformation("? ï¿½tat de l'application initialisï¿½");
             NotifyStateChanged();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Erreur lors de l'initialisation de l'état");
+            _logger.LogError("? Erreur lors de l'initialisation de l'ï¿½tat: {Message}", ex.Message);
             await SetErrorAsync($"Erreur d'initialisation: {ex.Message}");
         }
         finally
@@ -107,7 +107,7 @@ public class AppStateService : IAppStateService, IDisposable
         if (_isLoading != isLoading)
         {
             _isLoading = isLoading;
-            _logger.LogDebug("État de chargement: {IsLoading}", isLoading);
+            _logger.LogDebug("ï¿½tat de chargement: {IsLoading}", isLoading);
             
             await Task.Run(() => NotifyStateChanged());
         }
@@ -119,7 +119,7 @@ public class AppStateService : IAppStateService, IDisposable
         
         if (!string.IsNullOrEmpty(error))
         {
-            _logger.LogError("? Erreur dans l'état: {Error}", error);
+            _logger.LogError("? Erreur dans l'ï¿½tat: {Error}", error);
             OnError?.Invoke(error);
         }
         
@@ -135,12 +135,12 @@ public class AppStateService : IAppStateService, IDisposable
             
             if (user != null)
             {
-                _logger.LogInformation("?? Utilisateur connecté: {Email} (Rôles: {Roles})", 
+                _logger.LogInformation("?? Utilisateur connectï¿½: {Email} (Rï¿½les: {Roles})", 
                     user.Email, string.Join(", ", user.Roles));
             }
             else
             {
-                _logger.LogInformation("?? Utilisateur déconnecté");
+                _logger.LogInformation("?? Utilisateur dï¿½connectï¿½");
                 ClearUserData();
             }
             
@@ -160,7 +160,7 @@ public class AppStateService : IAppStateService, IDisposable
             _zones = zones.ToList();
             _cache["zones_updated"] = DateTime.UtcNow;
             
-            _logger.LogDebug("?? {Count} zones mises à jour", _zones.Count);
+            _logger.LogDebug("?? {Count} zones mises ï¿½ jour", _zones.Count);
             NotifyStateChanged();
         }
         finally
@@ -177,7 +177,7 @@ public class AppStateService : IAppStateService, IDisposable
             _devices = devices.ToList();
             _cache["devices_updated"] = DateTime.UtcNow;
             
-            _logger.LogDebug("?? {Count} appareils mis à jour", _devices.Count);
+            _logger.LogDebug("?? {Count} appareils mis ï¿½ jour", _devices.Count);
             NotifyStateChanged();
         }
         finally
@@ -206,12 +206,12 @@ public class AppStateService : IAppStateService, IDisposable
         await SetLoadingStateAsync(true);
         try
         {
-            // Cette méthode sera implémentée pour recharger les données depuis l'API
-            _logger.LogInformation("?? Actualisation des données...");
+            // Cette mï¿½thode sera implï¿½mentï¿½e pour recharger les donnï¿½es depuis l'API
+            _logger.LogInformation("?? Actualisation des donnï¿½es...");
             
             // Ici, vous pourrez appeler vos services pour recharger zones, devices, etc.
             
-            await ShowNotificationAsync("Données actualisées", NotificationType.Success);
+            await ShowNotificationAsync("Donnï¿½es actualisï¿½es", NotificationType.Success);
         }
         catch (Exception ex)
         {
@@ -225,7 +225,7 @@ public class AppStateService : IAppStateService, IDisposable
 
     public void ClearState()
     {
-        _logger.LogInformation("?? Nettoyage de l'état de l'application");
+        _logger.LogInformation("?? Nettoyage de l'ï¿½tat de l'application");
         
         _currentUser = null;
         _zones.Clear();
@@ -247,14 +247,14 @@ public class AppStateService : IAppStateService, IDisposable
     {
         try
         {
-            // Simulation d'une vérification de connectivité
-            // En WebAssembly, on peut vérifier via une requête HTTP simple
+            // Simulation d'une vï¿½rification de connectivitï¿½
+            // En WebAssembly, on peut vï¿½rifier via une requï¿½te HTTP simple
             _isOnline = true;
         }
         catch
         {
             _isOnline = false;
-            await ShowNotificationAsync("Connexion réseau indisponible", NotificationType.Warning);
+            await ShowNotificationAsync("Connexion rï¿½seau indisponible", NotificationType.Warning);
         }
     }
 
@@ -266,7 +266,7 @@ public class AppStateService : IAppStateService, IDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Erreur lors de la notification de changement d'état");
+            _logger.LogError("Erreur lors de la notification de changement d'ï¿½tat: {Message}", ex.Message);
         }
     }
 

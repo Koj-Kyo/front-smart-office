@@ -1,88 +1,370 @@
 ﻿@page "/utilisateurs"
 @using MudBlazor
+@using MySmartApp.Ui.Services
+@using MySmartApp.Ui.Models
+@using System.ComponentModel.DataAnnotations
 @inject IDialogService DialogService
+@inject IAdminUserManagementService AdminUserService
+@inject ISnackbar Snackbar
+@inject ILogger<Users> Logger
 @attribute [Authorize]
 
 <RequireAuth>
 
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="my-8">
-    <MudText Typo="Typo.h4" Class="mb-4">Gestion des utilisateurs</MudText>
-    <MudText Typo="Typo.body1" Class="mb-8">Gérez ici la liste complète des utilisateurs, leurs rôles et leur statut.</MudText>
+    <MudText Typo="Typo.h4" Class="mb-4">👥 Gestion des utilisateurs</MudText>
+    <MudText Typo="Typo.body1" Class="mb-6">Gérez ici la liste complète des utilisateurs, leurs rôles et leur statut dans le système.</MudText>
 
-    <div class="d-flex align-center justify-space-between mb-4">
-        <MudButton OnClick="OpenAddDialog" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" Class="mb-4">
-            Ajouter un utilisateur
-        </MudButton>
-        <MudTextField T="string" 
-                      @bind-Value="searchString"
-                      Placeholder="Rechercher..." 
-                      Adornment="Adornment.Start" 
-                      AdornmentIcon="@Icons.Material.Filled.Search" 
-                      IconSize="Size.Medium" 
-                      Class="ml-4"
-                      Style="max-width: 300px;"></MudTextField>
+    <!-- Statistiques rapides -->
+    @if (statistics != null)
+    {
+        <MudGrid Class="mb-6">
+            <MudItem xs="6" sm="3">
+                <MudPaper Class="pa-4 text-center" Elevation="2">
+                    <MudText Typo="Typo.h4" Color="Color.Primary">@statistics.TotalUsers</MudText>
+                    <MudText Typo="Typo.body2">Utilisateurs totaux</MudText>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="6" sm="3">
+                <MudPaper Class="pa-4 text-center" Elevation="2">
+                    <MudText Typo="Typo.h4" Color="Color.Success">@statistics.ActiveUsers</MudText>
+                    <MudText Typo="Typo.body2">Utilisateurs actifs</MudText>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="6" sm="3">
+                <MudPaper Class="pa-4 text-center" Elevation="2">
+                    <MudText Typo="Typo.h4" Color="Color.Warning">@statistics.LockedUsers</MudText>
+                    <MudText Typo="Typo.body2">Comptes verrouillés</MudText>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="6" sm="3">
+                <MudPaper Class="pa-4 text-center" Elevation="2">
+                    <MudText Typo="Typo.h4" Color="Color.Info">@statistics.TotalRoles</MudText>
+                    <MudText Typo="Typo.body2">Rôles disponibles</MudText>
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+    }
+
+    <!-- Actions principales -->
+    <MudGrid Class="mb-6">
+        <MudItem xs="12" sm="6" md="4">
+            <MudButton OnClick="OpenAddDialog" 
+                       Variant="Variant.Filled" 
+                       Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.PersonAdd"
+                       Size="Size.Large"
+                       FullWidth="true">
+                Créer un utilisateur
+            </MudButton>
+        </MudItem>
+        
+        <MudItem xs="12" sm="6" md="4">
+            <MudButton OnClick="RefreshData" 
+                       Variant="Variant.Outlined" 
+                       Color="Color.Info"
+                       StartIcon="@Icons.Material.Filled.Refresh"
+                       Size="Size.Large"
+                       Disabled="@isLoading"
+                       FullWidth="true">
+                @if (isLoading)
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                }
+                Actualiser
+            </MudButton>
+        </MudItem>
+        
+        <MudItem xs="12" sm="12" md="4">
+            <MudTextField @bind-Value="searchString"
+                          Placeholder="Rechercher..."
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Search"
+                          Clearable="true"
+                          Immediate="true"
+                          FullWidth="true" />
+        </MudItem>
+    </MudGrid>
+
+    @if (isLoading)
+    {
+        <div class="d-flex justify-center align-center pa-8">
+            <MudProgressCircular Size="Size.Large" Indeterminate="true" Class="mr-4" />
+            <MudText Typo="Typo.h6">Chargement des utilisateurs...</MudText>
+        </div>
+    }
+    else if (filteredUsers.Any())
+    {
+        <MudExpansionPanels MultiExpansion="true" Class="rounded-xl">
+            @foreach (var user in filteredUsers)
+            {
+                <MudExpansionPanel>
+                    <TitleContent>
+                        <div class="d-flex align-center justify-space-between" style="width: 100%;">
+                            <div class="d-flex align-center">
+                                <MudIcon Icon="@Icons.Material.Filled.Person" Class="mr-2" />
+                                <span>@user.UserName</span>
+                            </div>
+                            <div class="d-flex align-center gap-2">
+                                @if (!user.IsActive)
+                                {
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Error">
+                                        🔒 Inactif
+                                    </MudChip>
+                                }
+                                @if (!user.EmailConfirmed)
+                                {
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Warning">
+                                        ⚠️ Email non confirmé
+                                    </MudChip>
+                                }
+                            </div>
+                        </div>
+                    </TitleContent>
+                    <ChildContent>
+                        <div class="d-flex flex-column pa-4">
+                            <MudGrid>
+                                <MudItem xs="12" sm="6">
+                                    <MudText Typo="Typo.h6" Class="mb-3">📋 Informations personnelles</MudText>
+                                    <MudText Typo="Typo.body2" Class="mb-2">
+                                        <strong>Nom d'utilisateur:</strong> @user.UserName
+                                    </MudText>
+                                    <MudText Typo="Typo.body2" Class="mb-2">
+                                        <strong>Email:</strong> @user.Email
+                                    </MudText>
+                                    <MudText Typo="Typo.body2" Class="mb-2">
+                                        <strong>Nom complet:</strong> @user.FullName
+                                    </MudText>
+                                    @if (!string.IsNullOrEmpty(user.PhoneNumber))
+                                    {
+                                        <MudText Typo="Typo.body2" Class="mb-2">
+                                            <strong>Téléphone:</strong> @user.PhoneNumber
+                                        </MudText>
+                                    }
+                                </MudItem>
+                                <MudItem xs="12" sm="6">
+                                    <MudText Typo="Typo.h6" Class="mb-3">🔐 Statut et sécurité</MudText>
+                                    <div class="mb-2">
+                                        <MudChip T="string" 
+                                                 Size="Size.Small" 
+                                                 Color="@(user.IsActive ? Color.Success : Color.Error)">
+                                            @(user.IsActive ? "✅ Actif" : "🔒 Inactif")
+                                        </MudChip>
+                                    </div>
+                                    <MudText Typo="Typo.body2" Class="mb-2">
+                                        <strong>Email confirmé:</strong> @(user.EmailConfirmed ? "✅ Oui" : "❌ Non")
+                                    </MudText>
+                                    <MudText Typo="Typo.body2" Class="mb-2">
+                                        <strong>Créé le:</strong> @user.CreatedDate.ToString("dd/MM/yyyy")
+                                    </MudText>
+                                    <MudText Typo="Typo.body2" Class="mb-3">
+                                        <strong>Dernière connexion:</strong> @user.LastLogin.ToString("dd/MM/yyyy HH:mm")
+                                    </MudText>
+                                    
+                                    <MudText Typo="Typo.subtitle2" Class="mb-2">🎭 Rôles assignés:</MudText>
+                                    <div class="d-flex flex-wrap gap-1">
+                                        @foreach (var role in user.Roles)
+                                        {
+                                            <MudChip T="string" Size="Size.Small" Color="@GetRoleColor(role)">
+                                                @role
+                                            </MudChip>
+                                        }
+                                        @if (!user.Roles.Any())
+                                        {
+                                            <MudChip T="string" Size="Size.Small" Color="Color.Default">
+                                                Aucun rôle
+                                            </MudChip>
+                                        }
+                                    </div>
+                                </MudItem>
+                            </MudGrid>
+                        </div>
+                        <div class="d-flex justify-end pa-2 gap-2">
+                            <MudIconButton OnClick="@(() => OpenEditDialog(user))" 
+                                         Icon="@Icons.Material.Filled.Edit" 
+                                         Color="Color.Primary"
+                                         Title="Modifier l'utilisateur" />
+                            <MudIconButton OnClick="@(() => OpenUserRolesDialog(user))" 
+                                         Icon="@Icons.Material.Filled.Security" 
+                                         Color="Color.Warning"
+                                         Title="Gérer les rôles" />
+                            <MudIconButton OnClick="@(() => ToggleUserStatus(user))" 
+                                         Icon="@(user.IsActive ? Icons.Material.Filled.Lock : Icons.Material.Filled.LockOpen)" 
+                                         Color="@(user.IsActive ? Color.Warning : Color.Success)"
+                                         Title="@(user.IsActive ? "Désactiver" : "Activer")" />
+                            <MudIconButton OnClick="@(() => DeleteUser(user))" 
+                                         Icon="@Icons.Material.Filled.Delete" 
+                                         Color="Color.Error"
+                                         Title="Supprimer l'utilisateur" />
+                        </div>
+                    </ChildContent>
+                </MudExpansionPanel>
+            }
+        </MudExpansionPanels>
+    }
+    else
+    {
+        <MudPaper Class="pa-8 text-center" Elevation="2">
+            <MudIcon Icon="@Icons.Material.Filled.PersonOff" Size="Size.Large" Color="Color.Secondary" Class="mb-4" />
+            <MudText Typo="Typo.h5" Color="Color.Secondary">Aucun utilisateur trouvé</MudText>
+            <MudText Typo="Typo.body1" Color="Color.Secondary" Class="mb-4">
+                @if (string.IsNullOrEmpty(searchString))
+                {
+                    <text>Aucun utilisateur n'est actuellement enregistré dans le système.</text>
+                }
+                else
+                {
+                    <text>Aucun utilisateur ne correspond à votre recherche "@searchString".</text>
+                }
+            </MudText>
+            <MudButton OnClick="OpenAddDialog" 
+                       Variant="Variant.Filled" 
+                       Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.PersonAdd">
+                Créer le premier utilisateur
+            </MudButton>
+        </MudPaper>
+    }
+    
+    <!-- Composant de gestion des rôles -->
+    <div class="mt-8">
+        <UserRoleManagementComponent OnRoleChanged="RefreshUsers" />
     </div>
-
-    <MudExpansionPanels MultiExpansion="true" Class="rounded-xl">
-        @foreach (var user in filteredUsers)
-        {
-            <MudExpansionPanel Text="@user.Name">
-                <ChildContent>
-                    <div class="d-flex flex-column pa-4">
-                        <MudText Typo="Typo.h6">Détails de l'utilisateur</MudText>
-                        <MudText Typo="Typo.body2">Nom: @user.Name</MudText>
-                        <MudText Typo="Typo.body2">Rôle: @user.Role</MudText>
-                        <MudText Typo="Typo.body2">Statut: @(user.IsActive ? "Actif" : "Inactif")</MudText>
-                    </div>
-                    <div class="d-flex justify-end pa-2">
-                        <MudIconButton OnClick="@(() => OpenEditDialog(user))" Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" />
-                        <MudIconButton OnClick="@(() => DeleteUser(user))" Icon="@Icons.Material.Filled.Delete" Color="Color.Error" />
-                    </div>
-                </ChildContent>
-            </MudExpansionPanel>
-        }
-    </MudExpansionPanels>
 </MudContainer>
 
+<!-- Dialog de création/modification d'utilisateur -->
 @if (isDialogOpen)
 {
     <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1300; display: flex; align-items: center; justify-content: center;">
-        <MudPaper Class="pa-6" Style="max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto;">
+        <MudPaper Class="pa-6" Style="max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto;">
             <MudText Typo="Typo.h6" Class="mb-4">
-                <MudIcon Icon="@(isAdding ? Icons.Material.Filled.Add : Icons.Material.Filled.Edit)" Class="mr-3" />
-                @(isAdding ? "Ajouter un utilisateur" : "Modifier l'utilisateur")
+                @if (isAdding)
+                {
+                    <MudIcon Icon="@Icons.Material.Filled.PersonAdd" Class="mr-2" />
+                    <text>Créer un nouvel utilisateur</text>
+                }
+                else
+                {
+                    <MudIcon Icon="@Icons.Material.Filled.Edit" Class="mr-2" />
+                    <text>Modifier l'utilisateur</text>
+                }
             </MudText>
 
-            <MudForm @ref="form">
-                <MudTextField @bind-Value="editingUser.Name" 
-                             Label="Nom de l'utilisateur" 
-                             Required="true" 
-                             RequiredError="Le nom est obligatoire!" 
-                             Class="mb-4" />
-                
-                <MudSelect @bind-Value="editingUser.Role" 
-                          Label="Rôle" 
-                          Required="true" 
-                          RequiredError="Le rôle est obligatoire!"
-                          Class="mb-4">
-                    <MudSelectItem Value="@("Admin")">🔐 Admin</MudSelectItem>
-                    <MudSelectItem Value="@("Membre")">👤 Membre</MudSelectItem>
-                    <MudSelectItem Value="@("Visiteur")">👁️ Visiteur</MudSelectItem>
-                </MudSelect>
-                
-                <MudSwitch @bind-Value="editingUser.IsActive" 
-                          Label="Utilisateur actif" 
-                          Color="Color.Primary" 
-                          Class="mb-4" />
+            @if (!string.IsNullOrEmpty(validationError))
+            {
+                <MudAlert Severity="Severity.Error" Class="mb-4" Variant="Variant.Filled">
+                    @validationError
+                </MudAlert>
+            }
+
+            <MudForm @ref="form" @bind-IsValid="@isFormValid">
+                <MudGrid>
+                    <MudItem xs="12" sm="6">
+                        <MudTextField @bind-Value="userModel.UserName"
+                                      Label="Nom d'utilisateur"
+                                      Required="true"
+                                      RequiredError="Le nom d'utilisateur est obligatoire"
+                                      Validation="@(new Func<string, string?>(ValidateUserName))" />
+                    </MudItem>
+                    <MudItem xs="12" sm="6">
+                        <MudTextField @bind-Value="userModel.Email"
+                                      Label="Email"
+                                      Required="true"
+                                      RequiredError="L'email est obligatoire"
+                                      Validation="@(new Func<string, IEnumerable<string>>(ValidateEmail))" />
+                    </MudItem>
+                    <MudItem xs="12">
+                        <MudTextField @bind-Value="userModel.FullName"
+                                      Label="Nom complet"
+                                      Required="true"
+                                      RequiredError="Le nom complet est obligatoire"
+                                      Validation="@(new Func<string, string?>(ValidateFullName))" />
+                    </MudItem>
+                    <MudItem xs="12" sm="6">
+                        <MudTextField @bind-Value="userModel.PhoneNumber"
+                                      Label="Téléphone (optionnel)"
+                                      InputType="InputType.Telephone"
+                                      Validation="@(new Func<string?, string?>(ValidatePhoneNumber))" />
+                    </MudItem>
+                    @if (isAdding)
+                    {
+                        <MudItem xs="12" sm="6">
+                            <MudTextField @bind-Value="userModel.Password"
+                                          Label="Mot de passe"
+                                          InputType="@(showPassword ? InputType.Text : InputType.Password)"
+                                          Required="true"
+                                          RequiredError="Le mot de passe est obligatoire"
+                                          Validation="@(new Func<string, IEnumerable<string>>(ValidatePassword))"
+                                          Adornment="Adornment.End"
+                                          AdornmentIcon="@(showPassword ? Icons.Material.Filled.Visibility : Icons.Material.Filled.VisibilityOff)"
+                                          OnAdornmentClick="@(() => showPassword = !showPassword)" />
+                        </MudItem>
+                        <MudItem xs="12">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                Le mot de passe doit contenir au minimum 8 caractères, une majuscule, un chiffre et un caractère spécial.
+                            </MudText>
+                        </MudItem>
+                    }
+                    <MudItem xs="12">
+                        <MudSelect T="string" @bind-SelectedValues="userModel.SelectedRoles"
+                                   Label="Rôles"
+                                   MultiSelection="true"
+                                   ToStringFunc="@(x => x)"
+                                   HelperText="Sélectionnez un ou plusieurs rôles pour cet utilisateur"
+                                   MultiSelectionTextFunc="@(selectedRoles => $"{selectedRoles.Count()} rôle(s) sélectionné(s)")">
+                            @foreach (var role in roles)
+                            {
+                                <MudSelectItem T="string" Value="@role.Name">
+                                    <div class="d-flex align-center">
+                                        <MudChip T="string" Size="Size.Small" Color="@GetRoleColor(role.Name)" Class="mr-2">
+                                            @role.Name
+                                        </MudChip>
+                                        <span>(@role.UserCount utilisateur(s))</span>
+                                    </div>
+                                </MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                </MudGrid>
             </MudForm>
+
+            @if (!isAdding && currentUser != null)
+            {
+                <MudDivider Class="my-4" />
+                <MudText Typo="Typo.subtitle2" Class="mb-2">Informations système</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">ID: @currentUser.Id</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                    Statut: @(currentUser.IsActive ? "Actif" : "Inactif")
+                </MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                    Créé le: @currentUser.CreatedDate.ToString("dd/MM/yyyy")
+                </MudText>
+            }
 
             <MudGrid Class="mt-4">
                 <MudItem xs="6">
-                    <MudButton OnClick="OnCancel" FullWidth="true" Color="Color.Default">Annuler</MudButton>
+                    <MudButton OnClick="OnCancel" 
+                               FullWidth="true" 
+                               Color="Color.Default"
+                               Disabled="@isProcessing">
+                        Annuler
+                    </MudButton>
                 </MudItem>
                 <MudItem xs="6">
-                    <MudButton OnClick="OnSave" FullWidth="true" Color="Color.Primary" Variant="Variant.Filled">
-                        Sauvegarder
+                    <MudButton OnClick="OnSave" 
+                               FullWidth="true" 
+                               Color="Color.Primary" 
+                               Variant="Variant.Filled"
+                               Disabled="@(!isFormValid || isProcessing)">
+                        @if (isProcessing)
+                        {
+                            <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                            <text>Traitement...</text>
+                        }
+                        else
+                        {
+                            @(isAdding ? "Créer" : "Modifier")
+                        }
                     </MudButton>
                 </MudItem>
             </MudGrid>
@@ -91,134 +373,543 @@
 }
 
 @code {
-    private List<User> users = new List<User>();
-    private List<User> filteredUsers => FilterUsers();
-    private string searchString = "";
+    // État de la page
+    private bool isLoading = true;
     private bool isDialogOpen = false;
     private bool isAdding = true;
-    private User editingUser = new User();
+    private bool isFormValid = false;
+    private bool isProcessing = false;
+    private bool showPassword = false;
+    private string searchString = "";
+    private string validationError = "";
     private MudForm? form;
-    private int nextId = 4;
+    
+    // Données
+    private List<UserDetailsDto> users = new();
+    private List<RoleDto> roles = new();
+    private UserStatisticsDto? statistics;
+    private UserDetailsDto? currentUser;
+    
+    // Modèle pour le formulaire
+    private UserFormModel userModel = new();
+    
+    // Propriétés calculées
+    private List<UserDetailsDto> filteredUsers => 
+        string.IsNullOrEmpty(searchString) 
+            ? users 
+            : users.Where(u => 
+                u.UserName.Contains(searchString, StringComparison.OrdinalIgnoreCase) ||
+                u.Email.Contains(searchString, StringComparison.OrdinalIgnoreCase) ||
+                u.FullName.Contains(searchString, StringComparison.OrdinalIgnoreCase) ||
+                u.Roles.Any(r => r.Contains(searchString, StringComparison.OrdinalIgnoreCase)))
+              .ToList();
 
-    // Modèle de données pour l'utilisateur
-    public class User
+    protected override async Task OnInitializedAsync()
     {
-        public int Id { get; set; }
-        public string Name { get; set; } = "";
-        public string Role { get; set; } = "Membre";
-        public bool IsActive { get; set; } = true;
-
-        public override bool Equals(object? obj) => obj is User user && Id == user.Id;
-        public override int GetHashCode() => Id.GetHashCode();
+        await LoadData();
     }
 
-    protected override void OnInitialized()
+    private async Task LoadData()
     {
-        // Données d'utilisateurs fictives avec des ID uniques
-        users = new List<User>
+        isLoading = true;
+        StateHasChanged();
+
+        try
         {
-            new User { Id = 1, Name = "Scarlett", Role = "Admin", IsActive = true },
-            new User { Id = 2, Name = "Nariya", Role = "Membre", IsActive = true },
-            new User { Id = 3, Name = "Riya", Role = "Visiteur", IsActive = false }
-        };
+            // Charger les données en parallèle
+            var usersTask = AdminUserService.GetAllUsersAsync();
+            var rolesTask = AdminUserService.GetAllRolesAsync();
+            var statisticsTask = AdminUserService.GetUserStatisticsAsync();
+
+            await Task.WhenAll(usersTask, rolesTask, statisticsTask);
+
+            var usersResponse = await usersTask;
+            var rolesResponse = await rolesTask;
+            var statisticsResponse = await statisticsTask;
+
+            if (usersResponse.IsSuccess && usersResponse.Data != null)
+            {
+                users = usersResponse.Data;
+                Logger.LogInformation("✅ {Count} utilisateurs chargés", users.Count);
+            }
+            else
+            {
+                Snackbar.Add($"❌ Erreur de chargement des utilisateurs: {usersResponse.ErrorMessage}", Severity.Error);
+            }
+
+            if (rolesResponse.IsSuccess && rolesResponse.Data != null)
+            {
+                roles = rolesResponse.Data;
+                Logger.LogInformation("✅ {Count} rôles chargés", roles.Count);
+            }
+            else
+            {
+                Snackbar.Add($"❌ Erreur de chargement des rôles: {rolesResponse.ErrorMessage}", Severity.Error);
+            }
+
+            if (statisticsResponse.IsSuccess && statisticsResponse.Data != null)
+            {
+                statistics = statisticsResponse.Data;
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "❌ Erreur lors du chargement des données utilisateurs");
+            Snackbar.Add("❌ Une erreur est survenue lors du chargement", Severity.Error);
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
     }
 
-    private List<User> FilterUsers()
+    private async Task RefreshData()
     {
-        if (string.IsNullOrWhiteSpace(searchString))
-            return users;
-
-        return users.Where(u => 
-            u.Name.ToLower().Contains(searchString.ToLower()) ||
-            u.Role.ToLower().Contains(searchString.ToLower())
-        ).ToList();
+        AdminUserService.InvalidateCache();
+        await LoadData();
+        Snackbar.Add("✅ Données actualisées", Severity.Success);
     }
+
+    private void RefreshUsers()
+    {
+        // Méthode appelée après modification des rôles (compatibilité avec UserRoleManagementComponent)
+        _ = Task.Run(async () => await RefreshData());
+    }
+
+    // ==========================================
+    // GESTION DES UTILISATEURS
+    // ==========================================
 
     private void OpenAddDialog()
     {
         isAdding = true;
-        editingUser = new User 
-        { 
-            Name = "",
-            Role = "Membre",
-            IsActive = true
-        };
+        currentUser = null;
+        userModel = new UserFormModel();
+        validationError = "";
         isDialogOpen = true;
-        StateHasChanged();
     }
 
-    private void OpenEditDialog(User user)
+    private void OpenEditDialog(UserDetailsDto user)
     {
         isAdding = false;
-        // Créer une copie pour éviter la modification directe
-        editingUser = new User
+        currentUser = user;
+        userModel = new UserFormModel
         {
-            Id = user.Id,
-            Name = user.Name,
-            Role = user.Role,
-            IsActive = user.IsActive
+            UserName = user.UserName,
+            Email = user.Email,
+            FullName = user.FullName,
+            PhoneNumber = user.PhoneNumber,
+            SelectedRoles = user.Roles
         };
+        validationError = "";
         isDialogOpen = true;
-        StateHasChanged();
     }
 
     private void OnCancel()
     {
         isDialogOpen = false;
-        editingUser = new User();
-        StateHasChanged();
+        userModel = new UserFormModel();
+        currentUser = null;
+        validationError = "";
+        isFormValid = false;
+        showPassword = false;
     }
 
     private async Task OnSave()
     {
-        bool isValid = true;
-        
         if (form != null)
         {
             await form.Validate();
-            isValid = form.IsValid;
-        }
-
-        if (!isValid || string.IsNullOrWhiteSpace(editingUser.Name))
-        {
-            return;
-        }
-
-        if (isAdding)
-        {
-            // Ajouter le nouvel utilisateur avec un ID unique
-            editingUser.Id = nextId++;
-            users.Add(editingUser);
-        }
-        else
-        {
-            // Modifier l'utilisateur existant
-            var existingUser = users.FirstOrDefault(u => u.Id == editingUser.Id);
-            if (existingUser != null)
+            if (!form.IsValid)
             {
-                existingUser.Name = editingUser.Name;
-                existingUser.Role = editingUser.Role;
-                existingUser.IsActive = editingUser.IsActive;
+                Snackbar.Add("⚠️ Veuillez corriger les erreurs du formulaire", Severity.Warning);
+                return;
             }
         }
 
-        isDialogOpen = false;
-        editingUser = new User();
+        validationError = "";
+        isProcessing = true;
         StateHasChanged();
-    }
 
-    private async Task DeleteUser(User user)
-    {
-        bool? result = await DialogService.ShowMessageBox(
-            "Confirmation",
-            $"Êtes-vous sûr de vouloir supprimer l'utilisateur '{user.Name}' ?",
-            yesText:"Supprimer", cancelText:"Annuler");
-
-        if (result == true)
+        try
         {
-            users.Remove(user);
+            if (isAdding)
+            {
+                await CreateUser();
+            }
+            else if (currentUser != null)
+            {
+                await UpdateUser();
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "❌ Erreur lors de la sauvegarde");
+            Snackbar.Add("❌ Une erreur inattendue est survenue", Severity.Error);
+        }
+        finally
+        {
+            isProcessing = false;
             StateHasChanged();
         }
+    }
+
+    private async Task CreateUser()
+    {
+        try
+        {
+            // Vérifier si l'utilisateur existe déjà
+            var existingUser = users.FirstOrDefault(u => 
+                u.Email.Equals(userModel.Email, StringComparison.OrdinalIgnoreCase) ||
+                u.UserName.Equals(userModel.UserName, StringComparison.OrdinalIgnoreCase));
+            
+            if (existingUser != null)
+            {
+                if (existingUser.Email.Equals(userModel.Email, StringComparison.OrdinalIgnoreCase))
+                {
+                    validationError = "❌ Un utilisateur avec cet email existe déjà";
+                    Snackbar.Add(validationError, Severity.Error);
+                    return;
+                }
+                else
+                {
+                    validationError = "❌ Un utilisateur avec ce nom existe déjà";
+                    Snackbar.Add(validationError, Severity.Error);
+                    return;
+                }
+            }
+
+            var createDto = new CreateUserDto(
+                UserName: userModel.UserName.Trim(),
+                Email: userModel.Email.Trim().ToLower(),
+                FullName: userModel.FullName.Trim(),
+                Password: userModel.Password,
+                PhoneNumber: userModel.PhoneNumber?.Trim(),
+                EmailConfirmed: true,
+                Roles: userModel.SelectedRoles.ToList()
+            );
+            
+            var result = await AdminUserService.CreateUserAsync(createDto);
+            
+            if (result.IsSuccess)
+            {
+                Logger.LogInformation("✅ Utilisateur créé: {UserName}", userModel.UserName);
+                Snackbar.Add($"✅ Utilisateur '{userModel.UserName}' créé avec succès", Severity.Success);
+                OnCancel();
+                await LoadData();
+            }
+            else
+            {
+                // Gestion d'erreurs spécifiques
+                if (result.StatusCode == 409) // Conflict
+                {
+                    validationError = "❌ Conflit: Un utilisateur avec ces informations existe déjà";
+                }
+                else if (result.StatusCode == 400) // Bad Request
+                {
+                    validationError = $"❌ Données invalides: {result.ErrorMessage}";
+                }
+                else
+                {
+                    validationError = $"❌ Erreur: {result.ErrorMessage}";
+                }
+                
+                Snackbar.Add(validationError, Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "❌ Exception lors de la création de l'utilisateur");
+            validationError = "❌ Une erreur technique est survenue";
+            Snackbar.Add(validationError, Severity.Error);
+        }
+    }
+
+    private async Task UpdateUser()
+    {
+        if (currentUser == null) return;
+
+        try
+        {
+            // Vérifier si un autre utilisateur a déjà cet email ou ce nom
+            var conflictUser = users.FirstOrDefault(u => 
+                u.Id != currentUser.Id && (
+                    u.Email.Equals(userModel.Email, StringComparison.OrdinalIgnoreCase) ||
+                    u.UserName.Equals(userModel.UserName, StringComparison.OrdinalIgnoreCase)
+                ));
+            
+            if (conflictUser != null)
+            {
+                if (conflictUser.Email.Equals(userModel.Email, StringComparison.OrdinalIgnoreCase))
+                {
+                    validationError = "❌ Un autre utilisateur utilise déjà cet email";
+                    Snackbar.Add(validationError, Severity.Error);
+                    return;
+                }
+                else
+                {
+                    validationError = "❌ Un autre utilisateur utilise déjà ce nom";
+                    Snackbar.Add(validationError, Severity.Error);
+                    return;
+                }
+            }
+
+            var updateDto = new UpdateUserDto(
+                UserName: userModel.UserName.Trim(),
+                Email: userModel.Email.Trim().ToLower(),
+                FullName: userModel.FullName.Trim(),
+                PhoneNumber: userModel.PhoneNumber?.Trim(),
+                EmailConfirmed: true,
+                LockoutEnabled: false
+            );
+            
+            var updateResult = await AdminUserService.UpdateUserAsync(currentUser.Id, updateDto);
+            
+            if (updateResult.IsSuccess)
+            {
+                // Mettre à jour les rôles si nécessaires
+                if (!userModel.SelectedRoles.SequenceEqual(currentUser.Roles))
+                {
+                    await AdminUserService.SetUserRolesAsync(currentUser.Id, userModel.SelectedRoles.ToList());
+                }
+                
+                Logger.LogInformation("✅ Utilisateur modifié: {UserName}", userModel.UserName);
+                Snackbar.Add($"✅ Utilisateur '{userModel.UserName}' modifié avec succès", Severity.Success);
+                OnCancel();
+                await LoadData();
+            }
+            else
+            {
+                // Gestion d'erreurs spécifiques
+                if (updateResult.StatusCode == 409) // Conflict
+                {
+                    validationError = "❌ Conflit: Les modifications entrent en conflit avec un autre utilisateur";
+                }
+                else if (updateResult.StatusCode == 400) // Bad Request
+                {
+                    validationError = $"❌ Données invalides: {updateResult.ErrorMessage}";
+                }
+                else if (updateResult.StatusCode == 404) // Not Found
+                {
+                    validationError = "❌ Utilisateur introuvable";
+                }
+                else
+                {
+                    validationError = $"❌ Erreur: {updateResult.ErrorMessage}";
+                }
+                
+                Snackbar.Add(validationError, Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "❌ Exception lors de la modification de l'utilisateur");
+            validationError = "❌ Une erreur technique est survenue";
+            Snackbar.Add(validationError, Severity.Error);
+        }
+    }
+
+    private async Task ToggleUserStatus(UserDetailsDto user)
+    {
+        var action = user.IsActive ? "désactiver" : "activer";
+        var actionCapital = user.IsActive ? "Désactiver" : "Activer";
+        
+        bool? confirmed = await DialogService.ShowMessageBox(
+            $"🔄 Confirmation - {actionCapital}",
+            $"Êtes-vous sûr de vouloir {action} l'utilisateur '{user.UserName}' ?\n\n" +
+            (user.IsActive 
+                ? "⚠️ L'utilisateur ne pourra plus se connecter jusqu'à réactivation." 
+                : "✅ L'utilisateur pourra à nouveau se connecter."),
+            yesText: actionCapital,
+            cancelText: "Annuler");
+
+        if (confirmed == true)
+        {
+            var result = await AdminUserService.ToggleUserStatusAsync(user.Id);
+            
+            if (result.IsSuccess)
+            {
+                Logger.LogInformation("✅ Statut modifié pour {UserName}: {Status}", 
+                    user.UserName, user.IsActive ? "Désactivé" : "Activé");
+                Snackbar.Add($"✅ Utilisateur '{user.UserName}' {(user.IsActive ? "désactivé" : "activé")}", Severity.Success);
+                await LoadData();
+            }
+            else
+            {
+                Snackbar.Add($"❌ Erreur lors du changement de statut: {result.ErrorMessage}", Severity.Error);
+            }
+        }
+    }
+
+    private async Task DeleteUser(UserDetailsDto user)
+    {
+        bool? confirmed = await DialogService.ShowMessageBox(
+            "🗑️ Confirmation de suppression",
+            $"⚠️ ATTENTION ⚠️\n\n" +
+            $"Vous êtes sur le point de supprimer définitivement l'utilisateur:\n\n" +
+            $"• Nom: {user.UserName}\n" +
+            $"• Email: {user.Email}\n" +
+            $"• Rôles: {string.Join(", ", user.Roles)}\n\n" +
+            $"Cette action est IRRÉVERSIBLE et supprimera:\n" +
+            $"- L'accès au système\n" +
+            $"- Toutes les données associées\n" +
+            $"- L'historique de l'utilisateur\n\n" +
+            $"Êtes-vous absolument certain de vouloir continuer ?",
+            yesText: "Oui, supprimer définitivement",
+            cancelText: "Non, annuler");
+
+        if (confirmed == true)
+        {
+            var result = await AdminUserService.DeleteUserAsync(user.Id);
+            
+            if (result.IsSuccess)
+            {
+                Logger.LogWarning("⚠️ Utilisateur supprimé: {UserName} ({Email})", user.UserName, user.Email);
+                Snackbar.Add($"✅ Utilisateur '{user.UserName}' supprimé définitivement", Severity.Success);
+                await LoadData();
+            }
+            else
+            {
+                if (result.StatusCode == 403) // Forbidden
+                {
+                    Snackbar.Add("❌ Vous ne pouvez pas supprimer votre propre compte", Severity.Error);
+                }
+                else
+                {
+                    Snackbar.Add($"❌ Erreur lors de la suppression: {result.ErrorMessage}", Severity.Error);
+                }
+            }
+        }
+    }
+
+    private async Task OpenUserRolesDialog(UserDetailsDto user)
+    {
+        var rolesText = user.Roles.Any() ? string.Join(", ", user.Roles) : "Aucun rôle assigné";
+        
+        var parameters = new DialogParameters
+        {
+            { "Message", $"Rôles actuels: {rolesText}\n\nUtilisez le bouton 'Modifier' pour changer les rôles de cet utilisateur." }
+        };
+        
+        await DialogService.ShowMessageBox(
+            $"🎭 Rôles de {user.UserName}",
+            $"Rôles actuels: {rolesText}\n\nUtilisez le bouton 'Modifier' pour changer les rôles de cet utilisateur.",
+            "Fermer");
+    }
+
+    // ==========================================
+    // VALIDATION
+    // ==========================================
+
+    private string? ValidateUserName(string userName)
+    {
+        if (string.IsNullOrWhiteSpace(userName))
+            return "Le nom d'utilisateur est obligatoire";
+        
+        if (userName.Length < 3)
+            return "Le nom d'utilisateur doit contenir au moins 3 caractères";
+        
+        if (userName.Length > 50)
+            return "Le nom d'utilisateur ne peut pas dépasser 50 caractères";
+        
+        if (!System.Text.RegularExpressions.Regex.IsMatch(userName, @"^[a-zA-Z0-9_.-]+$"))
+            return "Le nom d'utilisateur ne peut contenir que des lettres, chiffres, points, tirets et underscores";
+        
+        return null;
+    }
+
+    private IEnumerable<string> ValidateEmail(string email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            yield return "L'email est obligatoire";
+            yield break;
+        }
+
+        if (!new EmailAddressAttribute().IsValid(email))
+        {
+            yield return "L'email n'est pas valide";
+        }
+    }
+
+    private string? ValidateFullName(string fullName)
+    {
+        if (string.IsNullOrWhiteSpace(fullName))
+            return "Le nom complet est obligatoire";
+        
+        if (fullName.Length < 2)
+            return "Le nom complet doit contenir au moins 2 caractères";
+        
+        if (fullName.Length > 100)
+            return "Le nom complet ne peut pas dépasser 100 caractères";
+        
+        return null;
+    }
+
+    private string? ValidatePhoneNumber(string? phoneNumber)
+    {
+        if (string.IsNullOrWhiteSpace(phoneNumber))
+            return null; // Optional field
+        
+        // Basic phone validation
+        if (!System.Text.RegularExpressions.Regex.IsMatch(phoneNumber, @"^[\d\s\-\+\(\)]+$"))
+            return "Le numéro de téléphone contient des caractères invalides";
+        
+        var digitsOnly = System.Text.RegularExpressions.Regex.Replace(phoneNumber, @"[^\d]", "");
+        if (digitsOnly.Length < 10 || digitsOnly.Length > 15)
+            return "Le numéro de téléphone doit contenir entre 10 et 15 chiffres";
+        
+        return null;
+    }
+
+    private IEnumerable<string> ValidatePassword(string password)
+    {
+        if (string.IsNullOrWhiteSpace(password))
+        {
+            yield return "Le mot de passe est obligatoire";
+            yield break;
+        }
+
+        if (password.Length < 8)
+            yield return "Le mot de passe doit contenir au moins 8 caractères";
+
+        if (!password.Any(char.IsUpper))
+            yield return "Le mot de passe doit contenir au moins une majuscule";
+
+        if (!password.Any(char.IsDigit))
+            yield return "Le mot de passe doit contenir au moins un chiffre";
+
+        if (!password.Any(ch => !char.IsLetterOrDigit(ch)))
+            yield return "Le mot de passe doit contenir au moins un caractère spécial";
+    }
+
+    // ==========================================
+    // MÉTHODES UTILITAIRES
+    // ==========================================
+
+    private Color GetRoleColor(string role) => role.ToLower() switch
+    {
+        "admin" => Color.Error,
+        "manager" => Color.Warning,
+        "employee" => Color.Primary,
+        "user" => Color.Info,
+        "viewer" => Color.Secondary,
+        _ => Color.Default
+    };
+
+    // ==========================================
+    // MODÈLE POUR LE FORMULAIRE
+    // ==========================================
+
+    public class UserFormModel
+    {
+        public string UserName { get; set; } = "";
+        public string Email { get; set; } = "";
+        public string FullName { get; set; } = "";
+        public string? PhoneNumber { get; set; }
+        public string Password { get; set; } = "";
+        public IEnumerable<string> SelectedRoles { get; set; } = new List<string>();
     }
 }
 

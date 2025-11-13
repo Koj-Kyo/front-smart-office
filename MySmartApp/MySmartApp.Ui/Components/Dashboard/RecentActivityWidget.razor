@@ -1,0 +1,209 @@
+@using MySmartApp.Ui.Services
+@using MySmartApp.Ui.Models
+@inject IUserActivityService UserActivityService
+@inject NavigationManager Navigation
+@inject ILogger<RecentActivityWidget> Logger
+
+<MudCard Elevation="2">
+    <MudCardHeader>
+        <CardHeaderContent>
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                <MudIcon Icon="@Icons.Material.Filled.History" Color="Color.Info" />
+                <MudText Typo="Typo.h6">Activité Récente</MudText>
+            </MudStack>
+        </CardHeaderContent>
+        <CardHeaderActions>
+            @if (_activities?.Any() == true)
+            {
+                <MudChip T="string" Size="Size.Small" Color="Color.Info">@_activities.Count</MudChip>
+            }
+            <MudIconButton Icon="@Icons.Material.Filled.Refresh" 
+                          Size="Size.Small" 
+                          OnClick="LoadActivitiesAsync"
+                          Disabled="@_isLoading" />
+        </CardHeaderActions>
+    </MudCardHeader>
+    <MudCardContent>
+        @if (_isLoading)
+        {
+            <MudProgressLinear Indeterminate="true" Color="Color.Info" />
+        }
+        else if (_errorMessage != null)
+        {
+            <MudAlert Severity="Severity.Error" Dense="true">@_errorMessage</MudAlert>
+        }
+        else if (_activities?.Any() == true)
+        {
+            <MudTimeline TimelineOrientation="TimelineOrientation.Vertical" TimelineAlign="TimelineAlign.Start">
+                @foreach (var activity in _activities.Take(MaxActivitiesDisplayed))
+                {
+                    <MudTimelineItem Color="@GetActivityColor(activity.ActivityType)" 
+                                   Size="Size.Small"
+                                   Icon="@GetActivityIcon(activity.ActivityType)">
+                        <ItemOpposite>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                @GetTimeAgo(activity.Timestamp)
+                            </MudText>
+                        </ItemOpposite>
+                        <ItemContent>
+                            <MudStack Spacing="1">
+                                <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                                    <MudChip T="string" Size="Size.Small" 
+                                           Color="@GetActivityTypeColor(activity.ActivityType)"
+                                           Icon="@GetActivityTypeIcon(activity.ActivityType)">
+                                        @activity.ActivityType
+                                    </MudChip>
+                                        <MudChip T="string" Size="Size.Small" Variant="Variant.Text">
+                                            @(activity.ResourceType ?? "N/A")
+                                        </MudChip>
+                                </MudStack>
+                                <MudText Typo="Typo.body2">@activity.Description</MudText>
+                                @if (!string.IsNullOrEmpty(activity.UserId))
+                                {
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                        Par: @activity.UserId
+                                    </MudText>
+                                }
+                            </MudStack>
+                        </ItemContent>
+                    </MudTimelineItem>
+                }
+            </MudTimeline>
+
+            @if (_activities.Count > MaxActivitiesDisplayed)
+            {
+                <MudText Typo="Typo.caption" Align="Align.Center" Color="Color.Secondary" Class="mt-2">
+                    +@(_activities.Count - MaxActivitiesDisplayed) activité(s) supplémentaire(s)
+                </MudText>
+            }
+        }
+        else
+        {
+            <MudStack AlignItems="AlignItems.Center" Spacing="2" Class="py-4">
+                <MudIcon Icon="@Icons.Material.Filled.HourglassEmpty" Color="Color.Default" Size="Size.Large" />
+                <MudText Typo="Typo.body1" Color="Color.Secondary">Aucune activité récente</MudText>
+            </MudStack>
+        }
+    </MudCardContent>
+    @if (_activities?.Any() == true)
+    {
+        <MudCardActions>
+            <MudButton StartIcon="@Icons.Material.Filled.List" 
+                      OnClick="ViewAllActivities"
+                      Size="Size.Small">
+                Voir tout l'historique
+            </MudButton>
+        </MudCardActions>
+    }
+</MudCard>
+
+@code {
+    [Parameter] public int MaxActivitiesDisplayed { get; set; } = 10;
+    [Parameter] public int PageSize { get; set; } = 20;
+
+    private List<UserActivityDto>? _activities;
+    private bool _isLoading;
+    private string? _errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadActivitiesAsync();
+    }
+
+    private async Task LoadActivitiesAsync()
+    {
+        _isLoading = true;
+        _errorMessage = null;
+        StateHasChanged();
+
+        try
+        {
+            // Charger toutes les activités récentes (admin view)
+            var response = await UserActivityService.GetAllActivitiesAsync(
+                pageNumber: 1, 
+                pageSize: PageSize);
+
+            if (response.IsSuccess && response.Data?.Data != null)
+            {
+                _activities = response.Data.Data;
+                Logger.LogInformation("? {Count} activité(s) récente(s) chargée(s)", _activities.Count);
+            }
+            else
+            {
+                _errorMessage = response.ErrorMessage ?? "Erreur lors du chargement";
+                Logger.LogError("? Erreur chargement activités: {Error}", _errorMessage);
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Erreur technique: {ex.Message}";
+            Logger.LogError(ex, "? Exception chargement activités");
+        }
+        finally
+        {
+            _isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void ViewAllActivities()
+    {
+        Navigation.NavigateTo("/audit");
+    }
+
+    private Color GetActivityColor(string activityType)
+    {
+        return activityType switch
+        {
+            "Commande" => Color.Primary,
+            "Audit" => Color.Info,
+            "Login" => Color.Success,
+            "Logout" => Color.Default,
+            "Create" => Color.Success,
+            "Update" => Color.Warning,
+            "Delete" => Color.Error,
+            _ => Color.Default
+        };
+    }
+
+    private Color GetActivityTypeColor(string activityType)
+    {
+        return GetActivityColor(activityType);
+    }
+
+    private string GetActivityIcon(string activityType)
+    {
+        return activityType switch
+        {
+            "Commande" => Icons.Material.Filled.Send,
+            "Audit" => Icons.Material.Filled.Visibility,
+            "Login" => Icons.Material.Filled.Login,
+            "Logout" => Icons.Material.Filled.Logout,
+            "Create" => Icons.Material.Filled.Add,
+            "Update" => Icons.Material.Filled.Edit,
+            "Delete" => Icons.Material.Filled.Delete,
+            _ => Icons.Material.Filled.Circle
+        };
+    }
+
+    private string GetActivityTypeIcon(string activityType)
+    {
+        return GetActivityIcon(activityType);
+    }
+
+    private string GetTimeAgo(DateTime timestamp)
+    {
+        var diff = DateTime.Now - timestamp;
+
+        if (diff.TotalMinutes < 1)
+            return "À l'instant";
+        if (diff.TotalMinutes < 60)
+            return $"Il y a {(int)diff.TotalMinutes}min";
+        if (diff.TotalHours < 24)
+            return $"Il y a {(int)diff.TotalHours}h";
+        if (diff.TotalDays < 7)
+            return $"Il y a {(int)diff.TotalDays}j";
+
+        return timestamp.ToString("dd/MM HH:mm");
+    }
+}

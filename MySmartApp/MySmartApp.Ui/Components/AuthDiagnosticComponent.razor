@@ -1,0 +1,311 @@
+@using Microsoft.AspNetCore.Components.Authorization
+@using MySmartApp.Ui.Services
+@inject AuthenticationStateProvider AuthStateProvider
+@inject IAuthService AuthService
+@inject ITokenProvider TokenProvider
+@inject ILogger<AuthDiagnosticComponent> Logger
+
+<MudExpansionPanels>
+    <MudExpansionPanel>
+        <TitleContent>
+            <div class="d-flex align-center">
+                <MudIcon Icon="@Icons.Material.Filled.BugReport" Class="mr-2" />
+                <MudText>Diagnostic d'authentification</MudText>
+            </div>
+        </TitleContent>
+        <ChildContent>
+            <MudButton OnClick="RunDiagnostic" 
+                       Variant="Variant.Filled" 
+                       Color="Color.Info"
+                       StartIcon="@Icons.Material.Filled.PlayArrow"
+                       Class="mb-4">
+                Exécuter diagnostic
+            </MudButton>
+
+            @if (diagnosticResults.Any())
+            {
+                <MudList T="string">
+                    @foreach (var result in diagnosticResults)
+                    {
+                        <MudListItem T="string">
+                            <div class="d-flex align-center">
+                                <MudIcon Icon="@result.Icon" Color="@result.Color" Class="mr-3" />
+                                <div>
+                                    <MudText Typo="Typo.body1" Style="font-weight: 500;">@result.Title</MudText>
+                                    <MudText Typo="Typo.body2" Color="Color.Secondary">@result.Description</MudText>
+                                    @if (!string.IsNullOrEmpty(result.Details))
+                                    {
+                                        <MudText Typo="Typo.caption" Color="Color.Tertiary">@result.Details</MudText>
+                                    }
+                                </div>
+                            </div>
+                        </MudListItem>
+                    }
+                </MudList>
+            }
+        </ChildContent>
+    </MudExpansionPanel>
+</MudExpansionPanels>
+
+@code {
+    private List<DiagnosticResult> diagnosticResults = new();
+
+    private async Task RunDiagnostic()
+    {
+        diagnosticResults.Clear();
+        Logger.LogInformation("Début du diagnostic d'authentification");
+
+        try
+        {
+            // 1. Vérifier le token
+            var token = await TokenProvider.GetTokenAsync();
+            if (string.IsNullOrEmpty(token))
+            {
+                diagnosticResults.Add(new DiagnosticResult
+                {
+                    Title = "Token manquant",
+                    Description = "Aucun token d'authentification trouvé",
+                    Icon = Icons.Material.Filled.Warning,
+                    Color = Color.Warning
+                });
+            }
+            else
+            {
+                diagnosticResults.Add(new DiagnosticResult
+                {
+                    Title = "Token présent",
+                    Description = "Token d'authentification trouvé",
+                    Details = $"Longueur: {token.Length} caractères",
+                    Icon = Icons.Material.Filled.CheckCircle,
+                    Color = Color.Success
+                });
+
+                // 2. Valider le token
+                try
+                {
+                    var isValid = await AuthService.ValidateTokenAsync();
+                    if (isValid)
+                    {
+                        diagnosticResults.Add(new DiagnosticResult
+                        {
+                            Title = "Token valide",
+                            Description = "Le token a été validé avec succès par le serveur",
+                            Icon = Icons.Material.Filled.Verified,
+                            Color = Color.Success
+                        });
+                    }
+                    else
+                    {
+                        diagnosticResults.Add(new DiagnosticResult
+                        {
+                            Title = "Token invalide",
+                            Description = "Le serveur a rejeté le token",
+                            Icon = Icons.Material.Filled.Error,
+                            Color = Color.Error
+                        });
+                    }
+                }
+                catch (Exception ex)
+                {
+                    diagnosticResults.Add(new DiagnosticResult
+                    {
+                        Title = "Erreur de validation",
+                        Description = "Erreur lors de la validation du token",
+                        Details = ex.Message,
+                        Icon = Icons.Material.Filled.Error,
+                        Color = Color.Error
+                    });
+                }
+            }
+
+            // 3. État d'authentification
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var isAuthenticated = authState.User?.Identity?.IsAuthenticated == true;
+            
+            diagnosticResults.Add(new DiagnosticResult
+            {
+                Title = $"État d'authentification: {(isAuthenticated ? "Authentifié" : "Non authentifié")}",
+                Description = isAuthenticated ? "L'utilisateur est reconnu comme authentifié" : "L'utilisateur n'est pas authentifié",
+                Details = $"Nom: {authState.User?.Identity?.Name ?? "N/A"}",
+                Icon = isAuthenticated ? Icons.Material.Filled.Person : Icons.Material.Filled.PersonOff,
+                Color = isAuthenticated ? Color.Success : Color.Warning
+            });
+
+            // 4. Rôles utilisateur
+            if (isAuthenticated)
+            {
+                var user = authState.User;
+                var roles = user?.Claims.Where(c => c.Type == System.Security.Claims.ClaimTypes.Role)
+                                       .Select(c => c.Value)
+                                       .ToList() ?? new List<string>();
+                
+                diagnosticResults.Add(new DiagnosticResult
+                {
+                    Title = $"Rôles utilisateur ({roles.Count})",
+                    Description = roles.Any() ? $"Rôles: {string.Join(", ", roles)}" : "Aucun rôle assigné",
+                    Icon = Icons.Material.Filled.AdminPanelSettings,
+                    Color = roles.Any() ? Color.Info : Color.Warning
+                });
+            }
+
+            // 5. Profil utilisateur
+            try
+            {
+                var profile = await AuthService.GetCurrentUserAsync();
+                if (profile != null)
+                {
+                    diagnosticResults.Add(new DiagnosticResult
+                    {
+                        Title = "Profil utilisateur chargé",
+                        Description = $"Email: {profile.Email}",
+                        Details = $"ID: {profile.Id}, Rôles: {string.Join(", ", profile.Roles)}",
+                        Icon = Icons.Material.Filled.AccountCircle,
+                        Color = Color.Success
+                    });
+                }
+                else
+                {
+                    diagnosticResults.Add(new DiagnosticResult
+                    {
+                        Title = "Profil utilisateur non disponible",
+                        Description = "Impossible de charger le profil utilisateur",
+                        Icon = Icons.Material.Filled.AccountCircle,
+                        Color = Color.Warning
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                diagnosticResults.Add(new DiagnosticResult
+                {
+                    Title = "Erreur de profil",
+                    Description = "Erreur lors du chargement du profil",
+                    Details = ex.Message,
+                    Icon = Icons.Material.Filled.Error,
+                    Color = Color.Error
+                });
+            }
+
+            // 6. Test de connectivité API
+            try
+            {
+                // Test de ping à l'API
+                var pingResult = await TestApiConnectivity();
+                diagnosticResults.Add(new DiagnosticResult
+                {
+                    Title = pingResult.success ? "API accessible" : "API non accessible",
+                    Description = pingResult.success ? "La connexion à l'API backend fonctionne" : "Impossible de joindre l'API backend",
+                    Details = pingResult.details,
+                    Icon = pingResult.success ? Icons.Material.Filled.CloudDone : Icons.Material.Filled.CloudOff,
+                    Color = pingResult.success ? Color.Success : Color.Error
+                });
+            }
+            catch (Exception ex)
+            {
+                diagnosticResults.Add(new DiagnosticResult
+                {
+                    Title = "Erreur de connectivité",
+                    Description = "Erreur lors du test de connectivité API",
+                    Details = ex.Message,
+                    Icon = Icons.Material.Filled.Error,
+                    Color = Color.Error
+                });
+            }
+
+            // 7. Configuration frontend
+            diagnosticResults.Add(new DiagnosticResult
+            {
+                Title = "Configuration frontend",
+                Description = "Application Blazor WebAssembly configurée",
+                Details = $"Thème: Activé, SignalR: Configuré, Services: {GetServicesStatus()}",
+                Icon = Icons.Material.Filled.Settings,
+                Color = Color.Success
+            });
+
+            // 8. Local Storage
+            try
+            {
+                var tokenInStorage = await TokenProvider.GetTokenAsync();
+                var hasValidToken = !string.IsNullOrEmpty(tokenInStorage);
+                
+                diagnosticResults.Add(new DiagnosticResult
+                {
+                    Title = hasValidToken ? "Local Storage accessible" : "Local Storage vide",
+                    Description = hasValidToken ? "Token stocké dans le navigateur" : "Aucun token en local storage",
+                    Details = hasValidToken ? $"Token présent ({tokenInStorage.Length} caractères)" : "Session non persistée",
+                    Icon = hasValidToken ? Icons.Material.Filled.Storage : Icons.Material.Filled.Warning,
+                    Color = hasValidToken ? Color.Success : Color.Warning
+                });
+            }
+            catch (Exception ex)
+            {
+                diagnosticResults.Add(new DiagnosticResult
+                {
+                    Title = "Erreur Local Storage",
+                    Description = "Problème d'accès au stockage local",
+                    Details = ex.Message,
+                    Icon = Icons.Material.Filled.Error,
+                    Color = Color.Error
+                });
+            }
+
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Erreur pendant le diagnostic");
+            diagnosticResults.Add(new DiagnosticResult
+            {
+                Title = "Erreur de diagnostic",
+                Description = "Une erreur s'est produite pendant le diagnostic",
+                Details = ex.Message,
+                Icon = Icons.Material.Filled.Error,
+                Color = Color.Error
+            });
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task<(bool success, string details)> TestApiConnectivity()
+    {
+        try
+        {
+            // Test simple de validation du token qui indique si l'API répond
+            var isValid = await AuthService.ValidateTokenAsync();
+            return (true, isValid ? "API répond et token valide" : "API répond mais token invalide");
+        }
+        catch (HttpRequestException)
+        {
+            return (false, "Serveur backend non accessible (vérifiez que l'API est démarrée)");
+        }
+        catch (TaskCanceledException)
+        {
+            return (false, "Délai d'attente dépassé (timeout)");
+        }
+        catch (Exception ex)
+        {
+            return (false, $"Erreur: {ex.Message}");
+        }
+    }
+
+    private string GetServicesStatus()
+    {
+        // Vérifier que les services principaux sont enregistrés
+        var services = new List<string>();
+        
+        if (AuthService != null) services.Add("Auth");
+        if (TokenProvider != null) services.Add("Token");
+        if (AuthStateProvider != null) services.Add("AuthState");
+        
+        return services.Any() ? string.Join(", ", services) : "Aucun service détecté";
+    }
+
+    public class DiagnosticResult
+    {
+        public string Title { get; set; } = "";
+        public string Description { get; set; } = "";
+        public string? Details { get; set; }
+        public string Icon { get; set; } = Icons.Material.Filled.Info;
+        public Color Color { get; set; } = Color.Default;
+    }
+}

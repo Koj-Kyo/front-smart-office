@@ -1,0 +1,205 @@
+@using MySmartApp.Ui.Services
+@using MySmartApp.Ui.Models
+@inject IDroitAccesService DroitAccesService
+@inject ILogger<UserAccessRightsComponent> Logger
+
+<MudPaper Class="pa-4 rounded-xl" Elevation="2">
+    <MudText Typo="Typo.h6" Class="mb-4">?? Mes Droits d'Accès</MudText>
+    
+    @if (isLoading)
+    {
+        <div class="d-flex align-center pa-4">
+            <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+            <MudText>Chargement des droits d'accès...</MudText>
+        </div>
+    }
+    else
+    {
+        <MudTabs Elevation="0">
+            <!-- Onglet Zones -->
+            <MudTabPanel Text="?? Zones" BadgeData="@zoneRights.Count" BadgeColor="Color.Info">
+                @if (zoneRights.Any())
+                {
+                    <MudList T="string" Dense="true">
+                        @foreach (var zone in zoneRights)
+                        {
+                            <MudListItem T="string" Icon="@Icons.Material.Filled.LocationOn">
+                                <div class="d-flex justify-space-between align-center">
+                                    <div>
+                                        <MudText Typo="Typo.body1">@zone.ZoneName</MudText>
+                                        <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                            Accordé le @zone.GrantedAt.ToString("dd/MM/yyyy")
+                                        </MudText>
+                                    </div>
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Info">
+                                        @zone.AccessType
+                                    </MudChip>
+                                </div>
+                            </MudListItem>
+                        }
+                    </MudList>
+                }
+                else
+                {
+                    <div class="d-flex flex-column align-center pa-8">
+                        <MudIcon Icon="@Icons.Material.Filled.LocationOff" Size="Size.Large" Color="Color.Secondary" Class="mb-2" />
+                        <MudText Color="Color.Secondary">Aucun accès à des zones</MudText>
+                    </div>
+                }
+            </MudTabPanel>
+            
+            <!-- Onglet Périphériques -->
+            <MudTabPanel Text="?? Périphériques" BadgeData="@peripheriqueRights.Count" BadgeColor="Color.Success">
+                @if (peripheriqueRights.Any())
+                {
+                    <MudList T="string" Dense="true">
+                        @foreach (var peripherique in peripheriqueRights)
+                        {
+                            <MudListItem T="string" Icon="@GetPeripheriqueIcon(peripherique.PeripheriqueType)">
+                                <div class="d-flex justify-space-between align-center">
+                                    <div>
+                                        <MudText Typo="Typo.body1">@peripherique.PeripheriqueName</MudText>
+                                        <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                            @peripherique.ZoneName • Accordé le @peripherique.GrantedAt.ToString("dd/MM/yyyy")
+                                        </MudText>
+                                    </div>
+                                    <div class="d-flex gap-1">
+                                        <MudChip T="string" Size="Size.Small" Color="@GetTypeColor(peripherique.PeripheriqueType)">
+                                            @peripherique.PeripheriqueType
+                                        </MudChip>
+                                        <MudChip T="string" Size="Size.Small" Color="Color.Success">
+                                            @peripherique.AccessType
+                                        </MudChip>
+                                    </div>
+                                </div>
+                            </MudListItem>
+                        }
+                    </MudList>
+                }
+                else
+                {
+                    <div class="d-flex flex-column align-center pa-8">
+                        <MudIcon Icon="@Icons.Material.Filled.DeviceHub" Size="Size.Large" Color="Color.Secondary" Class="mb-2" />
+                        <MudText Color="Color.Secondary">Aucun accès à des périphériques</MudText>
+                    </div>
+                }
+            </MudTabPanel>
+        </MudTabs>
+        
+        <!-- Statistiques -->
+        <MudDivider Class="my-4" />
+        <div class="d-flex justify-space-around">
+            <div class="text-center">
+                <MudText Typo="Typo.h6" Color="Color.Info">@zoneRights.Count</MudText>
+                <MudText Typo="Typo.caption">Zone(s)</MudText>
+            </div>
+            <div class="text-center">
+                <MudText Typo="Typo.h6" Color="Color.Success">@peripheriqueRights.Count</MudText>
+                <MudText Typo="Typo.caption">Périphérique(s)</MudText>
+            </div>
+            <div class="text-center">
+                <MudText Typo="Typo.h6" Color="Color.Primary">@(zoneRights.Count + peripheriqueRights.Count)</MudText>
+                <MudText Typo="Typo.caption">Total</MudText>
+            </div>
+        </div>
+    }
+    
+    @if (ShowRefreshButton)
+    {
+        <MudDivider Class="my-4" />
+        <div class="d-flex justify-center">
+            <MudButton OnClick="RefreshRights" 
+                       Variant="Variant.Text" 
+                       StartIcon="@Icons.Material.Filled.Refresh"
+                       Size="Size.Small"
+                       Disabled="@isLoading">
+                Actualiser
+            </MudButton>
+        </div>
+    }
+</MudPaper>
+
+@code {
+    [Parameter] public bool ShowRefreshButton { get; set; } = true;
+
+    private bool isLoading = true;
+    private List<UserZoneAccessRightDto> zoneRights = new();
+    private List<UserPeripheriqueAccessRightDto> peripheriqueRights = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAccessRights();
+    }
+
+    private async Task LoadAccessRights()
+    {
+        isLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            // Charger les droits d'accès en parallèle
+            var zoneTask = DroitAccesService.GetUserZoneAccessRightsAsync();
+            var peripheriqueTask = DroitAccesService.GetUserPeripheriqueAccessRightsAsync();
+
+            await Task.WhenAll(zoneTask, peripheriqueTask);
+
+            var zoneResponse = await zoneTask;
+            var peripheriqueResponse = await peripheriqueTask;
+
+            if (zoneResponse.IsSuccess && zoneResponse.Data != null)
+            {
+                zoneRights = zoneResponse.Data;
+            }
+
+            if (peripheriqueResponse.IsSuccess && peripheriqueResponse.Data != null)
+            {
+                peripheriqueRights = peripheriqueResponse.Data;
+            }
+
+            Logger.LogInformation("? Droits d'accès chargés: {ZoneCount} zones, {PeripheriqueCount} périphériques", 
+                zoneRights.Count, peripheriqueRights.Count);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "? Erreur lors du chargement des droits d'accès");
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    public async Task RefreshRights()
+    {
+        await LoadAccessRights();
+    }
+
+    // Méthodes utilitaires
+    private string GetPeripheriqueIcon(string type) => type.ToLower() switch
+    {
+        "relay" => Icons.Material.Filled.Power,
+        "sensor" => Icons.Material.Filled.Sensors,
+        "actuator" => Icons.Material.Filled.Engineering,
+        "light" => Icons.Material.Filled.Lightbulb,
+        "hvac" => Icons.Material.Filled.Thermostat,
+        "security" => Icons.Material.Filled.Security,
+        "multimedia" => Icons.Material.Filled.Tv,
+        "network" => Icons.Material.Filled.Router,
+        _ => Icons.Material.Filled.DeviceHub
+    };
+
+    private Color GetTypeColor(string type) => type.ToLower() switch
+    {
+        "relay" => Color.Primary,
+        "sensor" => Color.Info,
+        "actuator" => Color.Success,
+        "light" => Color.Warning,
+        "hvac" => Color.Secondary,
+        "security" => Color.Error,
+        "multimedia" => Color.Tertiary,
+        "network" => Color.Dark,
+        _ => Color.Default
+    };
+}

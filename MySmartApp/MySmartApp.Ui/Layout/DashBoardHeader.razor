@@ -80,7 +80,10 @@
     </MudItem>
     <MudItem xs="12" sm="6" md="4" Class="d-flex justify-end align-center">
         <MudIconButton Icon="@Icons.Material.Outlined.Settings" Color="Color.Default" />
-        <MudIconButton Icon="@Icons.Material.Outlined.Notifications" Color="Color.Default" Class="mx-2" />
+        
+        <!-- Badge de notifications -->
+        <NotificationBadgeComponent OnViewAllClicked="@(() => NavigationManager.NavigateTo("/notifications"))" 
+                                    Class="mx-2" />
         
         @* Section profil cliquable *@
         <div class="profile-section" @onclick="NavigateToProfile">

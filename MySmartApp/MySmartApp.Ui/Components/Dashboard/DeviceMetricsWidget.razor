@@ -1,0 +1,286 @@
+@using MySmartApp.Ui.Services
+@using MySmartApp.Ui.Models
+@inject IDeviceStatusService DeviceStatusService
+@inject NavigationManager Navigation
+@inject ILogger<DeviceMetricsWidget> Logger
+
+<MudCard Elevation="2">
+    <MudCardHeader>
+        <CardHeaderContent>
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                <MudIcon Icon="@Icons.Material.Filled.Sensors" Color="Color.Primary" />
+                <MudText Typo="Typo.h6">Métriques Devices IoT</MudText>
+            </MudStack>
+        </CardHeaderContent>
+        <CardHeaderActions>
+            @if (_metrics?.Any() == true)
+            {
+                <MudChip T="string" Size="Size.Small" Color="Color.Info">@_metrics.Count device(s)</MudChip>
+            }
+            <MudIconButton Icon="@Icons.Material.Filled.Refresh" 
+                          Size="Size.Small" 
+                          OnClick="LoadMetricsAsync"
+                          Disabled="@_isLoading" />
+        </CardHeaderActions>
+    </MudCardHeader>
+    <MudCardContent>
+        @if (_isLoading)
+        {
+            <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+        }
+        else if (_errorMessage != null)
+        {
+            <MudAlert Severity="Severity.Error" Dense="true">@_errorMessage</MudAlert>
+        }
+        else if (_metrics?.Any() == true)
+        {
+            <MudStack Spacing="3">
+                <!-- Résumé Global -->
+                <MudGrid Spacing="2">
+                    <MudItem xs="4">
+                        <MudPaper Elevation="1" Class="pa-2">
+                            <MudStack Spacing="1" AlignItems="AlignItems.Center">
+                                <MudIcon Icon="@Icons.Material.Filled.CheckCircle" 
+                                        Color="@(_healthyCount > 0 ? Color.Success : Color.Default)" />
+                                <MudText Typo="Typo.h6">@_healthyCount</MudText>
+                                <MudText Typo="Typo.caption" Align="Align.Center">Bon état</MudText>
+                            </MudStack>
+                        </MudPaper>
+                    </MudItem>
+                    <MudItem xs="4">
+                        <MudPaper Elevation="1" Class="pa-2">
+                            <MudStack Spacing="1" AlignItems="AlignItems.Center">
+                                <MudIcon Icon="@Icons.Material.Filled.Warning" 
+                                        Color="@(_warningCount > 0 ? Color.Warning : Color.Default)" />
+                                <MudText Typo="Typo.h6">@_warningCount</MudText>
+                                <MudText Typo="Typo.caption" Align="Align.Center">Attention</MudText>
+                            </MudStack>
+                        </MudPaper>
+                    </MudItem>
+                    <MudItem xs="4">
+                        <MudPaper Elevation="1" Class="pa-2">
+                            <MudStack Spacing="1" AlignItems="AlignItems.Center">
+                                <MudIcon Icon="@Icons.Material.Filled.Error" 
+                                        Color="@(_criticalCount > 0 ? Color.Error : Color.Default)" />
+                                <MudText Typo="Typo.h6">@_criticalCount</MudText>
+                                <MudText Typo="Typo.caption" Align="Align.Center">Critique</MudText>
+                            </MudStack>
+                        </MudPaper>
+                    </MudItem>
+                </MudGrid>
+
+                <!-- Liste Devices -->
+                <MudStack Spacing="2">
+                    @foreach (var metric in _metrics.Take(MaxDevicesDisplayed))
+                    {
+                        var health = GetDeviceHealth(metric);
+                        
+                        <MudPaper Elevation="1" Class="pa-3">
+                            <MudStack Spacing="2">
+                                <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                                    <MudStack Spacing="0">
+                                        <MudText Typo="Typo.subtitle1" Style="font-weight: 600;">
+                                            @metric.IotDeviceId
+                                        </MudText>
+                                        <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                            Firmware: @metric.FirmwareVersion
+                                        </MudText>
+                                    </MudStack>
+                                    <MudChip T="string" Size="Size.Small" Color="@health.Color">
+                                        @health.Status
+                                    </MudChip>
+                                </MudStack>
+
+                                <MudGrid Spacing="1">
+                                    <!-- RSSI -->
+                                    <MudItem xs="6">
+                                        <MudStack Spacing="0">
+                                            <MudText Typo="Typo.caption" Color="Color.Secondary">Signal WiFi</MudText>
+                                            <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                                                <MudText Typo="Typo.body2">@(metric.Rssi ?? 0) dBm</MudText>
+                                                <MudProgressLinear Value="@GetRssiPercentage(metric.Rssi)" 
+                                                                  Color="@GetRssiColor(metric.Rssi)" 
+                                                                  Size="Size.Small" 
+                                                                  Style="flex: 1;" />
+                                            </MudStack>
+                                        </MudStack>
+                                    </MudItem>
+
+                                    <!-- Heap -->
+                                    <MudItem xs="6">
+                                        <MudStack Spacing="0">
+                                            <MudText Typo="Typo.caption" Color="Color.Secondary">Mémoire</MudText>
+                                            <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                                                <MudText Typo="Typo.body2">@FormatBytes(metric.HeapFree ?? 0)</MudText>
+                                                <MudProgressLinear Value="@GetHeapPercentage(metric.HeapFree)" 
+                                                                  Color="@GetHeapColor(metric.HeapFree)" 
+                                                                  Size="Size.Small" 
+                                                                  Style="flex: 1;" />
+                                            </MudStack>
+                                        </MudStack>
+                                    </MudItem>
+
+                                    <!-- Uptime -->
+                                    <MudItem xs="6">
+                                        <MudStack Spacing="0">
+                                            <MudText Typo="Typo.caption" Color="Color.Secondary">Uptime</MudText>
+                                            <MudText Typo="Typo.body2">
+                                                @FormatUptime(metric.UptimeSeconds ?? 0)
+                                            </MudText>
+                                        </MudStack>
+                                    </MudItem>
+
+                                    <!-- Dernière MAJ -->
+                                    <MudItem xs="6">
+                                        <MudStack Spacing="0">
+                                            <MudText Typo="Typo.caption" Color="Color.Secondary">Dernière MAJ</MudText>
+                                            <MudText Typo="Typo.body2">
+                                                @metric.Timestamp.ToString("HH:mm:ss")
+                                            </MudText>
+                                        </MudStack>
+                                    </MudItem>
+                                </MudGrid>
+                            </MudStack>
+                        </MudPaper>
+                    }
+                </MudStack>
+
+                @if (_metrics.Count > MaxDevicesDisplayed)
+                {
+                    <MudText Typo="Typo.caption" Align="Align.Center" Color="Color.Secondary">
+                        +@(_metrics.Count - MaxDevicesDisplayed) device(s) supplémentaire(s)
+                    </MudText>
+                }
+            </MudStack>
+        }
+        else
+        {
+            <MudStack AlignItems="AlignItems.Center" Spacing="2" Class="py-4">
+                <MudIcon Icon="@Icons.Material.Filled.DevicesOther" Color="Color.Default" Size="Size.Large" />
+                <MudText Typo="Typo.body1" Color="Color.Secondary">Aucune métrique disponible</MudText>
+            </MudStack>
+        }
+    </MudCardContent>
+    @if (_metrics?.Any() == true)
+    {
+        <MudCardActions>
+            <MudButton StartIcon="@Icons.Material.Filled.Devices" 
+                      OnClick="ViewAllDevices"
+                      Size="Size.Small">
+                Voir tous les devices
+            </MudButton>
+        </MudCardActions>
+    }
+</MudCard>
+
+@code {
+    [Parameter] public int MaxDevicesDisplayed { get; set; } = 5;
+
+    private List<DeviceMetricsDto>? _metrics;
+    private bool _isLoading;
+    private string? _errorMessage;
+
+    private int _healthyCount;
+    private int _warningCount;
+    private int _criticalCount;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadMetricsAsync();
+    }
+
+    private async Task LoadMetricsAsync()
+    {
+        _isLoading = true;
+        _errorMessage = null;
+        StateHasChanged();
+
+        try
+        {
+            // TODO: Implémenter GetAllLatestMetricsAsync() dans DeviceStatusService
+            // Pour l'instant, afficher message
+            _errorMessage = "Fonctionnalité en développement: nécessite GetAllLatestMetricsAsync()";
+            Logger.LogWarning("?? GetAllLatestMetricsAsync() pas encore implémenté dans DeviceStatusService");
+            
+            // Mock pour démonstration
+            _metrics = new List<DeviceMetricsDto>();
+            CalculateHealthStats();
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Erreur technique: {ex.Message}";
+            Logger.LogError(ex, "? Exception chargement métriques");
+        }
+        finally
+        {
+            _isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void CalculateHealthStats()
+    {
+        if (_metrics == null) return;
+
+        _healthyCount = _metrics.Count(m => GetDeviceHealth(m).Status == "Bon");
+        _warningCount = _metrics.Count(m => GetDeviceHealth(m).Status == "Attention");
+        _criticalCount = _metrics.Count(m => GetDeviceHealth(m).Status == "Critique");
+    }
+
+    private (string Status, Color Color) GetDeviceHealth(DeviceMetricsDto metrics)
+    {
+        if (metrics.Rssi < -80 || metrics.HeapFree < 50000)
+            return ("Critique", Color.Error);
+        if (metrics.Rssi < -70 || metrics.HeapFree < 100000)
+            return ("Attention", Color.Warning);
+        return ("Bon", Color.Success);
+    }
+
+    private void ViewAllDevices()
+    {
+        Navigation.NavigateTo("/devices");
+    }
+
+    // Helpers (identiques à DeviceStatusMonitor)
+
+    private double GetRssiPercentage(int? rssi)
+    {
+        if (!rssi.HasValue) return 0;
+        return Math.Max(0, Math.Min(100, ((rssi.Value + 90) / 60.0) * 100));
+    }
+
+    private Color GetRssiColor(int? rssi)
+    {
+        if (!rssi.HasValue || rssi < -80) return Color.Error;
+        if (rssi < -70) return Color.Warning;
+        return Color.Success;
+    }
+
+    private double GetHeapPercentage(int? heap)
+    {
+        if (!heap.HasValue) return 0;
+        return Math.Max(0, Math.Min(100, (heap.Value / 250000.0) * 100));
+    }
+
+    private Color GetHeapColor(int? heap)
+    {
+        if (!heap.HasValue || heap < 50000) return Color.Error;
+        if (heap < 100000) return Color.Warning;
+        return Color.Success;
+    }
+
+    private string FormatBytes(int bytes)
+    {
+        if (bytes < 1024) return $"{bytes} B";
+        if (bytes < 1024 * 1024) return $"{bytes / 1024.0:F1} KB";
+        return $"{bytes / (1024.0 * 1024):F1} MB";
+    }
+
+    private string FormatUptime(long seconds)
+    {
+        var ts = TimeSpan.FromSeconds(seconds);
+        if (ts.TotalDays >= 1) return $"{(int)ts.TotalDays}j {ts.Hours}h";
+        if (ts.TotalHours >= 1) return $"{(int)ts.TotalHours}h {ts.Minutes}m";
+        return $"{ts.Minutes}m {ts.Seconds}s";
+    }
+}

@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using MySmartApp.Ui.Configuration;
 using MySmartApp.Ui.Models;
+using MySmartApp.Ui.Converters;
 using Polly;
 using Polly.Extensions.Http;
 
@@ -17,6 +18,7 @@ public interface IApiService
     Task<ApiResponse<T>> PostAsync<T>(string endpoint, object data);
     Task<ApiResponse<T>> PutAsync<T>(string endpoint, object data);
     Task<ApiResponse> DeleteAsync(string endpoint);
+    Task<ApiResponse<T>> DeleteAsync<T>(string endpoint, object data); // Pour DELETE avec body
     Task<ApiResponse<T>> PostAsync<T>(string endpoint); // Pour les appels sans body
 }
 
@@ -69,7 +71,13 @@ public class ApiService : IApiService
         _jsonOptions = new JsonSerializerOptions
         {
             PropertyNameCaseInsensitive = true,
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            Converters = 
+            { 
+                new System.Text.Json.Serialization.JsonStringEnumConverter(),
+                new FlexibleDateTimeConverter(),
+                new FlexibleNullableDateTimeConverter()
+            }
         };
 
         // Configuration de la politique de retry avec Polly
@@ -147,9 +155,22 @@ public class ApiService : IApiService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Erreur lors de DELETE {Endpoint}", endpoint);
+            _logger.LogError("Erreur lors de DELETE {Endpoint}: {Message}", endpoint, ex.Message);
             return ApiResponse.Error($"Erreur de communication: {ex.Message}");
         }
+    }
+
+    public async Task<ApiResponse<T>> DeleteAsync<T>(string endpoint, object data)
+    {
+        return await ExecuteWithRetryAsync<T>(async client =>
+        {
+            _logger.LogDebug("??? DELETE {Endpoint} (avec body)", endpoint);
+            var request = new HttpRequestMessage(HttpMethod.Delete, endpoint)
+            {
+                Content = JsonContent.Create(data, options: _jsonOptions)
+            };
+            return await client.SendAsync(request);
+        }, endpoint);
     }
 
     private async Task<ApiResponse<T>> ExecuteWithRetryAsync<T>(
@@ -170,7 +191,7 @@ public class ApiService : IApiService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Erreur lors de l'appel � {Endpoint}", endpoint);
+            _logger.LogError("Erreur lors de l'appel � {Endpoint}: {Message}", endpoint, ex.Message);
             return ApiResponse<T>.Error($"Erreur de communication: {ex.Message}");
         }
     }
@@ -179,6 +200,8 @@ public class ApiService : IApiService
     {
         var statusCode = (int)response.StatusCode;
 
+        _logger.LogInformation("📥 Response Status: {StatusCode} pour type {Type}", statusCode, typeof(T).Name);
+
         if (response.IsSuccessStatusCode)
         {
             try
@@ -186,52 +209,128 @@ public class ApiService : IApiService
                 if (response.StatusCode == HttpStatusCode.NoContent || 
                     response.Content.Headers.ContentLength == 0)
                 {
+                    _logger.LogDebug("✅ NoContent response");
                     return ApiResponse<T>.Success(default, statusCode);
                 }
 
                 var content = await response.Content.ReadAsStringAsync();
                 
+                _logger.LogInformation("📄 Response content length: {Length}", content?.Length ?? 0);
+                _logger.LogDebug("📄 Response content preview: {Content}", content?.Substring(0, Math.Min(500, content?.Length ?? 0)));
+                
                 if (string.IsNullOrWhiteSpace(content))
                 {
+                    _logger.LogDebug("✅ Empty content response");
                     return ApiResponse<T>.Success(default, statusCode);
                 }
 
-                // Gestion sp�ciale pour les r�ponses IoT (wrapper success/message)
-                if (IsIoTEndpoint(response.RequestMessage?.RequestUri?.ToString()))
+                // ✅ PRIORITÉ 1: Essayer désérialisation directe du DTO (backend retourne DTO direct)
+                try
                 {
-                    var iotResponse = JsonSerializer.Deserialize<IoTResponse>(content, _jsonOptions);
-                    if (iotResponse != null)
+                    _logger.LogDebug("🔄 Tentative désérialisation directe vers {Type}", typeof(T).Name);
+                    var directData = JsonSerializer.Deserialize<T>(content, _jsonOptions);
+                    if (directData != null)
                     {
-                        if (iotResponse.Success)
+                        _logger.LogInformation("✅ Désérialisation directe réussie");
+                        return ApiResponse<T>.Success(directData, statusCode);
+                    }
+                }
+                catch (JsonException ex)
+                {
+                    _logger.LogDebug("⚠️ Désérialisation directe échouée: {Message}", ex.Message);
+                }
+
+                // ✅ PRIORITÉ 2: Tenter wrapper backend ApiResponse
+                try
+                {
+                    _logger.LogDebug("🔄 Tentative désérialisation wrapper backend");
+                    var backendResponse = JsonSerializer.Deserialize<BackendApiResponse<T>>(content, _jsonOptions);
+                    if (backendResponse != null && backendResponse.IsSuccess)
+                    {
+                        _logger.LogInformation("✅ Wrapper backend désérialisé avec succès");
+                        return ApiResponse<T>.Success(backendResponse.Data, statusCode);
+                    }
+                    else if (backendResponse != null && !backendResponse.IsSuccess)
+                    {
+                        _logger.LogWarning("❌ Wrapper backend indique échec: {Error}", backendResponse.ErrorMessage);
+                        return ApiResponse<T>.Error(backendResponse.ErrorMessage ?? "Erreur backend", statusCode);
+                    }
+                }
+                catch (JsonException ex)
+                {
+                    _logger.LogDebug("⚠️ Pas un wrapper backend: {Message}", ex.Message);
+                }
+
+                // ✅ PRIORITÉ 3: Pour List<T>, essayer wrapper avec array
+                var typeT = typeof(T);
+                if (typeT.IsGenericType && 
+                    (typeT.GetGenericTypeDefinition() == typeof(List<>) || 
+                     typeT.GetGenericTypeDefinition() == typeof(IEnumerable<>)))
+                {
+                    try
+                    {
+                        _logger.LogDebug("🔄 Tentative wrapper avec array pour {Type}", typeT.Name);
+                        var elementType = typeT.GetGenericArguments()[0];
+                        var wrapperType = typeof(BackendApiResponseWithArray<>).MakeGenericType(elementType);
+                        var wrapperResponse = JsonSerializer.Deserialize(content, wrapperType, _jsonOptions);
+                        
+                        if (wrapperResponse != null)
                         {
-                            // Si T est IoTResponse, retourner directement
-                            if (typeof(T) == typeof(IoTResponse))
+                            var isSuccessProp = wrapperType.GetProperty("IsSuccess");
+                            var dataProp = wrapperType.GetProperty("Data");
+                            
+                            if (isSuccessProp?.GetValue(wrapperResponse) is bool isSuccess && isSuccess)
                             {
-                                return ApiResponse<T>.Success((T)(object)iotResponse, statusCode);
+                                var dataValue = dataProp?.GetValue(wrapperResponse);
+                                if (dataValue != null)
+                                {
+                                    if (typeT.GetGenericTypeDefinition() == typeof(List<>))
+                                    {
+                                        var toListMethod = typeof(Enumerable).GetMethod("ToList")?.MakeGenericMethod(elementType);
+                                        var listData = toListMethod?.Invoke(null, new[] { dataValue });
+                                        _logger.LogInformation("✅ Wrapper array désérialisé vers List");
+                                        return ApiResponse<T>.Success((T)listData!, statusCode);
+                                    }
+                                    
+                                    _logger.LogInformation("✅ Wrapper array désérialisé");
+                                    return ApiResponse<T>.Success((T)dataValue, statusCode);
+                                }
                             }
-                            // Sinon, essayer de d�s�rialiser le message comme T
-                            return ApiResponse<T>.Success(default, statusCode);
+                            else if (isSuccessProp?.GetValue(wrapperResponse) is bool isFail && !isFail)
+                            {
+                                var errorProp = wrapperType.GetProperty("ErrorMessage");
+                                var errorMsg = errorProp?.GetValue(wrapperResponse)?.ToString() ?? "Erreur backend";
+                                _logger.LogWarning("❌ Wrapper array indique échec: {Error}", errorMsg);
+                                return ApiResponse<T>.Error(errorMsg, statusCode);
+                            }
                         }
-                        else
-                        {
-                            return ApiResponse<T>.Error(iotResponse.Message, statusCode);
-                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogDebug("⚠️ Pas un wrapper array: {Message}", ex.Message);
                     }
                 }
 
-                var data = JsonSerializer.Deserialize<T>(content, _jsonOptions);
-                return ApiResponse<T>.Success(data, statusCode);
+                // ✅ Fallback: Erreur de désérialisation
+                _logger.LogError("❌ Toutes tentatives de désérialisation échouées pour {Type}", typeof(T).Name);
+                return ApiResponse<T>.Error($"Impossible de désérialiser la réponse en {typeof(T).Name}", statusCode);
             }
             catch (JsonException ex)
             {
-                _logger.LogWarning(ex, "?? Erreur de d�s�rialisation pour {Type}", typeof(T).Name);
-                return ApiResponse<T>.Error($"Erreur de format de r�ponse: {ex.Message}", statusCode);
+                _logger.LogError("❌ Erreur de désérialisation pour {Type}: {Message}", typeof(T).Name, ex.Message);
+                return ApiResponse<T>.Error($"Erreur de format de réponse: {ex.Message}", statusCode);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("💥 Erreur inattendue lors du traitement de la réponse: {Message}", ex.Message);
+                return ApiResponse<T>.Error($"Erreur inattendue: {ex.Message}", statusCode);
             }
         }
 
         var errorMessage = await HandleErrorResponseAsync(response);
         var validationErrors = await ExtractValidationErrorsAsync(response);
         
+        _logger.LogError("❌ Réponse HTTP échec: {StatusCode} - {Error}", statusCode, errorMessage);
         return ApiResponse<T>.Error(errorMessage, statusCode, validationErrors);
     }
 
@@ -242,11 +341,11 @@ public class ApiService : IApiService
 
         return statusCode switch
         {
-            HttpStatusCode.BadRequest => await ExtractProblemDetailsMessageAsync(content) ?? "Requ�te invalide",
+            HttpStatusCode.BadRequest => await ExtractProblemDetailsMessageAsync(content) ?? "Requ�te invalide",
             HttpStatusCode.Unauthorized => "Authentification requise",
-            HttpStatusCode.Forbidden => "Acc�s interdit - permissions insuffisantes",
+            HttpStatusCode.Forbidden => "Accès interdit - permissions insuffisantes",
             HttpStatusCode.NotFound => "Ressource introuvable",
-            HttpStatusCode.TooManyRequests => "Trop de requ�tes - veuillez patienter",
+            HttpStatusCode.TooManyRequests => "Trop de requêtes - veuillez patienter",
             HttpStatusCode.InternalServerError => content.Length > 0 ? content : "Erreur serveur interne",
             _ => $"Erreur HTTP {(int)statusCode}: {content}"
         };
@@ -289,7 +388,7 @@ public class ApiService : IApiService
         }
         catch (JsonException ex)
         {
-            _logger.LogWarning(ex, "Impossible d'extraire les erreurs de validation");
+            _logger.LogWarning("Impossible d'extraire les erreurs de validation: {Message}", ex.Message);
         }
 
         return null;
@@ -329,4 +428,26 @@ public class ApiService : IApiService
     {
         return endpoint?.Contains("/IoTHub/") == true;
     }
+}
+
+/// <summary>
+/// ✅ DTO pour wrapper ApiResponse du backend (compatible C# backend)
+/// </summary>
+internal class BackendApiResponse<T>
+{
+    public bool IsSuccess { get; set; }
+    public T? Data { get; set; }
+    public string? ErrorMessage { get; set; }
+    public int StatusCode { get; set; }
+}
+
+/// <summary>
+/// ✅ DTO spécialisé pour wrapper backend retournant IEnumerable/array
+/// </summary>
+internal class BackendApiResponseWithArray<T>
+{
+    public bool IsSuccess { get; set; }
+    public IEnumerable<T>? Data { get; set; }
+    public string? ErrorMessage { get; set; }
+    public int StatusCode { get; set; }
 }

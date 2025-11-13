@@ -1,0 +1,195 @@
+@using MySmartApp.Ui.Services
+@using MySmartApp.Ui.Models
+@inject IDeviceLogService DeviceLogService
+@inject NavigationManager Navigation
+@inject ILogger<CriticalLogsWidget> Logger
+
+<MudCard Elevation="2">
+    <MudCardHeader>
+        <CardHeaderContent>
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                <MudIcon Icon="@Icons.Material.Filled.BugReport" Color="Color.Error" />
+                <MudText Typo="Typo.h6">Logs Critiques (24h)</MudText>
+            </MudStack>
+        </CardHeaderContent>
+        <CardHeaderActions>
+            @if (_logs?.Any() == true)
+            {
+                <MudChip T="string" Size="Size.Small" Color="Color.Error">@_logs.Count</MudChip>
+            }
+            <MudIconButton Icon="@Icons.Material.Filled.Refresh" 
+                          Size="Size.Small" 
+                          OnClick="LoadLogsAsync"
+                          Disabled="@_isLoading" />
+        </CardHeaderActions>
+    </MudCardHeader>
+    <MudCardContent>
+        @if (_isLoading)
+        {
+            <MudProgressLinear Indeterminate="true" Color="Color.Error" />
+        }
+        else if (_errorMessage != null)
+        {
+            <MudAlert Severity="Severity.Error" Dense="true">@_errorMessage</MudAlert>
+        }
+        else if (_logs?.Any() == true)
+        {
+            <MudStack Spacing="2">
+                @foreach (var log in _logs.Take(MaxLogsDisplayed))
+                {
+                    <MudPaper Elevation="1" 
+                             Class="pa-2" 
+                             Style="@($"border-left: 4px solid {GetLevelColor(log.Level)};")">
+                        <MudStack Spacing="1">
+                            <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Start">
+                                <MudStack Spacing="0" Style="flex: 1;">
+                                    <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                                        <MudChip T="string" Size="Size.Small" 
+                                               Color="@(log.Level == "CRITICAL" ? Color.Error : Color.Warning)"
+                                               Icon="@(log.Level == "CRITICAL" ? Icons.Material.Filled.Cancel : Icons.Material.Filled.Error)">
+                                            @log.Level
+                                        </MudChip>
+                                        @if (!string.IsNullOrEmpty(log.Source))
+                                        {
+                                            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">
+                                                @log.Source
+                                            </MudChip>
+                                        }
+                                    </MudStack>
+                                    <MudText Typo="Typo.body2" Class="mt-1">@log.Message</MudText>
+                                    @if (!string.IsNullOrEmpty(log.AdditionalData) && log.AdditionalData.Length > 50)
+                                    {
+                                        <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                            @log.AdditionalData.Substring(0, 50)...
+                                        </MudText>
+                                    }
+                                </MudStack>
+                                <MudStack Spacing="0" AlignItems="AlignItems.End">
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                        @log.Timestamp.ToString("HH:mm:ss")
+                                    </MudText>
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                        @log.Timestamp.ToString("dd/MM")
+                                    </MudText>
+                                </MudStack>
+                            </MudStack>
+                        </MudStack>
+                    </MudPaper>
+                }
+                
+                @if (_logs.Count > MaxLogsDisplayed)
+                {
+                    <MudText Typo="Typo.caption" Align="Align.Center" Color="Color.Secondary">
+                        +@(_logs.Count - MaxLogsDisplayed) log(s) critique(s) supplémentaire(s)
+                    </MudText>
+                }
+            </MudStack>
+        }
+        else
+        {
+            <MudStack AlignItems="AlignItems.Center" Spacing="2" Class="py-4">
+                <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Large" />
+                <MudText Typo="Typo.body1" Color="Color.Success">Aucun log critique</MudText>
+                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                    Aucune erreur critique détectée dans les dernières 24h
+                </MudText>
+            </MudStack>
+        }
+    </MudCardContent>
+    @if (_logs?.Any() == true)
+    {
+        <MudCardActions>
+            <MudButton StartIcon="@Icons.Material.Filled.List" 
+                      OnClick="ViewAllLogs"
+                      Size="Size.Small">
+                Voir tous les logs
+            </MudButton>
+        </MudCardActions>
+    }
+</MudCard>
+
+@code {
+    [Parameter] public int MaxLogsDisplayed { get; set; } = 5;
+    [Parameter] public int HoursBack { get; set; } = 24;
+    [Parameter] public int MaxResults { get; set; } = 50;
+
+    private List<DeviceLogDto>? _logs;
+    private bool _isLoading;
+    private string? _errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadLogsAsync();
+    }
+
+    private async Task LoadLogsAsync()
+    {
+        _isLoading = true;
+        _errorMessage = null;
+        StateHasChanged();
+
+        try
+        {
+            var response = await DeviceLogService.GetCriticalLogsAsync(HoursBack, MaxResults);
+
+            if (response.IsSuccess && response.Data != null)
+            {
+                _logs = response.Data;
+                Logger.LogInformation("? {Count} log(s) critique(s) chargé(s)", _logs.Count);
+            }
+            else
+            {
+                _errorMessage = response.ErrorMessage ?? "Erreur lors du chargement";
+                Logger.LogError("? Erreur chargement logs critiques: {Error}", _errorMessage);
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Erreur technique: {ex.Message}";
+            Logger.LogError(ex, "? Exception chargement logs critiques");
+        }
+        finally
+        {
+            _isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void ViewAllLogs()
+    {
+        Navigation.NavigateTo("/logs?level=critical");
+    }
+
+    private string GetLevelColor(string level)
+    {
+        return level switch
+        {
+            "CRITICAL" => "var(--mud-palette-error)",
+            "ERROR" => "var(--mud-palette-error)",
+            "WARNING" => "var(--mud-palette-warning)",
+            _ => "var(--mud-palette-info)"
+        };
+    }
+
+    private Color GetLevelMudColor(string level)
+    {
+        return level switch
+        {
+            "CRITICAL" => Color.Error,
+            "ERROR" => Color.Error,
+            "WARNING" => Color.Warning,
+            _ => Color.Info
+        };
+    }
+
+    private string GetLevelIcon(string level)
+    {
+        return level switch
+        {
+            "CRITICAL" => Icons.Material.Filled.Cancel,
+            "ERROR" => Icons.Material.Filled.Error,
+            "WARNING" => Icons.Material.Filled.Warning,
+            _ => Icons.Material.Filled.Info
+        };
+    }
+}

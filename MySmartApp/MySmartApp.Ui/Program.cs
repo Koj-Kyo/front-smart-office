@@ -102,8 +102,30 @@ static void ConfigureBusinessServices(WebAssemblyHostBuilder builder)
     
     // Services métier spécialisés
     builder.Services.AddScoped<IZoneService, ZoneService>();
+    builder.Services.AddScoped<IBackendZoneService, BackendZoneService>();
     builder.Services.AddScoped<IDeviceService, DeviceService>();
-    // builder.Services.AddScoped<ITelemetryService, TelemetryService>();
+    builder.Services.AddScoped<IDevicePeripheralService, DevicePeripheralService>();
+    builder.Services.AddScoped<ICommandeService, CommandeService>();
+    builder.Services.AddScoped<IConsommationStatsService, ConsommationStatsService>();
+    builder.Services.AddScoped<IDroitAccesService, DroitAccesService>();
+    builder.Services.AddScoped<IIncidentTicketService, IncidentTicketService>();
+    builder.Services.AddScoped<IIoTHubService, IoTHubService>();
+    builder.Services.AddScoped<INotificationService, NotificationService>();
+    builder.Services.AddScoped<ITelemetrieService, TelemetrieService>();
+    builder.Services.AddScoped<IUserManagementService, UserManagementService>();
+    builder.Services.AddScoped<IAdminUserManagementService, AdminUserManagementService>();
+    
+    // ? NOUVEAUX SERVICES CRITIQUES - PHASE 1
+    builder.Services.AddScoped<IDeviceStatusService, DeviceStatusService>();
+    
+    // ? NOUVEAUX SERVICES AVANCÉS - PHASE 2
+    builder.Services.AddScoped<IUserActivityService, UserActivityService>();
+    builder.Services.AddScoped<IDeviceLogService, DeviceLogService>();
+    
+    // Services Dashboard
+    builder.Services.AddScoped<IWeatherService, WeatherService>();
+    builder.Services.AddScoped<IDashboardStatsService, DashboardStatsService>();
+    builder.Services.AddScoped<IUserService, UserService>();
 }
 
 static void ConfigureHttpServices(WebAssemblyHostBuilder builder)

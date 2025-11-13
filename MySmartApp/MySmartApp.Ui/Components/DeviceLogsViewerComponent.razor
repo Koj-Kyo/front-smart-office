@@ -1,0 +1,585 @@
+@using MySmartApp.Ui.Services
+@using MySmartApp.Ui.Models
+@inject IDeviceLogService DeviceLogService
+@inject ILogger<DeviceLogsViewerComponent> Logger
+
+<MudPaper Elevation="2" Class="pa-4">
+    <MudStack Spacing="3">
+        <!-- Header -->
+        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+            <MudText Typo="Typo.h5">
+                <MudIcon Icon="@Icons.Material.Filled.Article" Class="mr-2" />
+                Device Logs @(string.IsNullOrEmpty(DeviceId) ? "" : $"- {DeviceId}")
+            </MudText>
+            <MudStack Row="true" Spacing="2">
+                <MudButton OnClick="ExportLogs" 
+                          Variant="Variant.Outlined" 
+                          Color="Color.Primary" 
+                          StartIcon="@Icons.Material.Filled.Download"
+                          Disabled="@(string.IsNullOrEmpty(DeviceId) || _isLoading)">
+                    Export
+                </MudButton>
+                <MudButton OnClick="LoadCriticalLogs" 
+                          Variant="Variant.Filled" 
+                          Color="Color.Error"
+                          StartIcon="@Icons.Material.Filled.Warning"
+                          Disabled="@_isLoading">
+                    Logs Critiques
+                </MudButton>
+            </MudStack>
+        </MudStack>
+
+        <!-- Filtres -->
+        <MudGrid>
+            <MudItem xs="12" md="3">
+                <MudSelect @bind-Value="_selectedLevel" 
+                          Label="Niveau" 
+                          Variant="Variant.Outlined"
+                          Clearable="true"
+                          OnClearButtonClick="@(() => { _selectedLevel = null; _ = ReloadTable(); })">
+                    <MudSelectItem Value="@((string?)null)">Tous</MudSelectItem>
+                    <MudSelectItem Value="@("INFO")">
+                        <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                            <MudIcon Icon="@Icons.Material.Filled.Info" Size="Size.Small" Color="Color.Info" />
+                            <MudText>INFO</MudText>
+                        </MudStack>
+                    </MudSelectItem>
+                    <MudSelectItem Value="@("WARNING")">
+                        <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                            <MudIcon Icon="@Icons.Material.Filled.Warning" Size="Size.Small" Color="Color.Warning" />
+                            <MudText>WARNING</MudText>
+                        </MudStack>
+                    </MudSelectItem>
+                    <MudSelectItem Value="@("ERROR")">
+                        <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                            <MudIcon Icon="@Icons.Material.Filled.Error" Size="Size.Small" Color="Color.Error" />
+                            <MudText>ERROR</MudText>
+                        </MudStack>
+                    </MudSelectItem>
+                    <MudSelectItem Value="@("CRITICAL")">
+                        <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                            <MudIcon Icon="@Icons.Material.Filled.Cancel" Size="Size.Small" Color="Color.Error" />
+                            <MudText>CRITICAL</MudText>
+                        </MudStack>
+                    </MudSelectItem>
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" md="3">
+                <MudTextField @bind-Value="_selectedSource" 
+                             Label="Source" 
+                             Variant="Variant.Outlined"
+                             Clearable="true" />
+            </MudItem>
+            <MudItem xs="12" md="2">
+                <MudDatePicker @bind-Date="_startDate" 
+                              Label="Date début" 
+                              Variant="Variant.Outlined"
+                              Clearable="true" />
+            </MudItem>
+            <MudItem xs="12" md="2">
+                <MudDatePicker @bind-Date="_endDate" 
+                              Label="Date fin" 
+                              Variant="Variant.Outlined"
+                              Clearable="true" />
+            </MudItem>
+            <MudItem xs="12" md="2">
+                <MudButton OnClick="ReloadTable" 
+                          Variant="Variant.Filled" 
+                          Color="Color.Primary" 
+                          FullWidth="true"
+                          Disabled="@_isLoading">
+                    Filtrer
+                </MudButton>
+            </MudItem>
+        </MudGrid>
+
+        <!-- Recherche -->
+        <MudTextField @bind-Value="_searchTerm" 
+                     Label="Rechercher dans les messages" 
+                     Variant="Variant.Outlined"
+                     Adornment="Adornment.End"
+                     AdornmentIcon="@Icons.Material.Filled.Search"
+                     OnAdornmentClick="SearchLogs"
+                     OnKeyUp="@(e => { if (e.Key == "Enter") SearchLogs(); })"
+                     Clearable="true" />
+
+        <!-- Statistiques (si DeviceId spécifié) -->
+        @if (!string.IsNullOrEmpty(DeviceId) && _stats != null)
+        {
+            <MudGrid>
+                <MudItem xs="6" md="2">
+                    <MudCard>
+                        <MudCardContent>
+                            <MudStack Spacing="1">
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">Total</MudText>
+                                <MudText Typo="Typo.h5">@_stats.TotalLogs</MudText>
+                            </MudStack>
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
+                <MudItem xs="6" md="2">
+                    <MudCard Outlined="true">
+                        <MudCardContent>
+                            <MudStack Spacing="1">
+                                <MudText Typo="Typo.caption" Color="Color.Info">INFO</MudText>
+                                <MudText Typo="Typo.h5" Color="Color.Info">@_stats.InfoCount</MudText>
+                            </MudStack>
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
+                <MudItem xs="6" md="2">
+                    <MudCard Outlined="true">
+                        <MudCardContent>
+                            <MudStack Spacing="1">
+                                <MudText Typo="Typo.caption" Color="Color.Warning">WARNING</MudText>
+                                <MudText Typo="Typo.h5" Color="Color.Warning">@_stats.WarningCount</MudText>
+                            </MudStack>
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
+                <MudItem xs="6" md="2">
+                    <MudCard Outlined="true">
+                        <MudCardContent>
+                            <MudStack Spacing="1">
+                                <MudText Typo="Typo.caption" Color="Color.Error">ERROR</MudText>
+                                <MudText Typo="Typo.h5" Color="Color.Error">@_stats.ErrorCount</MudText>
+                            </MudStack>
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
+                <MudItem xs="6" md="2">
+                    <MudCard Outlined="true">
+                        <MudCardContent>
+                            <MudStack Spacing="1">
+                                <MudText Typo="Typo.caption" Color="Color.Error">CRITICAL</MudText>
+                                <MudText Typo="Typo.h5" Color="Color.Error">@_stats.CriticalCount</MudText>
+                            </MudStack>
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
+                <MudItem xs="6" md="2">
+                    <MudCard>
+                        <MudCardContent>
+                            <MudStack Spacing="1">
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">Dernier Log</MudText>
+                                <MudText Typo="Typo.caption">@_stats.LastLogTimestamp?.ToString("HH:mm:ss")</MudText>
+                            </MudStack>
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
+            </MudGrid>
+        }
+
+        @if (_errorMessage != null)
+        {
+            <MudAlert Severity="Severity.Error" ShowCloseIcon="true" CloseIconClicked="@(() => _errorMessage = null)">
+                @_errorMessage
+            </MudAlert>
+        }
+
+        <!-- Table Logs -->
+        @if (_showSearchResults)
+        {
+            <!-- Résultats Recherche -->
+            <MudCard>
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6">Résultats de recherche</MudText>
+                    </CardHeaderContent>
+                    <CardHeaderActions>
+                        <MudIconButton Icon="@Icons.Material.Filled.Close" 
+                                      OnClick="@(() => { _showSearchResults = false; _searchResults = null; })" />
+                    </CardHeaderActions>
+                </MudCardHeader>
+                <MudCardContent>
+                    @if (_searchResults?.Any() == true)
+                    {
+                        <MudSimpleTable Dense="true" Hover="true">
+                            <thead>
+                                <tr>
+                                    <th>Date/Heure</th>
+                                    <th>Niveau</th>
+                                    <th>Source</th>
+                                    <th>Message</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var log in _searchResults.Take(20))
+                                {
+                                    <tr Style="@GetRowStyle(log.Level)">
+                                        <td>
+                                            <MudText Typo="Typo.caption">@log.Timestamp.ToString("dd/MM HH:mm:ss")</MudText>
+                                        </td>
+                                        <td>
+                                            <MudChip T="string" Size="Size.Small" Color="@GetLevelColor(log.Level)">
+                                                @log.Level
+                                            </MudChip>
+                                        </td>
+                                        <td>@log.Source</td>
+                                        <td>
+                                            <MudText Typo="Typo.body2">@log.Message</MudText>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </MudSimpleTable>
+                        @if (_searchResults.Count > 20)
+                        {
+                            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-2">
+                                Affichage de 20 résultats sur @_searchResults.Count
+                            </MudText>
+                        }
+                    }
+                    else
+                    {
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Aucun résultat trouvé</MudText>
+                    }
+                </MudCardContent>
+            </MudCard>
+        }
+        else
+        {
+            <!-- Table Paginée -->
+            <MudTable @ref="_table"
+                     TItem="DeviceLogDto"
+                     ServerData="ServerReload"
+                     Dense="true"
+                     Hover="true"
+                     Loading="@_isLoading"
+                     LoadingProgressColor="Color.Primary"
+                     RowStyleFunc="@GetRowStyle">
+                <ToolBarContent>
+                    <MudText Typo="Typo.h6">Logs</MudText>
+                    <MudSpacer />
+                    @if (_paginatedLogs != null)
+                    {
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">
+                            @_paginatedLogs.TotalCount log(s)
+                        </MudText>
+                    }
+                </ToolBarContent>
+                <HeaderContent>
+                    <MudTh>Date/Heure</MudTh>
+                    <MudTh>Niveau</MudTh>
+                    <MudTh>Source</MudTh>
+                    <MudTh>Message</MudTh>
+                    <MudTh>Périphérique</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Date/Heure">
+                        <MudText Typo="Typo.body2">@context.Timestamp.ToString("dd/MM/yyyy")</MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">@context.Timestamp.ToString("HH:mm:ss")</MudText>
+                    </MudTd>
+                    <MudTd DataLabel="Niveau">
+                        <MudChip T="string" Size="Size.Small" Color="@GetLevelColor(context.Level)" Icon="@GetLevelIcon(context.Level)">
+                            @context.Level
+                        </MudChip>
+                    </MudTd>
+                    <MudTd DataLabel="Source">
+                        <MudText Typo="Typo.body2">@context.Source</MudText>
+                    </MudTd>
+                    <MudTd DataLabel="Message">
+                        <MudText Typo="Typo.body2">@context.Message</MudText>
+                        @if (!string.IsNullOrEmpty(context.AdditionalData))
+                        {
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                @context.AdditionalData.Substring(0, Math.Min(50, context.AdditionalData.Length))...
+                            </MudText>
+                        }
+                    </MudTd>
+                    <MudTd DataLabel="Périphérique">
+                        @if (!string.IsNullOrEmpty(context.Peripheral))
+                        {
+                            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">@context.Peripheral</MudChip>
+                        }
+                        else
+                        {
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">-</MudText>
+                        }
+                    </MudTd>
+                </RowTemplate>
+                <NoRecordsContent>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary" Align="Align.Center">
+                        Aucun log trouvé
+                    </MudText>
+                </NoRecordsContent>
+                <LoadingContent>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary" Align="Align.Center">
+                        Chargement...
+                    </MudText>
+                </LoadingContent>
+                <PagerContent>
+                    <MudTablePager PageSizeOptions="new int[] { 25, 50, 100 }" />
+                </PagerContent>
+            </MudTable>
+        }
+    </MudStack>
+</MudPaper>
+
+@code {
+    [Parameter] public string? DeviceId { get; set; }
+    [Parameter] public int PageSize { get; set; } = 50;
+
+    private MudTable<DeviceLogDto>? _table;
+    private PaginatedResponse<DeviceLogDto>? _paginatedLogs;
+    private DeviceLogStatsDto? _stats;
+    private bool _isLoading;
+    private string? _errorMessage;
+
+    private string? _selectedLevel;
+    private string? _selectedSource;
+    private DateTime? _startDate;
+    private DateTime? _endDate;
+
+    private string? _searchTerm;
+    private bool _showSearchResults;
+    private List<DeviceLogDto>? _searchResults;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!string.IsNullOrEmpty(DeviceId))
+        {
+            await LoadStatsAsync();
+        }
+    }
+
+    private async Task<TableData<DeviceLogDto>> ServerReload(TableState state, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrEmpty(DeviceId))
+        {
+            _errorMessage = "DeviceId est requis pour afficher les logs";
+            return new TableData<DeviceLogDto> { Items = new List<DeviceLogDto>(), TotalItems = 0 };
+        }
+
+        _isLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            var response = await DeviceLogService.GetDeviceLogsAsync(
+                DeviceId,
+                state.Page + 1,
+                state.PageSize,
+                _selectedLevel,
+                _selectedSource,
+                _startDate,
+                _endDate
+            );
+
+            if (response.IsSuccess && response.Data != null)
+            {
+                _paginatedLogs = response.Data;
+                Logger.LogInformation("? {Count} logs chargés (page {Page})", 
+                    response.Data.Data.Count, state.Page + 1);
+
+                return new TableData<DeviceLogDto>
+                {
+                    Items = response.Data.Data,
+                    TotalItems = response.Data.TotalCount
+                };
+            }
+            else
+            {
+                _errorMessage = response.ErrorMessage ?? "Erreur lors du chargement";
+                Logger.LogError("? Erreur chargement logs: {Error}", _errorMessage);
+                return new TableData<DeviceLogDto> { Items = new List<DeviceLogDto>(), TotalItems = 0 };
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Erreur technique: {ex.Message}";
+            Logger.LogError(ex, "? Exception lors du chargement logs");
+            return new TableData<DeviceLogDto> { Items = new List<DeviceLogDto>(), TotalItems = 0 };
+        }
+        finally
+        {
+            _isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task ReloadTable()
+    {
+        _showSearchResults = false;
+        _searchResults = null;
+
+        if (_table != null)
+        {
+            await _table.ReloadServerData();
+        }
+    }
+
+    private async Task LoadStatsAsync()
+    {
+        if (string.IsNullOrEmpty(DeviceId)) return;
+
+        try
+        {
+            var response = await DeviceLogService.GetLogStatsAsync(DeviceId, 7);
+
+            if (response.IsSuccess && response.Data != null)
+            {
+                _stats = response.Data;
+                Logger.LogInformation("? Stats logs chargées");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "? Exception lors du chargement stats logs");
+        }
+    }
+
+    private async Task LoadCriticalLogs()
+    {
+        try
+        {
+            _isLoading = true;
+            StateHasChanged();
+
+            var response = await DeviceLogService.GetCriticalLogsAsync(24, 100);
+
+            if (response.IsSuccess && response.Data != null)
+            {
+                _searchResults = response.Data;
+                _showSearchResults = true;
+                Logger.LogInformation("? {Count} logs critiques chargés", response.Data.Count);
+            }
+            else
+            {
+                _errorMessage = response.ErrorMessage ?? "Erreur lors du chargement";
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Erreur technique: {ex.Message}";
+            Logger.LogError(ex, "? Exception lors du chargement logs critiques");
+        }
+        finally
+        {
+            _isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task SearchLogs()
+    {
+        if (string.IsNullOrWhiteSpace(_searchTerm) || _searchTerm.Length < 3)
+        {
+            _errorMessage = "Entrez au moins 3 caractères pour la recherche";
+            return;
+        }
+
+        try
+        {
+            _isLoading = true;
+            StateHasChanged();
+
+            var response = await DeviceLogService.SearchLogsAsync(
+                _searchTerm,
+                _startDate,
+                _endDate,
+                100
+            );
+
+            if (response.IsSuccess && response.Data != null)
+            {
+                _searchResults = response.Data;
+                _showSearchResults = true;
+                Logger.LogInformation("? {Count} logs trouvés pour '{SearchTerm}'", 
+                    response.Data.Count, _searchTerm);
+            }
+            else
+            {
+                _errorMessage = response.ErrorMessage ?? "Erreur lors de la recherche";
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Erreur technique: {ex.Message}";
+            Logger.LogError(ex, "? Exception lors de la recherche logs");
+        }
+        finally
+        {
+            _isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task ExportLogs()
+    {
+        if (string.IsNullOrEmpty(DeviceId))
+        {
+            _errorMessage = "DeviceId est requis pour l'export";
+            return;
+        }
+
+        try
+        {
+            var start = _startDate ?? DateTime.Now.AddDays(-7);
+            var end = _endDate ?? DateTime.Now;
+
+            var response = await DeviceLogService.ExportLogsAsync(DeviceId, start, end, "csv");
+
+            if (response.IsSuccess && response.Data != null)
+            {
+                // TODO: Trigger browser download
+                Logger.LogInformation("? Export logs généré: {Size} bytes", response.Data.Length);
+            }
+            else
+            {
+                _errorMessage = response.ErrorMessage ?? "Erreur lors de l'export";
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Erreur technique: {ex.Message}";
+            Logger.LogError(ex, "? Exception lors de l'export logs");
+        }
+    }
+
+    // Helpers
+
+    private Color GetLevelColor(string level)
+    {
+        return level switch
+        {
+            "INFO" => Color.Info,
+            "WARNING" => Color.Warning,
+            "ERROR" => Color.Error,
+            "CRITICAL" => Color.Error,
+            _ => Color.Default
+        };
+    }
+
+    private string GetLevelIcon(string level)
+    {
+        return level switch
+        {
+            "INFO" => Icons.Material.Filled.Info,
+            "WARNING" => Icons.Material.Filled.Warning,
+            "ERROR" => Icons.Material.Filled.Error,
+            "CRITICAL" => Icons.Material.Filled.Cancel,
+            _ => Icons.Material.Filled.Circle
+        };
+    }
+
+    private string GetRowStyle(DeviceLogDto log)
+    {
+        return GetRowStyle(log.Level);
+    }
+
+    private string GetRowStyle(DeviceLogDto log, int rowNumber)
+    {
+        return GetRowStyle(log.Level);
+    }
+
+    private string GetRowStyle(string level)
+    {
+        return level switch
+        {
+            "CRITICAL" => "background-color: rgba(244, 67, 54, 0.1);",
+            "ERROR" => "background-color: rgba(244, 67, 54, 0.05);",
+            _ => ""
+        };
+    }
+}

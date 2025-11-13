@@ -16,7 +16,7 @@ public interface ISignalRService
     // Événements de données
     event Action<TelemetryData>? OnTelemetryUpdate;
     event Action<DeviceStatusUpdate>? OnDeviceStatusUpdate;
-    event Action<NotificationDto>? OnNotificationReceived;
+    event Action<SignalRNotificationDto>? OnNotificationReceived;
     event Action<string>? OnIncidentAlert;
     event Action<string>? OnCommandExecutionResult;
 }

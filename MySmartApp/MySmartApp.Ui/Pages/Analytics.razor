@@ -2,43 +2,571 @@
 @using MudBlazor
 @using MudBlazor.Charts
 @using MudBlazor.Utilities
+@using MySmartApp.Ui.Services
+@using MySmartApp.Ui.Models
+@inject IConsommationStatsService ConsommationService
+@inject ISnackbar Snackbar
+@inject ILogger<Analytics> Logger
+@attribute [Authorize]
 
+<RequireAuth>
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="my-8">
-    <MudText Typo="Typo.h4" Class="mb-4">Analyse de la maison intelligente</MudText>
-    <MudText Typo="Typo.body1" Class="mb-8">Visualisez les statistiques d'utilisation des zones et des appareils.</MudText>
+    <MudText Typo="Typo.h4" Class="mb-4">📊 Analytics Énergétiques</MudText>
+    <MudText Typo="Typo.body1" Class="mb-4">Analysez la consommation énergétique et optimisez vos appareils IoT. Cette page se concentre sur l'analyse de la consommation d'énergie et les recommandations d'optimisation.</MudText>
 
-    <MudGrid>
-        <MudItem xs="12" md="6">
-            <MudPaper Class="pa-4 rounded-xl" Elevation="2">
-                <MudText Typo="Typo.h6" Class="mb-2">Utilisation des appareils (Heures)</MudText>
-                <MudChart ChartType="ChartType.Bar"
-                          ChartSeries="@BarSeries"
-                          XAxisLabels="@XAxisLabels"
-                          Height="300" />
-            </MudPaper>
-        </MudItem>
+    <!-- Contrôles de période -->
+    <MudExpansionPanels Elevation="2" Class="mb-6">
+        <MudExpansionPanel Text="🗓️ Sélection de période et filtres">
+            <MudGrid>
+                <MudItem xs="12" sm="6" md="3">
+                    <MudDatePicker @bind-Date="startDate" Label="Date début" />
+                </MudItem>
+                <MudItem xs="12" sm="6" md="3">
+                    <MudDatePicker @bind-Date="endDate" Label="Date fin" />
+                </MudItem>
+                <MudItem xs="12" sm="6" md="3">
+                    <MudSelect T="int?" @bind-Value="selectedPeripheriqueId" Label="Périphérique" Clearable>
+                        <MudSelectItem T="int?" Value="@((int?)1)">Climatiseur Salon</MudSelectItem>
+                        <MudSelectItem T="int?" Value="@((int?)2)">Éclairage Bureau</MudSelectItem>
+                        <MudSelectItem T="int?" Value="@((int?)3)">Thermostat Principal</MudSelectItem>
+                        <MudSelectItem T="int?" Value="@((int?)4)">Routeur WiFi</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="3">
+                    <MudSelect T="int?" @bind-Value="selectedZoneId" Label="Zone" Clearable>
+                        <MudSelectItem T="int?" Value="@((int?)1)">Salon</MudSelectItem>
+                        <MudSelectItem T="int?" Value="@((int?)2)">Bureau</MudSelectItem>
+                        <MudSelectItem T="int?" Value="@((int?)3)">Chambre</MudSelectItem>
+                        <MudSelectItem T="int?" Value="@((int?)4)">Cuisine</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+            </MudGrid>
+            <div class="d-flex gap-2 mt-4">
+                <MudButton OnClick="LoadConsommationStats" 
+                          Variant="Variant.Filled" 
+                          Color="Color.Primary" 
+                          StartIcon="@Icons.Material.Filled.Analytics"
+                          Disabled="@isLoading">
+                    Analyser
+                </MudButton>
+                <MudButton OnClick="LoadTopConsommateurs" 
+                          Variant="Variant.Outlined" 
+                          Color="Color.Secondary" 
+                          StartIcon="@Icons.Material.Filled.Leaderboard"
+                          Disabled="@isLoading">
+                    Top Consommateurs
+                </MudButton>
+                <MudButton OnClick="DetectAnomalies" 
+                          Variant="Variant.Outlined" 
+                          Color="Color.Warning" 
+                          StartIcon="@Icons.Material.Filled.Warning"
+                          Disabled="@isLoading">
+                    Détecter Anomalies
+                </MudButton>
+                <MudButton OnClick="GenererRapport" 
+                          Variant="Variant.Outlined" 
+                          Color="Color.Info" 
+                          StartIcon="@Icons.Material.Filled.PictureAsPdf"
+                          Disabled="@isLoading">
+                    Générer Rapport
+                </MudButton>
+            </div>
+        </MudExpansionPanel>
+    </MudExpansionPanels>
 
-        <MudItem xs="12" md="6">
-            <MudPaper Class="pa-4 rounded-xl" Elevation="2">
-                <MudText Typo="Typo.h6" Class="mb-2">Appareils par zone</MudText>
-                <MudChart ChartType="ChartType.Pie"
-                          InputData="@PieData"
-                          InputLabels="@PieLabels"
-                          Height="300" />
-            </MudPaper>
-        </MudItem>
-    </MudGrid>
+    @if (isLoading)
+    {
+        <div class="d-flex justify-center align-center pa-8">
+            <MudProgressCircular Size="Size.Large" Indeterminate="true" />
+            <MudText Class="ml-4">Chargement des analytics...</MudText>
+        </div>
+    }
+    else
+    {
+        <!-- Statistiques principales -->
+        @if (consommationStats != null)
+        {
+            <MudGrid Class="mb-6">
+                <MudItem xs="12" sm="6" md="3">
+                    <MudPaper Class="pa-4 rounded-xl" Elevation="2">
+                        <div class="d-flex align-center">
+                            <MudIcon Icon="@Icons.Material.Filled.ElectricBolt" Color="Color.Warning" Size="Size.Large" Class="mr-3" />
+                            <div>
+                                <MudText Typo="Typo.h6">@($"{consommationStats.ConsommationTotaleMwh:F1}") mWh</MudText>
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">Consommation totale</MudText>
+                            </div>
+                        </div>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="3">
+                    <MudPaper Class="pa-4 rounded-xl" Elevation="2">
+                        <div class="d-flex align-center">
+                            <MudIcon Icon="@Icons.Material.Filled.Speed" Color="Color.Info" Size="Size.Large" Class="mr-3" />
+                            <div>
+                                <MudText Typo="Typo.h6">@($"{consommationStats.PuissanceMoyenneMw:F1}") mW</MudText>
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">Puissance moyenne</MudText>
+                            </div>
+                        </div>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="3">
+                    <MudPaper Class="pa-4 rounded-xl" Elevation="2">
+                        <div class="d-flex align-center">
+                            <MudIcon Icon="@Icons.Material.Filled.Schedule" Color="Color.Success" Size="Size.Large" Class="mr-3" />
+                            <div>
+                                <MudText Typo="Typo.h6">@($"{consommationStats.TempsFonctionnementHeures:F1}") h</MudText>
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">Temps fonctionnement</MudText>
+                            </div>
+                        </div>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="3">
+                    <MudPaper Class="pa-4 rounded-xl" Elevation="2">
+                        <div class="d-flex align-center">
+                            <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Color="Color.Primary" Size="Size.Large" Class="mr-3" />
+                            <div>
+                                <MudText Typo="Typo.h6">@($"{consommationStats.EfficaciteEnergetique:P1}")</MudText>
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">Efficacité</MudText>
+                            </div>
+                        </div>
+                    </MudPaper>
+                </MudItem>
+            </MudGrid>
+        }
+
+        <!-- Graphiques -->
+        <MudGrid>
+            <!-- Consommation horaire -->
+            @if (consommationHoraire.Any())
+            {
+                <MudItem xs="12" lg="8">
+                    <MudPaper Class="pa-4 rounded-xl" Elevation="2">
+                        <MudText Typo="Typo.h6" Class="mb-4">📈 Consommation horaire</MudText>
+                        <MudChart ChartType="ChartType.Line"
+                                  ChartSeries="@GetConsommationHoraireSeries()"
+                                  XAxisLabels="@GetHeuresLabels()"
+                                  Width="100%"
+                                  Height="300" />
+                    </MudPaper>
+                </MudItem>
+            }
+
+            <!-- Top consommateurs -->
+            @if (topConsommateurs.Any())
+            {
+                <MudItem xs="12" lg="4">
+                    <MudPaper Class="pa-4 rounded-xl" Elevation="2">
+                        <MudText Typo="Typo.h6" Class="mb-4">🏆 Top Consommateurs</MudText>
+                        @foreach (var item in topConsommateurs.Take(5))
+                        {
+                            <div class="d-flex justify-space-between align-center mb-3">
+                                <div>
+                                    <MudText Typo="Typo.body1">@item.PeripheriqueName</MudText>
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">@item.ZoneName</MudText>
+                                </div>
+                                <div class="text-right">
+                                    <MudText Typo="Typo.body1">@($"{item.ConsommationMwh:F1}") mWh</MudText>
+                                    <MudText Typo="Typo.caption" Color="Color.Primary">@($"{item.PourcentageTotal:F1}%")</MudText>
+                                </div>
+                            </div>
+                            <MudProgressLinear Value="@item.PourcentageTotal" Color="Color.Primary" Class="mb-2" />
+                        }
+                    </MudPaper>
+                </MudItem>
+            }
+
+            <!-- Anomalies détectées -->
+            @if (anomalies.Any())
+            {
+                <MudItem xs="12">
+                    <MudPaper Class="pa-4 rounded-xl" Elevation="2">
+                        <MudText Typo="Typo.h6" Class="mb-4">🚨 Anomalies détectées</MudText>
+                        <MudTable Items="@anomalies" Dense="true" Hover="true">
+                            <HeaderContent>
+                                <MudTh>Périphérique</MudTh>
+                                <MudTh>Type</MudTh>
+                                <MudTh>Description</MudTh>
+                                <MudTh>Écart</MudTh>
+                                <MudTh>Sévérité</MudTh>
+                                <MudTh>Date</MudTh>
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd>@context.PeripheriqueName</MudTd>
+                                <MudTd>@context.TypeAnomalie</MudTd>
+                                <MudTd>@context.Description</MudTd>
+                                <MudTd>@($"{context.EcartPourcentage:F1}%")</MudTd>
+                                <MudTd>
+                                    <MudChip T="string" Size="Size.Small" Color="@GetSeverityColor(context.Severite)">
+                                        @context.Severite
+                                    </MudChip>
+                                </MudTd>
+                                <MudTd>@context.DateDetection.ToString("dd/MM/yyyy HH:mm")</MudTd>
+                            </RowTemplate>
+                        </MudTable>
+                    </MudPaper>
+                </MudItem>
+            }
+
+            <!-- Rapport détaillé -->
+            @if (rapport != null)
+            {
+                <MudItem xs="12">
+                    <MudPaper Class="pa-4 rounded-xl" Elevation="2">
+                        <MudText Typo="Typo.h6" Class="mb-4">📄 Rapport de consommation</MudText>
+                        <MudGrid>
+                            <MudItem xs="12" md="4">
+                                <MudText Typo="Typo.subtitle1">Consommation totale</MudText>
+                                <MudText Typo="Typo.h5" Color="Color.Primary">@($"{rapport.ConsommationTotaleMwh:F2}") mWh</MudText>
+                            </MudItem>
+                            <MudItem xs="12" md="4">
+                                <MudText Typo="Typo.subtitle1">Coût estimé</MudText>
+                                <MudText Typo="Typo.h5" Color="Color.Warning">@($"{rapport.CoutTotalEstime:C2}")</MudText>
+                            </MudItem>
+                            <MudItem xs="12" md="4">
+                                <MudText Typo="Typo.subtitle1">Économies potentielles</MudText>
+                                <MudText Typo="Typo.h5" Color="Color.Success">@($"{rapport.EconomiesPotentiellesEuros:C2}")</MudText>
+                            </MudItem>
+                        </MudGrid>
+                        
+                        @if (rapport.Recommandations.Any())
+                        {
+                            <MudText Typo="Typo.h6" Class="mt-6 mb-4">💡 Recommandations</MudText>
+                            @foreach (var reco in rapport.Recommandations.Take(3))
+                            {
+                                <MudAlert Severity="@GetRecommendationSeverity(reco.Priorite)" Class="mb-2">
+                                    <div>
+                                        <MudText Typo="Typo.body1"><strong>@reco.PeripheriqueName</strong> - @reco.TypeRecommandation</MudText>
+                                        <MudText Typo="Typo.body2">@reco.Description</MudText>
+                                        <MudText Typo="Typo.caption" Color="Color.Success">
+                                            Économie estimée: @($"{reco.EconomieEstimeeEuros:C2}")
+                                        </MudText>
+                                    </div>
+                                </MudAlert>
+                            }
+                        }
+                        
+                        @if (rapport.ComparaisonPeriodePrecedente != null)
+                        {
+                            <MudText Typo="Typo.h6" Class="mt-6 mb-4">📊 Comparaison période précédente</MudText>
+                            <MudAlert Severity="@GetTendanceSeverity(rapport.ComparaisonPeriodePrecedente.Tendance)">
+                                <MudText Typo="Typo.body1">
+                                    <strong>@rapport.ComparaisonPeriodePrecedente.Tendance:</strong> 
+                                    @($"{Math.Abs(rapport.ComparaisonPeriodePrecedente.VariationPourcentage):F1}%") 
+                                    (@($"{rapport.ComparaisonPeriodePrecedente.VariationMwh:F1} mWh"))
+                                </MudText>
+                            </MudAlert>
+                        }
+                    </MudPaper>
+                </MudItem>
+            }
+        </MudGrid>
+    }
 </MudContainer>
+</RequireAuth>
 
 @code {
-    public List<ChartSeries> BarSeries = new List<ChartSeries>();
-    public string[] XAxisLabels = { "Climatiseur", "Lumières", "Thermostat", "Routeur" };
-    public double[] PieData = { 4, 3, 2 };
-    public string[] PieLabels = { "Salon", "Chambre", "Cuisine" };
+    // Paramètres de filtrage
+    private DateTime? startDate = DateTime.Today.AddDays(-7);
+    private DateTime? endDate = DateTime.Today;
+    private int? selectedPeripheriqueId;
+    private int? selectedZoneId;
+    private bool isLoading = false;
 
-    protected override void OnInitialized()
+    // Données chargées
+    private ConsommationStatsDto? consommationStats;
+    private List<ConsommationHoraireDto> consommationHoraire = new();
+    private List<TopConsommateursDto> topConsommateurs = new();
+    private List<AnomalieConsommationDto> anomalies = new();
+    private RapportConsommationDto? rapport;
+
+    protected override async Task OnInitializedAsync()
     {
-        // Données d'utilisation des appareils (heures par semaine)
-        BarSeries.Add(new ChartSeries() { Name = "Heures par semaine", Data = new double[] { 25, 60, 45, 12 } });
+        // Afficher un message invitant à sélectionner un périphérique
+        Snackbar.Add("👋 Sélectionnez un périphérique et une période pour commencer", Severity.Info);
+    }
+
+    private bool ValidateParameters()
+    {
+        if (!selectedPeripheriqueId.HasValue && !selectedZoneId.HasValue)
+        {
+            Snackbar.Add("⚠️ Veuillez sélectionner un périphérique ou une zone", Severity.Warning);
+            return false;
+        }
+
+        if (!startDate.HasValue || !endDate.HasValue)
+        {
+            Snackbar.Add("⚠️ Veuillez sélectionner une période", Severity.Warning);
+            return false;
+        }
+
+        if (startDate.Value >= endDate.Value)
+        {
+            Snackbar.Add("⚠️ La date de début doit être antérieure à la date de fin", Severity.Warning);
+            return false;
+        }
+
+        var maxPeriod = TimeSpan.FromDays(365);
+        if ((endDate.Value - startDate.Value) > maxPeriod)
+        {
+            Snackbar.Add("⚠️ La période ne peut pas dépasser 365 jours", Severity.Warning);
+            return false;
+        }
+
+        return true;
+    }
+
+    private async Task LoadConsommationStats()
+    {
+        if (!selectedPeripheriqueId.HasValue)
+        {
+            Snackbar.Add("⚠️ Veuillez sélectionner un périphérique", Severity.Warning);
+            return;
+        }
+
+        if (!ValidateParameters()) return;
+
+        isLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            // Charger les stats principales
+            var statsResponse = await ConsommationService.GetConsommationStatsAsync(
+                selectedPeripheriqueId.Value, 
+                startDate!.Value, 
+                endDate!.Value);
+
+            if (statsResponse.IsSuccess && statsResponse.Data != null)
+            {
+                consommationStats = statsResponse.Data;
+                
+                // Charger aussi les données horaires pour aujourd'hui
+                await LoadConsommationHoraire();
+                
+                Snackbar.Add("✅ Données chargées avec succès", Severity.Success);
+                Logger.LogInformation("✅ Statistiques chargées pour périphérique {Id}", selectedPeripheriqueId.Value);
+            }
+            else
+            {
+                Snackbar.Add("❌ Aucune donnée disponible pour cette période", Severity.Warning);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "❌ Erreur lors du chargement des statistiques");
+            Snackbar.Add("❌ Erreur lors du chargement", Severity.Error);
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadConsommationHoraire()
+    {
+        if (!selectedPeripheriqueId.HasValue) return;
+
+        try
+        {
+            var response = await ConsommationService.GetConsommationHoraireAsync(
+                selectedPeripheriqueId.Value, 
+                DateTime.Today);
+
+            if (response.IsSuccess && response.Data != null)
+            {
+                consommationHoraire = response.Data;
+                Logger.LogInformation("✅ {Count} heures de données chargées", consommationHoraire.Count);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "❌ Erreur lors du chargement des données horaires");
+        }
+    }
+
+    private async Task LoadTopConsommateurs()
+    {
+        if (!ValidateParameters()) return;
+
+        isLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            var response = await ConsommationService.GetTopConsommateursAsync(
+                selectedZoneId, 
+                startDate!.Value, 
+                endDate!.Value, 
+                top: 10);
+
+            if (response.IsSuccess && response.Data != null)
+            {
+                topConsommateurs = response.Data;
+                Snackbar.Add($"✅ {topConsommateurs.Count} consommateurs chargés", Severity.Success);
+            }
+            else
+            {
+                topConsommateurs = new List<TopConsommateursDto>();
+                Snackbar.Add("ℹ️ Aucun consommateur trouvé", Severity.Info);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "❌ Erreur lors du chargement du top consommateurs");
+            Snackbar.Add("❌ Erreur de chargement", Severity.Error);
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task DetectAnomalies()
+    {
+        if (!selectedPeripheriqueId.HasValue)
+        {
+            Snackbar.Add("⚠️ Veuillez sélectionner un périphérique", Severity.Warning);
+            return;
+        }
+
+        if (!ValidateParameters()) return;
+
+        isLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            var response = await ConsommationService.DetectAnomaliesAsync(
+                selectedPeripheriqueId.Value, 
+                startDate!.Value, 
+                endDate!.Value);
+
+            if (response.IsSuccess && response.Data != null)
+            {
+                anomalies = response.Data;
+                
+                if (anomalies.Any())
+                {
+                    var highSeverity = anomalies.Count(a => a.Severite == "High");
+                    Snackbar.Add($"🚨 {anomalies.Count} anomalies détectées ({highSeverity} critiques)", 
+                               Severity.Warning);
+                }
+                else
+                {
+                    Snackbar.Add("✅ Aucune anomalie détectée", Severity.Success);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "❌ Erreur lors de la détection d'anomalies");
+            Snackbar.Add("❌ Erreur de détection", Severity.Error);
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task GenererRapport()
+    {
+        if (!ValidateParameters()) return;
+
+        isLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            var response = await ConsommationService.GenererRapportConsommationAsync(
+                selectedZoneId, 
+                startDate!.Value, 
+                endDate!.Value);
+
+            if (response.IsSuccess && response.Data != null)
+            {
+                rapport = response.Data;
+                Snackbar.Add("✅ Rapport généré avec succès", Severity.Success);
+            }
+            else
+            {
+                Snackbar.Add("❌ Impossible de générer le rapport", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "❌ Erreur lors de la génération du rapport");
+            Snackbar.Add("❌ Erreur de génération", Severity.Error);
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    // Méthodes pour les graphiques
+    private List<ChartSeries> GetConsommationHoraireSeries()
+    {
+        if (!consommationHoraire.Any())
+        {
+            Logger.LogWarning("Aucune donnée horaire disponible pour le graphique");
+            return new List<ChartSeries>();
+        }
+
+        return new List<ChartSeries>
+        {
+            new ChartSeries
+            {
+                Name = "Consommation (mWh)",
+                Data = consommationHoraire.Select(x => x.ConsommationMwh).ToArray()
+            },
+            new ChartSeries
+            {
+                Name = "Puissance moyenne (mW)",
+                Data = consommationHoraire.Select(x => x.PuissanceMoyenneMw).ToArray()
+            }
+        };
+    }
+
+    private string[] GetHeuresLabels()
+    {
+        if (!consommationHoraire.Any()) return Array.Empty<string>();
+        
+        return consommationHoraire.Select(x => x.Heure.ToString("HH:mm")).ToArray();
+    }
+
+    private static Color GetSeverityColor(string severite)
+    {
+        return severite.ToLower() switch
+        {
+            "high" => Color.Error,
+            "medium" => Color.Warning,
+            "low" => Color.Info,
+            _ => Color.Default
+        };
+    }
+
+    private static Severity GetRecommendationSeverity(string priorite)
+    {
+        return priorite.ToLower() switch
+        {
+            "high" => Severity.Error,
+            "medium" => Severity.Warning,
+            "low" => Severity.Info,
+            _ => Severity.Normal
+        };
+    }
+
+    private static Severity GetTendanceSeverity(string tendance)
+    {
+        return tendance.ToLower() switch
+        {
+            "amélioration" or "reduction" => Severity.Success,
+            "dégradation" or "augmentation" => Severity.Warning,
+            _ => Severity.Normal
+        };
     }
 }

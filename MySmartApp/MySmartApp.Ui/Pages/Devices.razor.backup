@@ -1,0 +1,1340 @@
+@page "/devices"
+@using MySmartApp.Ui.Services
+@using MySmartApp.Ui.Models
+@inject IDialogService DialogService
+@inject ICommandeService CommandeService
+@inject IDeviceService DeviceService
+@inject IDevicePeripheralService PeripheralService
+@inject IZoneService ZoneService
+@inject IIoTHubService IoTHubService
+@inject ILogger<Devices> Logger
+@attribute [Authorize]
+
+<RequireAuth>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="my-8">
+    <MudText Typo="Typo.h4" Class="mb-4">?? Gestion des Appareils IoT</MudText>
+    <MudText Typo="Typo.body1" Class="mb-4">Gérez vos périphériques IoT et leurs capteurs/actionneurs physiques.</MudText>
+    
+    <!-- Actions principales -->
+    <div class="d-flex justify-space-between align-center mb-6">
+        <MudButton OnClick="OpenAddDeviceDialog" 
+                   Variant="Variant.Filled" 
+                   Color="Color.Primary" 
+                   StartIcon="@Icons.Material.Filled.Add">
+            Ajouter un périphérique IoT
+        </MudButton>
+        
+        <div class="d-flex gap-2">
+            <MudTextField T="string" 
+                          @bind-Value="searchString"
+                          Placeholder="Rechercher..." 
+                          Adornment="Adornment.Start" 
+                          AdornmentIcon="@Icons.Material.Filled.Search" 
+                          IconSize="Size.Medium"
+                          Style="max-width: 300px;" />
+            
+            <MudSelect T="int?" @bind-Value="selectedZoneFilter" Label="Zone" Clearable Style="min-width: 150px;">
+                @foreach (var zone in zones)
+                {
+                    <MudSelectItem Value="@zone.Id">@zone.Name</MudSelectItem>
+                }
+            </MudSelect>
+            
+            <MudButton OnClick="RefreshAll" 
+                       Variant="Variant.Outlined" 
+                       StartIcon="@Icons.Material.Filled.Refresh"
+                       Disabled="@isLoading">
+                Actualiser
+            </MudButton>
+        </div>
+    </div>
+
+    @if (isLoading)
+    {
+        <div class="d-flex justify-center align-center pa-8">
+            <MudProgressCircular Size="Size.Large" Indeterminate="true" />
+            <MudText Class="ml-4">Chargement des appareils...</MudText>
+        </div>
+    }
+    else
+    {
+        @* Liste des devices avec expansion pour les périphériques *@
+        @foreach (var device in filteredDevices)
+        {
+            <MudPaper Class="mb-4" Elevation="2">
+                <!-- En-tête du device -->
+                <div class="d-flex align-center pa-4" style="background: var(--mud-palette-surface);">
+                    <MudIcon Icon="@GetDeviceIcon(device.Type)" Class="mr-3" Size="Size.Large" />
+                    <div class="flex-grow-1">
+                        <MudText Typo="Typo.h6">@device.Name</MudText>
+                        <div class="d-flex align-center gap-2">
+                            <MudChip T="string" Size="Size.Small" Color="@GetTypeColor(device.Type)">
+                                @device.Type
+                            </MudChip>
+                            <MudChip T="string" Size="Size.Small" Color="Color.Info">
+                                @GetZoneName(device.ZoneId)
+                            </MudChip>
+                            @if (device.ConnectionStatus.HasValue)
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="@(device.ConnectionStatus.Value ? Color.Success : Color.Error)">
+                                    @(device.ConnectionStatus.Value ? "? Connecté" : "? Déconnecté")
+                                </MudChip>
+                            }
+                            <code class="pa-1 rounded" style="background-color: var(--mud-palette-background-grey); font-size: 0.7rem;">
+                                @device.IotDeviceId
+                            </code>
+                        </div>
+                    </div>
+                    
+                    <!-- Actions device -->
+                    <div class="d-flex gap-2">
+                        <MudButton Variant="Variant.Outlined" 
+                                  Color="Color.Primary" 
+                                  Size="Size.Small"
+                                  StartIcon="@Icons.Material.Filled.Add"
+                                  OnClick="@(() => OpenAddPeripheralDialog(device))">
+                            Ajouter périphérique
+                        </MudButton>
+                        
+                        <MudButton Variant="Variant.Outlined" 
+                                  Color="Color.Info" 
+                                  Size="Size.Small"
+                                  StartIcon="@Icons.Material.Filled.Refresh"
+                                  OnClick="@(() => RefreshDevicePeripherals(device))">
+                            Rafraîchir
+                        </MudButton>
+                        
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit" 
+                                       Color="Color.Primary" 
+                                       Size="Size.Small"
+                                       OnClick="@(() => OpenEditDeviceDialog(device))" />
+                        
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" 
+                                       Color="Color.Error" 
+                                       Size="Size.Small"
+                                       OnClick="@(() => DeleteDevice(device))" />
+                    </div>
+                </div>
+
+                <!-- Liste des périphériques physiques -->
+                <MudDivider />
+                <div class="pa-4">
+                    @if (device.IsLoadingPeripherals)
+                    {
+                        <div class="d-flex justify-center pa-4">
+                            <MudProgressCircular Size="Size.Medium" Indeterminate="true" />
+                        </div>
+                    }
+                    else if (!device.Peripherals.Any())
+                    {
+                        <MudAlert Severity="Severity.Info" Class="my-2">
+                            Aucun périphérique configuré. Cliquez sur "Ajouter périphérique" pour en ajouter.
+                        </MudAlert>
+                    }
+                    else
+                    {
+                        <MudSimpleTable Dense="true" Hover="true" Class="rounded">
+                            <thead>
+                                <tr>
+                                    <th>Nom</th>
+                                    <th>Type</th>
+                                    <th>GPIO</th>
+                                    <th>État</th>
+                                    <th>Dernière mise à jour</th>
+                                    <th>Statut</th>
+                                    <th>Commandes</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var peripheral in device.Peripherals)
+                                {
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-center">
+                                                <MudIcon Icon="@GetPeripheralIcon(peripheral.Type)" Size="Size.Small" Class="mr-2" />
+                                                @peripheral.Name
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <MudChip T="string" Size="Size.Small" Color="@GetPeripheralTypeColor(peripheral.Type)">
+                                                @peripheral.Type
+                                            </MudChip>
+                                        </td>
+                                        <td>
+                                            <MudChip T="string" Size="Size.Small" Variant="Variant.Text">
+                                                GPIO @peripheral.Gpio
+                                            </MudChip>
+                                        </td>
+                                        <td>
+                                            @if (peripheral.State != null)
+                                            {
+                                                <MudChip T="string" Size="Size.Small" Color="Color.Success">
+                                                    @peripheral.State.ToString()
+                                                </MudChip>
+                                            }
+                                            else
+                                            {
+                                                <MudText Typo="Typo.caption" Color="Color.Secondary">-</MudText>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (peripheral.LastUpdate.HasValue)
+                                            {
+                                                <MudText Typo="Typo.caption">
+                                                    @peripheral.LastUpdate.Value.ToString("g")
+                                                </MudText>
+                                            }
+                                            else
+                                            {
+                                                <MudText Typo="Typo.caption" Color="Color.Secondary">-</MudText>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (!string.IsNullOrEmpty(peripheral.Status))
+                                            {
+                                                <MudChip T="string" Size="Size.Small" Color="@GetStatusColor(peripheral.Status)">
+                                                    @peripheral.Status
+                                                </MudChip>
+                                            }
+                                            else
+                                            {
+                                                <MudText Typo="Typo.caption" Color="Color.Secondary">-</MudText>
+                                            }
+                                        </td>
+                                        <td>
+                                            <div class="d-flex gap-1">
+                                                @foreach (var cmd in GetPeripheralCommands(peripheral.Type))
+                                                {
+                                                    <MudIconButton Icon="@cmd.Icon" 
+                                                                  Color="@cmd.Color" 
+                                                                  Size="Size.Small"
+                                                                  Title="@cmd.Label"
+                                                                  OnClick="@(() => ExecutePeripheralCommand(device, peripheral, cmd.Command))" />
+                                                }
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex gap-1">
+                                                <MudIconButton Icon="@Icons.Material.Filled.Info" 
+                                                              Color="Color.Info" 
+                                                              Size="Size.Small"
+                                                              Title="Détails"
+                                                              OnClick="@(() => ShowPeripheralDetails(device, peripheral))" />
+                                                
+                                                <MudIconButton Icon="@Icons.Material.Filled.Delete" 
+                                                              Color="Color.Error" 
+                                                              Size="Size.Small"
+                                                              Title="Supprimer"
+                                                              OnClick="@(() => DeletePeripheral(device, peripheral))" />
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </MudSimpleTable>
+                    }
+                </div>
+            </MudPaper>
+        }
+
+        @if (!filteredDevices.Any())
+        {
+            <div class="d-flex flex-column align-center pa-8">
+                <MudIcon Icon="@Icons.Material.Filled.DeviceHub" Size="Size.Large" Color="Color.Secondary" Class="mb-4" />
+                <MudText Typo="Typo.h6" Color="Color.Secondary">Aucun périphérique trouvé</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                    @(string.IsNullOrEmpty(searchString) ? "Ajoutez votre premier périphérique IoT" : "Aucun résultat pour votre recherche")
+                </MudText>
+            </div>
+        }
+    }
+</MudContainer>
+
+@* Dialog d'ajout/modification de device *@
+<MudDialog @bind-IsVisible="isDeviceDialogOpen" Options="@(new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true })">
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            @(isAddingDevice ? "?? Ajouter un périphérique IoT" : "?? Modifier le périphérique")
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudForm @ref="deviceForm" Model="@editingDevice">
+            <MudGrid>
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="editingDevice.Name"
+                                  Label="Nom du périphérique"
+                                  Required="true"
+                                  RequiredError="Le nom est obligatoire"
+                                  MaxLength="100" />
+                </MudItem>
+                
+                <MudItem xs="12" sm="6">
+                    <MudSelect @bind-Value="editingDevice.Type"
+                               Label="Type de périphérique"
+                               Required="true"
+                               RequiredError="Le type est obligatoire">
+                        <MudSelectItem Value="@("relay")">?? Relais</MudSelectItem>
+                        <MudSelectItem Value="@("sensor")">?? Capteur</MudSelectItem>
+                        <MudSelectItem Value="@("actuator")">?? Actionneur</MudSelectItem>
+                        <MudSelectItem Value="@("light")">?? Éclairage</MudSelectItem>
+                        <MudSelectItem Value="@("hvac")">?? CVC</MudSelectItem>
+                        <MudSelectItem Value="@("security")">?? Sécurité</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+                
+                @if (isAddingDevice)
+                {
+                    <MudItem xs="12">
+                        <MudTextField @bind-Value="editingDevice.IotDeviceId"
+                                      Label="IoT Device ID"
+                                      Required="true"
+                                      RequiredError="L'ID IoT est obligatoire"
+                                      HelperText="Identifiant unique du périphérique dans IoT Hub"
+                                      Placeholder="esp32-device-001" />
+                    </MudItem>
+                }
+                
+                <MudItem xs="12">
+                    <MudSelect @bind-Value="editingDevice.ZoneId"
+                               Label="Zone d'installation"
+                               Required="true"
+                               RequiredError="La zone est obligatoire">
+                        @foreach (var zone in zones)
+                        {
+                            <MudSelectItem Value="@zone.Id">@zone.Name</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+            </MudGrid>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="CloseDeviceDialog" Color="Color.Default">Annuler</MudButton>
+        <MudButton OnClick="SaveDevice" 
+                   Color="Color.Primary" 
+                   Variant="Variant.Filled"
+                   Disabled="@isSaving">
+            @if (isSaving)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+            }
+            @(isAddingDevice ? "Créer" : "Modifier")
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@* Dialog d'ajout de périphérique physique *@
+<MudDialog @bind-IsVisible="isPeripheralDialogOpen" Options="@(new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true })">
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            ? Ajouter un périphérique sur @selectedDevice?.Name
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudForm @ref="peripheralForm" Model="@editingPeripheral">
+            <MudGrid>
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="editingPeripheral.Name"
+                                  Label="Nom"
+                                  Required="true"
+                                  RequiredError="Le nom est obligatoire"
+                                  Placeholder="relay1, temp_sensor" />
+                </MudItem>
+                
+                <MudItem xs="12" sm="6">
+                    <MudSelect @bind-Value="editingPeripheral.Type"
+                               Label="Type"
+                               Required="true"
+                               RequiredError="Le type est obligatoire">
+                        <MudSelectItem Value="@("relay")">?? Relais</MudSelectItem>
+                        <MudSelectItem Value="@("temperature")">??? Température</MudSelectItem>
+                        <MudSelectItem Value="@("humidity")">?? Humidité</MudSelectItem>
+                        <MudSelectItem Value="@("smoke")">?? Fumée</MudSelectItem>
+                        <MudSelectItem Value="@("motion")">?? Mouvement</MudSelectItem>
+                        <MudSelectItem Value="@("light")">?? Lumière</MudSelectItem>
+                        <MudSelectItem Value="@("door")">?? Porte</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+                
+                <MudItem xs="12" sm="6">
+                    <MudNumericField @bind-Value="editingPeripheral.Gpio"
+                                    Label="GPIO"
+                                    Required="true"
+                                    RequiredError="Le GPIO est obligatoire"
+                                    Min="0"
+                                    Max="50" />
+                </MudItem>
+                
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="editingPeripheral.Unit"
+                                  Label="Unité"
+                                  Placeholder="°C, %, V..." />
+                </MudItem>
+                
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="editingPeripheral.Notes"
+                                  Label="Notes"
+                                  Lines="2"
+                                  Placeholder="Notes de câblage, emplacement physique..." />
+                </MudItem>
+                
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="editingPeripheral.WiringDiagram"
+                                  Label="Schéma de câblage (URL)"
+                                  Placeholder="https://..." />
+                </MudItem>
+            </MudGrid>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="ClosePeripheralDialog" Color="Color.Default">Annuler</MudButton>
+        <MudButton OnClick="SavePeripheral" 
+                   Color="Color.Primary" 
+                   Variant="Variant.Filled"
+                   Disabled="@isSaving">
+            @if (isSaving)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+            }
+            Ajouter
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@* Dialog détails périphérique (vue fusionnée) *@
+<MudDialog @bind-IsVisible="isDetailsDialogOpen" Options="@(new DialogOptions { MaxWidth = MaxWidth.Large, FullWidth = true })">
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            ?? Détails - @selectedPeripheral?.Name
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        @if (mergedPeripheral != null)
+        {
+            <MudGrid>
+                <MudItem xs="12">
+                    <MudAlert Severity="@(mergedPeripheral.IsSynchronized ? Severity.Success : Severity.Warning)">
+                        @(mergedPeripheral.IsSynchronized ? "? Synchronisé (Desired = Reported)" : "?? Non synchronisé (Desired ? Reported)")
+                    </MudAlert>
+                </MudItem>
+                
+                <MudItem xs="12" md="6">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.h6" Class="mb-2">?? Configuration désirée (Desired)</MudText>
+                        @if (mergedPeripheral.DesiredConfig != null)
+                        {
+                            <MudSimpleTable Dense="true">
+                                <tbody>
+                                    <tr><td><strong>Type:</strong></td><td>@mergedPeripheral.DesiredConfig.Type</td></tr>
+                                    <tr><td><strong>GPIO:</strong></td><td>@mergedPeripheral.DesiredConfig.Gpio</td></tr>
+                                    @if (!string.IsNullOrEmpty(mergedPeripheral.DesiredConfig.Unit))
+                                    {
+                                        <tr><td><strong>Unité:</strong></td><td>@mergedPeripheral.DesiredConfig.Unit</td></tr>
+                                    }
+                                    @if (!string.IsNullOrEmpty(mergedPeripheral.DesiredConfig.Notes))
+                                    {
+                                        <tr><td><strong>Notes:</strong></td><td>@mergedPeripheral.DesiredConfig.Notes</td></tr>
+                                    }
+                                </tbody>
+                            </MudSimpleTable>
+                        }
+                        else
+                        {
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">Aucune configuration désirée</MudText>
+                        }
+                    </MudPaper>
+                </MudItem>
+                
+                <MudItem xs="12" md="6">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.h6" Class="mb-2">?? État reporté (Reported)</MudText>
+                        @if (mergedPeripheral.ReportedState != null)
+                        {
+                            <MudSimpleTable Dense="true">
+                                <tbody>
+                                    <tr><td><strong>Type:</strong></td><td>@mergedPeripheral.ReportedState.Type</td></tr>
+                                    <tr><td><strong>GPIO:</strong></td><td>@mergedPeripheral.ReportedState.Gpio</td></tr>
+                                    @if (mergedPeripheral.ReportedState.State != null)
+                                    {
+                                        <tr><td><strong>État:</strong></td><td>@mergedPeripheral.ReportedState.State</td></tr>
+                                    }
+                                    @if (!string.IsNullOrEmpty(mergedPeripheral.ReportedState.Status))
+                                    {
+                                        <tr><td><strong>Statut:</strong></td><td>@mergedPeripheral.ReportedState.Status</td></tr>
+                                    }
+                                    @if (mergedPeripheral.ReportedState.LastUpdate.HasValue)
+                                    {
+                                        <tr><td><strong>Dernière MAJ:</strong></td><td>@mergedPeripheral.ReportedState.LastUpdate.Value.ToString("g")</td></tr>
+                                    }
+                                </tbody>
+                            </MudSimpleTable>
+                        }
+                        else
+                        {
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">Aucun état reporté</MudText>
+                        }
+                    </MudPaper>
+                </MudItem>
+            </MudGrid>
+        }
+        else
+        {
+            <div class="d-flex justify-center pa-4">
+                <MudProgressCircular Indeterminate="true" />
+            </div>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="CloseDetailsDialog" Color="Color.Primary">Fermer</MudButton>
+    </DialogActions>
+</MudDialog>
+
+</RequireAuth>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="my-8">
+    <MudText Typo="Typo.h4" Class="mb-4">?? Gestion des Appareils IoT</MudText>
+    <MudText Typo="Typo.body1" Class="mb-4">Gérez vos périphériques connectés au hub IoT et contrôlez-les à distance.</MudText>
+    
+    <!-- Panneau de contrôle global -->
+    <MudExpansionPanels Elevation="2" Class="mb-4">
+        <MudExpansionPanel Text="??? Contrôles globaux">
+            <div class="d-flex flex-wrap gap-2 pa-2">
+                <MudButton Variant="Variant.Outlined" 
+                          Color="Color.Success" 
+                          StartIcon="@Icons.Material.Filled.PowerSettingsNew"
+                          OnClick="@(() => SendGlobalCommand("TurnOn"))"
+                          Size="Size.Small">
+                    Tout allumer
+                </MudButton>
+                
+                <MudButton Variant="Variant.Outlined" 
+                          Color="Color.Error" 
+                          StartIcon="@Icons.Material.Filled.PowerOff"
+                          OnClick="@(() => SendGlobalCommand("TurnOff"))"
+                          Size="Size.Small">
+                    Tout éteindre
+                </MudButton>
+                
+                <MudButton Variant="Variant.Outlined" 
+                          Color="Color.Info" 
+                          StartIcon="@Icons.Material.Filled.Refresh"
+                          OnClick="RefreshDevicesStatus"
+                          Size="Size.Small">
+                    Actualiser statuts
+                </MudButton>
+            </div>
+        </MudExpansionPanel>
+    </MudExpansionPanels>
+
+    <!-- Actions principales -->
+    <div class="d-flex justify-space-between align-center mb-6">
+        <MudButton OnClick="OpenAddDialog" 
+                   Variant="Variant.Filled" 
+                   Color="Color.Primary" 
+                   StartIcon="@Icons.Material.Filled.Add">
+            Ajouter un périphérique
+        </MudButton>
+        
+        <div class="d-flex gap-2">
+            <MudTextField T="string" 
+                          @bind-Value="searchString"
+                          Placeholder="Rechercher..." 
+                          Adornment="Adornment.Start" 
+                          AdornmentIcon="@Icons.Material.Filled.Search" 
+                          IconSize="Size.Medium"
+                          Style="max-width: 300px;" />
+            
+            <MudSelect T="int?" @bind-Value="selectedZoneFilter" Label="Zone" Clearable Style="min-width: 150px;">
+                @foreach (var zone in zones)
+                {
+                    <MudSelectItem Value="@zone.Id">@zone.Name</MudSelectItem>
+                }
+            </MudSelect>
+            
+            <MudButton OnClick="RefreshDevicesStatus" 
+                       Variant="Variant.Outlined" 
+                       StartIcon="@Icons.Material.Filled.Refresh"
+                       Disabled="@isLoading">
+                Actualiser
+            </MudButton>
+        </div>
+    </div>
+
+    @if (isLoading)
+    {
+        <div class="d-flex justify-center align-center pa-8">
+            <MudProgressCircular Size="Size.Large" Indeterminate="true" />
+            <MudText Class="ml-4">Chargement des appareils...</MudText>
+        </div>
+    }
+    else
+    {
+        <!-- Table des périphériques -->
+        <MudTable Items="@filteredDevices" 
+                  Dense="true" 
+                  Hover="true" 
+                  Class="rounded-xl" 
+                  Elevation="2"
+                  T="DeviceViewModel">
+            <ToolBarContent>
+                <MudText Typo="Typo.h6">Appareils IoT ({filteredDevices.Count()})</MudText>
+                <MudSpacer />
+                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                    @($"Dernière mise à jour: {DateTime.Now:HH:mm:ss}")
+                </MudText>
+            </ToolBarContent>
+            
+            <HeaderContent>
+                <MudTh>ID</MudTh>
+                <MudTh>Nom</MudTh>
+                <MudTh>Type</MudTh>
+                <MudTh>IoT Device ID</MudTh>
+                <MudTh>Zone</MudTh>
+                <MudTh>Statut</MudTh>
+                <MudTh>Contrôles IoT</MudTh>
+                <MudTh>Actions</MudTh>
+            </HeaderContent>
+            
+            <RowTemplate>
+                <MudTd DataLabel="ID">@context.Id</MudTd>
+                <MudTd DataLabel="Name">
+                    <div class="d-flex align-center">
+                        <MudIcon Icon="@GetDeviceIcon(context.Type)" Class="mr-2" />
+                        @context.Name
+                    </div>
+                </MudTd>
+                <MudTd DataLabel="Type">
+                    <MudChip T="string" Size="Size.Small" Color="@GetTypeColor(context.Type)">
+                        @context.Type
+                    </MudChip>
+                </MudTd>
+                <MudTd DataLabel="IoTDeviceId">
+                    <code class="pa-1 rounded" style="background-color: var(--mud-palette-background-grey); font-size: 0.75rem;">
+                        @context.IotDeviceId
+                    </code>
+                </MudTd>
+                <MudTd DataLabel="Zone">
+                    <MudChip T="string" Size="Size.Small" Color="Color.Info">
+                        @GetZoneName(context.ZoneId)
+                    </MudChip>
+                </MudTd>
+                <MudTd DataLabel="Status">
+                    @if (context.ConnectionStatus.HasValue)
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="@(context.ConnectionStatus.Value ? Color.Success : Color.Error)">
+                            @(context.ConnectionStatus.Value ? "?? Connecté" : "?? Déconnecté")
+                        </MudChip>
+                    }
+                    else
+                    {
+                        <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+                    }
+                </MudTd>
+                <MudTd DataLabel="Controls">
+                    <div class="d-flex align-center gap-2">
+                        <!-- Toggle ON/OFF -->
+                        <MudSwitch T="bool" 
+                                  @bind-Value="context.IsOn"
+                                  @bind-Value:after="@(() => SendToggleCommand(context))"
+                                  Color="Color.Primary" 
+                                  Size="Size.Small" />
+                        
+                        <!-- Boutons de commandes spécifiques -->
+                        @if (GetDeviceCommands(context).Any())
+                        {
+                            <MudMenu Icon="@Icons.Material.Filled.MoreVert" Size="Size.Small">
+                                @foreach (var command in GetDeviceCommands(context))
+                                {
+                                    <MudMenuItem Icon="@command.Icon" 
+                                                OnClick="@(() => SendDeviceCommand(context.Id, command.Command, command.Value))">
+                                        @command.Label
+                                    </MudMenuItem>
+                                }
+                            </MudMenu>
+                        }
+                        
+                        <!-- Configuration IoT -->
+                        <MudIconButton Icon="@Icons.Material.Filled.Settings" 
+                                       Color="Color.Info" 
+                                       Size="Size.Small"
+                                       OnClick="@(() => OpenIoTConfigDialog(context))" />
+                    </div>
+                </MudTd>
+                <MudTd DataLabel="Actions">
+                    <div class="d-flex gap-1">
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit" 
+                                       Color="Color.Primary" 
+                                       Size="Size.Small"
+                                       OnClick="@(() => OpenEditDialog(context))" />
+                        
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" 
+                                       Color="Color.Error" 
+                                       Size="Size.Small"
+                                       OnClick="@(() => DeleteDevice(context))" />
+                    </div>
+                </MudTd>
+            </RowTemplate>
+            
+            <NoRecordsContent>
+                <div class="d-flex flex-column align-center pa-8">
+                    <MudIcon Icon="@Icons.Material.Filled.DeviceHub" Size="Size.Large" Color="Color.Secondary" Class="mb-4" />
+                    <MudText Typo="Typo.h6" Color="Color.Secondary">Aucun périphérique trouvé</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                        @(string.IsNullOrEmpty(searchString) ? "Ajoutez votre premier périphérique IoT" : "Aucun résultat pour votre recherche")
+                    </MudText>
+                </div>
+            </NoRecordsContent>
+        </MudTable>
+    }
+</MudContainer>
+
+<!-- Dialog d'ajout/modification -->
+<MudOverlay @bind-Visible="isDialogOpen" DarkBackground="true" Absolute="false">
+    <MudPaper Class="pa-6" Style="max-width: 700px; margin: 50px auto;">
+        <MudText Typo="Typo.h6" Class="mb-4">
+            @(isAdding ? "?? Ajouter un périphérique" : "?? Modifier le périphérique")
+        </MudText>
+
+        <MudForm @ref="form" Model="@editingDevice">
+            <MudGrid>
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="editingDevice.Name"
+                                  Label="Nom du périphérique"
+                                  Required="true"
+                                  RequiredError="Le nom est obligatoire"
+                                  MaxLength="100" />
+                </MudItem>
+                
+                <MudItem xs="12" sm="6">
+                    <MudSelect @bind-Value="editingDevice.Type"
+                               Label="Type de périphérique"
+                               Required="true"
+                               RequiredError="Le type est obligatoire">
+                        <MudSelectItem Value="@("relay")">?? Relais</MudSelectItem>
+                        <MudSelectItem Value="@("sensor")">?? Capteur</MudSelectItem>
+                        <MudSelectItem Value="@("actuator")">?? Actionneur</MudSelectItem>
+                        <MudSelectItem Value="@("light")">?? Éclairage</MudSelectItem>
+                        <MudSelectItem Value="@("hvac")">?? CVC</MudSelectItem>
+                        <MudSelectItem Value="@("security")">?? Sécurité</MudSelectItem>
+                        <MudSelectItem Value="@("multimedia")">?? Multimédia</MudSelectItem>
+                        <MudSelectItem Value="@("network")">?? Réseau</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+                
+                @if (isAdding)
+                {
+                    <MudItem xs="12">
+                        <MudTextField @bind-Value="editingDevice.IotDeviceId"
+                                      Label="IoT Device ID"
+                                      Required="true"
+                                      RequiredError="L'ID IoT est obligatoire"
+                                      HelperText="Identifiant unique du périphérique dans IoT Hub"
+                                      Placeholder="esp32-device-001" />
+                    </MudItem>
+                }
+                
+                <MudItem xs="12">
+                    <MudSelect @bind-Value="editingDevice.ZoneId"
+                               Label="Zone d'installation"
+                               Required="true"
+                               RequiredError="La zone est obligatoire">
+                        @foreach (var zone in zones)
+                        {
+                            <MudSelectItem Value="@zone.Id">@zone.Name</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+            </MudGrid>
+        </MudForm>
+
+        <div class="d-flex justify-end mt-4">
+            <MudButton OnClick="CloseDialog" Color="Color.Default" Class="mr-2">
+                Annuler
+            </MudButton>
+            <MudButton OnClick="SaveDevice" 
+                       Color="Color.Primary" 
+                       Variant="Variant.Filled"
+                       Disabled="@isSaving">
+                @if (isSaving)
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                }
+                @(isAdding ? "Créer" : "Modifier")
+            </MudButton>
+        </div>
+    </MudPaper>
+</MudOverlay>
+
+<!-- Dialog configuration IoT -->
+<MudOverlay @bind-Visible="isIoTConfigOpen" DarkBackground="true" Absolute="false">
+    <MudPaper Class="pa-6" Style="max-width: 900px; margin: 50px auto;">
+        <MudText Typo="Typo.h6" Class="mb-4">
+            ?? Configuration IoT - @selectedDevice?.Name
+        </MudText>
+        
+        <MudText Typo="Typo.body2" Class="mb-4">
+            Configurez les propriétés désirées pour le périphérique IoT.
+        </MudText>
+        
+        <MudTextField @bind-Value="iotConfigJson"
+                      Label="Configuration JSON"
+                      Lines="10"
+                      Variant="Variant.Outlined"
+                      HelperText="Format JSON des propriétés désirées à envoyer au périphérique" />
+                      
+        <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-2">
+            Exemple: {"peripherals": [{"name":"relay1","type":"relay","gpio":33}]}
+        </MudText>
+
+        <div class="d-flex justify-end mt-4">
+            <MudButton OnClick="CloseIoTConfigDialog" Color="Color.Default" Class="mr-2">
+                Annuler
+            </MudButton>
+            <MudButton OnClick="SaveIoTConfig" 
+                       Color="Color.Primary" 
+                       Variant="Variant.Filled">
+                Envoyer Configuration
+            </MudButton>
+        </div>
+    </MudPaper>
+</MudOverlay>
+
+</RequireAuth>
+
+@code {
+    // État de la page
+    private bool isLoading = true;
+    private string searchString = "";
+    private int? selectedZoneFilter;
+    
+    // Dialogs
+    private bool isDeviceDialogOpen = false;
+    private bool isPeripheralDialogOpen = false;
+    private bool isDetailsDialogOpen = false;
+    private bool isAddingDevice = true;
+    private bool isSaving = false;
+    private MudForm? deviceForm;
+    private MudForm? peripheralForm;
+    
+    // Données backend
+    private List<PeripheriqueLogiqueDto> backendDevices = new();
+    private List<ZoneDto> zones = new();
+    
+    // Données UI (ViewModel)
+    private List<DeviceViewModel> devices = new();
+    
+    // Modèles d'édition
+    private DeviceEditModel editingDevice = new();
+    private PeripheralEditModel editingPeripheral = new();
+    private DeviceViewModel? selectedDevice;
+    private PeripheralDto? selectedPeripheral;
+    private MergedPeripheralDto? mergedPeripheral;
+
+    // Propriétés calculées
+    private IEnumerable<DeviceViewModel> filteredDevices =>
+        devices.Where(d => 
+            (string.IsNullOrEmpty(searchString) || 
+             d.Name.Contains(searchString, StringComparison.OrdinalIgnoreCase) ||
+             d.Type.Contains(searchString, StringComparison.OrdinalIgnoreCase) ||
+             d.IotDeviceId.Contains(searchString, StringComparison.OrdinalIgnoreCase)) &&
+            (!selectedZoneFilter.HasValue || d.ZoneId == selectedZoneFilter.Value)
+        );
+
+    // ==========================================
+    // MODÈLES INTERNES
+    // ==========================================
+
+    public class DeviceViewModel
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = "";
+        public string Type { get; set; } = "";
+        public string IotDeviceId { get; set; } = "";
+        public int ZoneId { get; set; }
+        public bool? ConnectionStatus { get; set; } = null;
+        public DateTime? LastActivity { get; set; }
+        public List<PeripheralDto> Peripherals { get; set; } = new();
+        public bool IsLoadingPeripherals { get; set; } = false;
+    }
+
+    public class DeviceEditModel
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = "";
+        public string Type { get; set; } = "";
+        public string IotDeviceId { get; set; } = "";
+        public int ZoneId { get; set; }
+    }
+
+    public class PeripheralEditModel
+    {
+        public string Name { get; set; } = "";
+        public string Type { get; set; } = "";
+        public int Gpio { get; set; }
+        public string? Notes { get; set; }
+        public string? Unit { get; set; }
+        public string? WiringDiagram { get; set; }
+    }
+
+    public record PeripheralCommand(string Command, string Label, string Icon, Color Color);
+
+    // ==========================================
+    // LIFECYCLE
+    // ==========================================
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        isLoading = true;
+        StateHasChanged();
+        
+        try
+        {
+            // Charger les zones et périphériques en parallèle
+            var zonesTask = ZoneService.GetAllZonesAsync();
+            var devicesTask = DeviceService.GetAllDevicesAsync();
+            
+            await Task.WhenAll(zonesTask, devicesTask);
+            
+            var zonesResult = await zonesTask;
+            zones = zonesResult.ToList();
+            
+            backendDevices = (await devicesTask).ToList();
+            
+            // Convertir en ViewModel pour l'UI
+            devices = backendDevices.Select(d => new DeviceViewModel
+            {
+                Id = d.Id,
+                Name = d.Name,
+                Type = d.Type,
+                IotDeviceId = d.IotDeviceId,
+                ZoneId = d.ZoneId
+            }).ToList();
+            
+            // Charger les statuts de connexion IoT Hub et périphériques en arrière-plan
+            _ = Task.Run(async () =>
+            {
+                await LoadIoTConnectionStatuses();
+                await LoadAllPeripherals();
+            });
+            
+            Logger.LogInformation("? Données chargées: {DevicesCount} périphériques, {ZonesCount} zones", 
+                devices.Count, zones.Count);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "? Erreur lors du chargement des données");
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task RefreshAll()
+    {
+        await LoadData();
+    }
+
+    // ==========================================
+    // CHARGEMENT IOT HUB
+    // ==========================================
+
+    private async Task LoadIoTConnectionStatuses()
+    {
+        try
+        {
+            if (!devices.Any()) return;
+
+            var deviceIds = devices.Select(d => d.IotDeviceId).ToList();
+            var connectionResponse = await IoTHubService.GetDevicesConnectionStatusAsync(deviceIds);
+            
+            if (connectionResponse.IsSuccess && connectionResponse.Data != null)
+            {
+                foreach (var device in devices)
+                {
+                    var connectionInfo = connectionResponse.Data.FirstOrDefault(ci => ci.DeviceId == device.IotDeviceId);
+                    if (connectionInfo != null)
+                    {
+                        device.ConnectionStatus = connectionInfo.IsConnected;
+                        device.LastActivity = connectionInfo.LastActivityTime;
+                    }
+                }
+                
+                await InvokeAsync(StateHasChanged);
+                Logger.LogInformation("? Statuts de connexion IoT Hub mis à jour pour {Count} devices", devices.Count);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "? Erreur lors du chargement des statuts IoT Hub");
+        }
+    }
+
+    private async Task LoadAllPeripherals()
+    {
+        try
+        {
+            var tasks = devices.Select(async device =>
+            {
+                device.IsLoadingPeripherals = true;
+                await InvokeAsync(StateHasChanged);
+                
+                try
+                {
+                    device.Peripherals = await PeripheralService.GetPeripheralsAsync(device.IotDeviceId);
+                }
+                finally
+                {
+                    device.IsLoadingPeripherals = false;
+                }
+            });
+
+            await Task.WhenAll(tasks);
+            await InvokeAsync(StateHasChanged);
+            
+            Logger.LogInformation("? Périphériques chargés pour tous les devices");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "? Erreur lors du chargement des périphériques");
+        }
+    }
+
+    private async Task RefreshDevicePeripherals(DeviceViewModel device)
+    {
+        try
+        {
+            device.IsLoadingPeripherals = true;
+            StateHasChanged();
+            
+            device.Peripherals = await PeripheralService.GetPeripheralsAsync(device.IotDeviceId);
+            
+            Logger.LogInformation("? Périphériques rafraîchis pour {DeviceName}", device.Name);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "? Erreur lors du rafraîchissement des périphériques de {DeviceName}", device.Name);
+        }
+        finally
+        {
+            device.IsLoadingPeripherals = false;
+            StateHasChanged();
+        }
+    }
+
+    // ==========================================
+    // GESTION DEVICES
+    // ==========================================
+
+    private void OpenAddDeviceDialog()
+    {
+        isAddingDevice = true;
+        editingDevice = new DeviceEditModel
+        {
+            ZoneId = zones.FirstOrDefault()?.Id ?? 1
+        };
+        isDeviceDialogOpen = true;
+    }
+
+    private void OpenEditDeviceDialog(DeviceViewModel device)
+    {
+        isAddingDevice = false;
+        editingDevice = new DeviceEditModel
+        {
+            Id = device.Id,
+            Name = device.Name,
+            Type = device.Type,
+            IotDeviceId = device.IotDeviceId,
+            ZoneId = device.ZoneId
+        };
+        isDeviceDialogOpen = true;
+    }
+
+    private void CloseDeviceDialog()
+    {
+        isDeviceDialogOpen = false;
+        editingDevice = new DeviceEditModel();
+    }
+
+    private async Task SaveDevice()
+    {
+        if (deviceForm != null)
+        {
+            await deviceForm.Validate();
+            if (!deviceForm.IsValid) return;
+        }
+
+        isSaving = true;
+        StateHasChanged();
+
+        try
+        {
+            if (isAddingDevice)
+            {
+                var creationDto = new PeripheriqueLogiqueCreationDto(
+                    editingDevice.Name,
+                    editingDevice.Type,
+                    editingDevice.IotDeviceId,
+                    editingDevice.ZoneId
+                );
+
+                var result = await DeviceService.CreateDeviceAsync(creationDto);
+                if (result.IsSuccess)
+                {
+                    await LoadData();
+                    CloseDeviceDialog();
+                }
+            }
+            else
+            {
+                var updateDto = new PeripheriqueLogiqueUpdateDto(
+                    editingDevice.Name,
+                    editingDevice.Type
+                );
+
+                var result = await DeviceService.UpdateDeviceAsync(editingDevice.Id, updateDto);
+                if (result.IsSuccess)
+                {
+                    await LoadData();
+                    CloseDeviceDialog();
+                }
+            }
+        }
+        finally
+        {
+            isSaving = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task DeleteDevice(DeviceViewModel device)
+    {
+        bool? result = await DialogService.ShowMessageBox(
+            "?? Confirmation de suppression",
+            $"Êtes-vous sûr de vouloir supprimer le périphérique '{device.Name}' ?\n\nCette action supprimera également tous les périphériques physiques associés.",
+            yesText: "Supprimer",
+            cancelText: "Annuler");
+
+        if (result == true)
+        {
+            var deleteResult = await DeviceService.DeleteDeviceAsync(device.Id);
+            if (deleteResult.IsSuccess)
+            {
+                await LoadData();
+            }
+        }
+    }
+
+    // ==========================================
+    // GESTION PÉRIPHÉRIQUES PHYSIQUES
+    // ==========================================
+
+    private void OpenAddPeripheralDialog(DeviceViewModel device)
+    {
+        selectedDevice = device;
+        editingPeripheral = new PeripheralEditModel();
+        isPeripheralDialogOpen = true;
+    }
+
+    private void ClosePeripheralDialog()
+    {
+        isPeripheralDialogOpen = false;
+        selectedDevice = null;
+        editingPeripheral = new PeripheralEditModel();
+    }
+
+    private async Task SavePeripheral()
+    {
+        if (peripheralForm != null)
+        {
+            await peripheralForm.Validate();
+            if (!peripheralForm.IsValid) return;
+        }
+
+        if (selectedDevice == null) return;
+
+        isSaving = true;
+        StateHasChanged();
+
+        try
+        {
+            var peripheralDto = new PeripheralDto(
+                editingPeripheral.Name,
+                editingPeripheral.Type,
+                editingPeripheral.Gpio,
+                editingPeripheral.Notes,
+                editingPeripheral.Unit,
+                editingPeripheral.WiringDiagram,
+                DateTime.UtcNow
+            );
+
+            var result = await PeripheralService.AddPeripheralAsync(selectedDevice.IotDeviceId, peripheralDto);
+            
+            if (result.IsSuccess)
+            {
+                await RefreshDevicePeripherals(selectedDevice);
+                ClosePeripheralDialog();
+            }
+        }
+        finally
+        {
+            isSaving = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task DeletePeripheral(DeviceViewModel device, PeripheralDto peripheral)
+    {
+        bool? result = await DialogService.ShowMessageBox(
+            "?? Confirmation de suppression",
+            $"Êtes-vous sûr de vouloir supprimer le périphérique '{peripheral.Name}' ?",
+            yesText: "Supprimer",
+            cancelText: "Annuler");
+
+        if (result == true)
+        {
+            var deleteResult = await PeripheralService.DeletePeripheralAsync(device.IotDeviceId, peripheral.Name);
+            
+            if (deleteResult.IsSuccess)
+            {
+                await RefreshDevicePeripherals(device);
+            }
+        }
+    }
+
+    private async Task ShowPeripheralDetails(DeviceViewModel device, PeripheralDto peripheral)
+    {
+        selectedDevice = device;
+        selectedPeripheral = peripheral;
+        mergedPeripheral = null;
+        isDetailsDialogOpen = true;
+        
+        // Charger la vue fusionnée
+        mergedPeripheral = await PeripheralService.GetMergedPeripheralAsync(device.IotDeviceId, peripheral.Name);
+        StateHasChanged();
+    }
+
+    private void CloseDetailsDialog()
+    {
+        isDetailsDialogOpen = false;
+        selectedDevice = null;
+        selectedPeripheral = null;
+        mergedPeripheral = null;
+    }
+
+    // ==========================================
+    // COMMANDES PÉRIPHÉRIQUES
+    // ==========================================
+
+    private async Task ExecutePeripheralCommand(DeviceViewModel device, PeripheralDto peripheral, string command)
+    {
+        Logger.LogInformation("Exécution de la commande {Command} sur {Peripheral} @ {Device}", 
+            command, peripheral.Name, device.Name);
+
+        var result = await PeripheralService.ExecuteCommandAsync(
+            device.IotDeviceId, 
+            peripheral.Name, 
+            command);
+
+        if (result.IsSuccess)
+        {
+            // Rafraîchir après un petit délai pour laisser le temps au device de répondre
+            await Task.Delay(1000);
+            await RefreshDevicePeripherals(device);
+        }
+    }
+
+    private List<PeripheralCommand> GetPeripheralCommands(string type)
+    {
+        return type.ToLower() switch
+        {
+            "relay" => new List<PeripheralCommand>
+            {
+                new("turn-on", "Allumer", Icons.Material.Filled.PowerSettingsNew, Color.Success),
+                new("turn-off", "Éteindre", Icons.Material.Filled.PowerOff, Color.Error)
+            },
+            "light" => new List<PeripheralCommand>
+            {
+                new("turn-on", "Allumer", Icons.Material.Filled.LightMode, Color.Warning),
+                new("turn-off", "Éteindre", Icons.Material.Filled.LightbulbOutline, Color.Default)
+            },
+            "temperature" or "humidity" or "smoke" or "motion" => new List<PeripheralCommand>
+            {
+                new("read", "Lire", Icons.Material.Filled.Sensors, Color.Info)
+            },
+            _ => new List<PeripheralCommand>()
+        };
+    }
+
+    // ==========================================
+    // UTILITAIRES UI
+    // ==========================================
+
+    private string GetDeviceIcon(string type) => type.ToLower() switch
+    {
+        "relay" => Icons.Material.Filled.Power,
+        "sensor" => Icons.Material.Filled.Sensors,
+        "actuator" => Icons.Material.Filled.Engineering,
+        "light" => Icons.Material.Filled.Lightbulb,
+        "hvac" => Icons.Material.Filled.Thermostat,
+        "security" => Icons.Material.Filled.Security,
+        _ => Icons.Material.Filled.DeviceHub
+    };
+
+    private string GetPeripheralIcon(string type) => type.ToLower() switch
+    {
+        "relay" => Icons.Material.Filled.ElectricBolt,
+        "temperature" => Icons.Material.Filled.Thermostat,
+        "humidity" => Icons.Material.Filled.WaterDrop,
+        "smoke" => Icons.Material.Filled.Smoke,
+        "motion" => Icons.Material.Filled.DirectionsWalk,
+        "light" => Icons.Material.Filled.Lightbulb,
+        "door" => Icons.Material.Filled.Door,
+        _ => Icons.Material.Filled.Sensors
+    };
+
+    private Color GetTypeColor(string type) => type.ToLower() switch
+    {
+        "relay" => Color.Primary,
+        "sensor" => Color.Info,
+        "actuator" => Color.Success,
+        "light" => Color.Warning,
+        "hvac" => Color.Secondary,
+        "security" => Color.Error,
+        _ => Color.Default
+    };
+
+    private Color GetPeripheralTypeColor(string type) => type.ToLower() switch
+    {
+        "relay" => Color.Primary,
+        "temperature" => Color.Error,
+        "humidity" => Color.Info,
+        "smoke" => Color.Warning,
+        "motion" => Color.Success,
+        "light" => Color.Warning,
+        "door" => Color.Secondary,
+        _ => Color.Default
+    };
+
+    private Color GetStatusColor(string status) => status.ToLower() switch
+    {
+        "active" => Color.Success,
+        "inactive" => Color.Default,
+        "error" => Color.Error,
+        "offline" => Color.Secondary,
+        _ => Color.Default
+    };
+
+    private string GetZoneName(int zoneId)
+    {
+        return zones.FirstOrDefault(z => z.Id == zoneId)?.Name ?? $"Zone {zoneId}";
+    }
+}

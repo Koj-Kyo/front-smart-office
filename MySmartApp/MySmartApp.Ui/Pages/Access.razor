@@ -1,306 +1,676 @@
 ﻿@page "/access"
+@using MySmartApp.Ui.Services
+@using MySmartApp.Ui.Models
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
 @inject IDialogService DialogService
+@inject IDroitAccesService DroitAccesService
+@inject IAdminUserManagementService UserManagementService
+@inject IBackendZoneService ZoneService
+@inject IDeviceService DeviceService
+@inject ISnackbar Snackbar
+@inject ILogger<Access> Logger
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@attribute [Authorize(Roles = "Admin")]
 
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="my-8">
-    <MudText Typo="Typo.h4" Class="mb-4">Gestion des accès</MudText>
-    <MudText Typo="Typo.body1" Class="mb-8">Gérez ici les droits d'accès des utilisateurs aux zones et aux appareils de votre maison intelligente.</MudText>
+    @if (_debugMode)
+    {
+        <MudAlert Severity="Severity.Info" Class="mb-4">
+            <MudText Typo="Typo.h6">🔍 Debug - Claims Utilisateur</MudText>
+            <MudText Typo="Typo.body2">Utilisateur: @_currentUser?.Identity?.Name</MudText>
+            <MudText Typo="Typo.body2">Authentifié: @_currentUser?.Identity?.IsAuthenticated</MudText>
+            <MudText Typo="Typo.body2">Type Auth: @_currentUser?.Identity?.AuthenticationType</MudText>
+            @if (_userClaims.Any())
+            {
+                <MudText Typo="Typo.body2" Class="mt-2">Claims:</MudText>
+                @foreach (var claim in _userClaims)
+                {
+                    <MudText Typo="Typo.caption">- @claim.Type: @claim.Value</MudText>
+                }
+            }
+            else
+            {
+                <MudText Typo="Typo.body2" Color="Color.Error">⚠️ Aucun claim trouvé!</MudText>
+            }
+        </MudAlert>
+    }
 
+    <MudText Typo="Typo.h4" Class="mb-4">
+        🔐 Gestion des Droits d'Accès
+        <MudIconButton Icon="@Icons.Material.Filled.BugReport" 
+                      Size="Size.Small" 
+                      Color="@(_debugMode ? Color.Primary : Color.Default)"
+                      OnClick="@(() => _debugMode = !_debugMode)" 
+                      Title="Toggle Debug" />
+    </MudText>
+    
     <div class="d-flex align-center justify-space-between mb-4">
         <MudButton OnClick="OpenAddDialog" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add">
-            Attribuer des accès
+            Ajouter un droit d'accès
         </MudButton>
         
-        <MudTextField T="string" 
-                      @bind-Value="searchString"
-                      Placeholder="Rechercher..." 
-                      Adornment="Adornment.Start" 
-                      AdornmentIcon="@Icons.Material.Filled.Search" 
-                      IconSize="Size.Medium" 
-                      Class="ml-4"
-                      Style="max-width: 300px;"></MudTextField>
+        <div class="d-flex gap-2">
+            <MudTextField T="string" 
+                          @bind-Value="searchString"
+                          Placeholder="Rechercher..." 
+                          Adornment="Adornment.Start" 
+                          AdornmentIcon="@Icons.Material.Filled.Search" 
+                          Style="max-width: 300px;" />
+            
+            <MudSelect T="string?" @bind-Value="selectedResourceTypeFilter" Label="Ressource" Clearable Style="min-width: 150px;">
+                <MudSelectItem T="string?" Value="@((string?)"Zone")">🏢 Zone</MudSelectItem>
+                <MudSelectItem T="string?" Value="@((string?)"Peripherique")">🔌 Périphérique</MudSelectItem>
+            </MudSelect>
+            
+            <MudSelect T="string?" @bind-Value="selectedAccessTypeFilter" Label="Type d'accès" Clearable Style="min-width: 150px;">
+                <MudSelectItem T="string?" Value="@((string?)"Lecture")">👁️ Lecture</MudSelectItem>
+                <MudSelectItem T="string?" Value="@((string?)"Controle")">🎮 Contrôle</MudSelectItem>
+            </MudSelect>
+            
+            <MudButton OnClick="RefreshData" 
+                       Variant="Variant.Outlined" 
+                       StartIcon="@Icons.Material.Filled.Refresh"
+                       Disabled="@isLoading">
+                Actualiser
+            </MudButton>
+        </div>
     </div>
 
-    <MudExpansionPanels MultiExpansion="true" Class="rounded-xl">
-        @foreach (var user in filteredUsers)
-        {
-            <MudExpansionPanel Text="@user.Name">
-                <ChildContent>
-                    <div class="d-flex flex-column pa-4">
-                        <MudText Typo="Typo.h6">Rôles</MudText>
-                        <MudText Typo="Typo.body2">@user.Role</MudText>
-
-                        <MudText Typo="Typo.h6" Class="mt-4">Zones accessibles</MudText>
-                        @if (user.AccessibleZones.Any())
+    @if (isLoading)
+    {
+        <MudProgressLinear Indeterminate="true" />
+    }
+    else
+    {
+        <MudTable Items="@filteredDroits" Dense="true" Hover="true" Elevation="2">
+            <HeaderContent>
+                <MudTh>ID</MudTh>
+                <MudTh>Utilisateur</MudTh>
+                <MudTh>Type d'accès</MudTh>
+                <MudTh>Ressource</MudTh>
+                <MudTh>Créé le</MudTh>
+                <MudTh>Actions</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="ID">@context.Id</MudTd>
+                <MudTd DataLabel="User">
+                    <div class="d-flex flex-column">
+                        <MudText Typo="Typo.body2">
+                            @(context.UserFullName ?? context.UserName ?? context.UserId)
+                        </MudText>
+                        @if (!string.IsNullOrEmpty(context.UserEmail))
                         {
-                            <MudList T="ZoneModel">
-                                @foreach (var zone in user.AccessibleZones)
-                                {
-                                    <MudListItem T="ZoneModel" Text="@zone.Name" Icon="@zone.Icon" />
-                                }
-                            </MudList>
-                        }
-                        else
-                        {
-                            <MudText>Aucune zone assignée.</MudText>
-                        }
-
-                        <MudText Typo="Typo.h6" Class="mt-4">Appareils accessibles</MudText>
-                        @if (user.AccessibleDevices.Any())
-                        {
-                            <MudList T="Device">
-                                @foreach (var device in user.AccessibleDevices)
-                                {
-                                    <MudListItem T="Device" Text="@device.DeviceName" Icon="@device.Icon" />
-                                }
-                            </MudList>
-                        }
-                        else
-                        {
-                            <MudText>Aucun appareil assigné.</MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">@context.UserEmail</MudText>
                         }
                     </div>
-                    <div class="d-flex justify-end pa-2">
-                        <MudIconButton OnClick="@(() => OpenEditDialog(user))" Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" />
-                        <MudIconButton OnClick="@(() => DeleteUser(user))" Icon="@Icons.Material.Filled.Delete" Color="Color.Error" />
-                    </div>
-                </ChildContent>
-            </MudExpansionPanel>
-        }
-    </MudExpansionPanels>
+                </MudTd>
+                <MudTd DataLabel="AccessType">
+                    <MudChip T="string" Size="Size.Small" Color="@GetTypeColor(context.Type)">
+                        @GetTypeDisplay(context.Type)
+                    </MudChip>
+                </MudTd>
+                <MudTd DataLabel="Resource">
+                    @if (context.ZoneId.HasValue)
+                    {
+                        <div class="d-flex align-center">
+                            <MudIcon Icon="@Icons.Material.Filled.LocationOn" Class="mr-2" />
+                            <div>
+                                <MudText Typo="Typo.body2">@(context.ZoneName ?? $"Zone {context.ZoneId}")</MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">Zone #@context.ZoneId</MudText>
+                            </div>
+                        </div>
+                    }
+                    else if (context.PeripheriqueLogiqueId.HasValue)
+                    {
+                        <div class="d-flex align-center">
+                            <MudIcon Icon="@Icons.Material.Filled.DeviceHub" Class="mr-2" />
+                            <div>
+                                <MudText Typo="Typo.body2">@(context.PeripheriqueLogiqueName ?? $"Périphérique {context.PeripheriqueLogiqueId}")</MudText>
+                                @if (!string.IsNullOrEmpty(context.PeripheriqueLogiqueType))
+                                {
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">@context.PeripheriqueLogiqueType</MudText>
+                                }
+                            </div>
+                        </div>
+                    }
+                </MudTd>
+                <MudTd DataLabel="CreatedAt">
+                    <MudText Typo="Typo.body2">@context.CreatedAt.ToString("dd/MM/yyyy HH:mm")</MudText>
+                    @if (context.UpdatedAt.HasValue)
+                    {
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">
+                            Modifié: @context.UpdatedAt.Value.ToString("dd/MM/yyyy HH:mm")
+                        </MudText>
+                    }
+                </MudTd>
+                <MudTd DataLabel="Actions">
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit" 
+                                   Color="Color.Primary" 
+                                   Size="Size.Small"
+                                   OnClick="@(() => OpenEditDialog(context))" />
+                    
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" 
+                                   Color="Color.Error" 
+                                   Size="Size.Small"
+                                   OnClick="@(() => DeleteDroitAcces(context))" />
+                </MudTd>
+            </RowTemplate>
+            
+            <NoRecordsContent>
+                <MudText Align="Align.Center" Color="Color.Secondary" Class="py-8">
+                    Aucun droit d'accès trouvé
+                </MudText>
+            </NoRecordsContent>
+        </MudTable>
+    }
 </MudContainer>
 
+<!-- Dialog d'ajout/modification AMÉLIORÉ -->
 <MudOverlay @bind-Visible="isDialogOpen" DarkBackground="true" Absolute="false">
-    <MudPaper Class="pa-6" Style="max-width: 600px; margin: 50px auto;">
+    <MudPaper Class="pa-6" Style="max-width: 700px; margin: 50px auto;">
         <MudText Typo="Typo.h6" Class="mb-4">
-            <MudIcon Icon="@(isAdding ? Icons.Material.Filled.Add : Icons.Material.Filled.Edit)" Class="mr-3" />
-            @(isAdding ? "Attribuer des accès" : "Modifier les accès")
+            @(isAdding ? "➕ Ajouter un droit d'accès" : "✏️ Modifier le droit d'accès")
         </MudText>
 
-        @if (isAdding)
-        {
-            <MudTextField @bind-Value="editingUser.Name" 
-                         Label="Nom de l'utilisateur" 
-                         Required="true" 
-                         Class="mb-4" />
-        }
-        else
-        {
-            <MudTextField Value="@editingUser.Name" 
-                         Label="Nom de l'utilisateur" 
-                         ReadOnly="true"
-                         Class="mb-4" />
-        }
-        
-        <MudSelect @bind-Value="editingUser.Role" 
-                  Label="Rôle" 
-                  Required="true" 
-                  Class="mb-4">
-            <MudSelectItem Value="@("Admin")">🔐 Administrateur</MudSelectItem>
-            <MudSelectItem Value="@("Membre")">👤 Membre</MudSelectItem>
-            <MudSelectItem Value="@("Visiteur")">👁️ Visiteur</MudSelectItem>
-        </MudSelect>
-        
-        <MudSelect T="ZoneModel" 
-                  Label="Zones accessibles" 
-                  MultiSelection="true" 
-                  @bind-SelectedValues="selectedZones"
-                  Class="mb-4">
-            @foreach (var zone in zones)
-            {
-                <MudSelectItem Value="@zone">@zone.Name</MudSelectItem>
-            }
-        </MudSelect>
-        
-        <MudSelect T="Device" 
-                  Label="Appareils accessibles" 
-                  MultiSelection="true" 
-                  @bind-SelectedValues="selectedDevices"
-                  Class="mb-4">
-            @foreach (var device in devices)
-            {
-                <MudSelectItem Value="@device">@device.DeviceName</MudSelectItem>
-            }
-        </MudSelect>
-        
-        <MudSwitch @bind-Value="editingUser.IsActive" 
-                  Label="Utilisateur actif" 
-                  Color="Color.Primary" 
-                  Class="mb-4" />
+        <MudForm @ref="form" Model="@editingDroit">
+            <MudGrid>
+                <!-- ✅ AMÉLIORATION 1: Autocomplete Utilisateurs -->
+                <MudItem xs="12">
+                    @if (isAdding)
+                    {
+                        <MudAutocomplete T="UserDetailsDto"
+                                        @bind-Value="selectedUser"
+                                        Label="Utilisateur *"
+                                        SearchFunc="SearchUsers"
+                                        ToStringFunc="@(u => u?.Email ?? "")"
+                                        Required="true"
+                                        RequiredError="L'utilisateur est obligatoire"
+                                        Clearable="true"
+                                        ResetValueOnEmptyText="true"
+                                        CoerceText="true"
+                                        Disabled="@isSaving">
+                            <ItemTemplate Context="user">
+                                <MudStack Spacing="0">
+                                    <MudText Typo="Typo.body2">@user.FullName</MudText>
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">@user.Email</MudText>
+                                </MudStack>
+                            </ItemTemplate>
+                        </MudAutocomplete>
+                    }
+                    else
+                    {
+                        <MudTextField Value="@editingDroit.UserEmail"
+                                     Label="Utilisateur"
+                                     Disabled="true"
+                                     HelperText="L'utilisateur ne peut pas être modifié" />
+                    }
+                </MudItem>
+                
+                <MudItem xs="6">
+                    <MudSelect T="string" @bind-Value="editingDroit.ResourceType"
+                               Label="Type de ressource *"
+                               Required="true"
+                               RequiredError="Le type de ressource est obligatoire"
+                               Disabled="@isSaving">
+                        <MudSelectItem T="string" Value="@("Zone")">🏢 Accès Zone</MudSelectItem>
+                        <MudSelectItem T="string" Value="@("Peripherique")">🔌 Accès Périphérique</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+                
+                <MudItem xs="6">
+                    <MudSelect T="string" @bind-Value="editingDroit.AccessType"
+                               Label="Type d'accès *"
+                               Required="true"
+                               RequiredError="Le type d'accès est obligatoire"
+                               Disabled="@isSaving">
+                        <MudSelectItem T="string" Value="@("Lecture")">👁️ Lecture</MudSelectItem>
+                        <MudSelectItem T="string" Value="@("Controle")">🎮 Contrôle</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+                
+                <!-- ✅ AMÉLIORATION 2: Select Zones -->
+                @if (editingDroit.ResourceType == "Zone")
+                {
+                    <MudItem xs="12">
+                        <MudSelect T="int?" @bind-Value="editingDroit.ZoneId"
+                                  Label="Zone *"
+                                  Required="true"
+                                  RequiredError="La zone est obligatoire"
+                                  Disabled="@(isSaving || isLoadingZones)">
+                            @if (isLoadingZones)
+                            {
+                                <MudSelectItem T="int?" Value="null" Disabled="true">Chargement...</MudSelectItem>
+                            }
+                            else if (!availableZones.Any())
+                            {
+                                <MudSelectItem T="int?" Value="null" Disabled="true">Aucune zone disponible</MudSelectItem>
+                            }
+                            else
+                            {
+                                @foreach (var zone in availableZones)
+                                {
+                                    <MudSelectItem T="int?" Value="@zone.Id">
+                                        @zone.Nom (ID: @zone.Id)
+                                    </MudSelectItem>
+                                }
+                            }
+                        </MudSelect>
+                    </MudItem>
+                }
+                
+                <!-- ✅ AMÉLIORATION 3: Select Devices -->
+                @if (editingDroit.ResourceType == "Peripherique")
+                {
+                    <MudItem xs="12">
+                        <MudSelect T="int?" @bind-Value="editingDroit.PeripheriqueLogiqueId"
+                                  Label="Périphérique *"
+                                  Required="true"
+                                  RequiredError="Le périphérique est obligatoire"
+                                  Disabled="@(isSaving || isLoadingDevices)">
+                            @if (isLoadingDevices)
+                            {
+                                <MudSelectItem T="int?" Value="null" Disabled="true">Chargement...</MudSelectItem>
+                            }
+                            else if (!availableDevices.Any())
+                            {
+                                <MudSelectItem T="int?" Value="null" Disabled="true">Aucun périphérique disponible</MudSelectItem>
+                            }
+                            else
+                            {
+                                @foreach (var device in availableDevices)
+                                {
+                                    <MudSelectItem T="int?" Value="@device.Id">
+                                        @device.Name - @device.DeviceType (Zone: @device.ZoneId)
+                                    </MudSelectItem>
+                                }
+                            }
+                        </MudSelect>
+                    </MudItem>
+                }
+            </MudGrid>
+        </MudForm>
 
-        <MudGrid Class="mt-4">
-            <MudItem xs="6">
-                <MudButton OnClick="OnCancel" FullWidth="true" Color="Color.Default">Annuler</MudButton>
-            </MudItem>
-            <MudItem xs="6">
-                <MudButton OnClick="OnSave" FullWidth="true" Color="Color.Primary" Variant="Variant.Filled">
-                    Sauvegarder
-                </MudButton>
-            </MudItem>
-        </MudGrid>
+        <div class="d-flex justify-end mt-4">
+            <MudButton OnClick="CloseDialog" Color="Color.Default" Class="mr-2" Disabled="@isSaving">
+                Annuler
+            </MudButton>
+            <MudButton OnClick="SaveDroitAcces" 
+                       Color="Color.Primary" 
+                       Variant="Variant.Filled"
+                       Disabled="@isSaving">
+                @if (isSaving)
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                }
+                @(isAdding ? "Créer" : "Modifier")
+            </MudButton>
+        </div>
     </MudPaper>
 </MudOverlay>
 
 @code {
-    private List<User> users = new List<User>();
-    private List<User> filteredUsers => FilterUsers();
-    private List<ZoneModel> zones = new List<ZoneModel>();
-    private List<Device> devices = new List<Device>();
+    // ✅ DEBUG MODE
+    private bool _debugMode = false;
+    private ClaimsPrincipal? _currentUser;
+    private List<Claim> _userClaims = new();
+    
+    // État de la page
+    private bool isLoading = true;
     private string searchString = "";
+    private string? selectedResourceTypeFilter;
+    private string? selectedAccessTypeFilter;
+    
+    // Dialogs
     private bool isDialogOpen = false;
     private bool isAdding = true;
-    private User editingUser = new User();
-    private IEnumerable<ZoneModel> selectedZones = new List<ZoneModel>();
-    private IEnumerable<Device> selectedDevices = new List<Device>();
-    private int nextId = 4;
+    private bool isSaving = false;
+    private MudForm? form;
+    
+    // Données
+    private List<DroitAccesDto> droitsAcces = new();
+    
+    // ✅ NOUVEAU: Listes pour les selects
+    private List<UserDetailsDto> availableUsers = new();
+    private List<BackendZoneDto> availableZones = new();
+    private List<DeviceDto> availableDevices = new();
+    private bool isLoadingZones = false;
+    private bool isLoadingDevices = false;
+    
+    // ✅ NOUVEAU: Utilisateur sélectionné dans autocomplete
+    private UserDetailsDto? selectedUser;
+    
+    // Modèles d'édition
+    private DroitAccesEditModel editingDroit = new();
 
-    public class User
+    // Propriétés calculées
+    private IEnumerable<DroitAccesDto> filteredDroits =>
+        droitsAcces.Where(d => 
+            (string.IsNullOrEmpty(searchString) || 
+             (d.UserFullName?.Contains(searchString, StringComparison.OrdinalIgnoreCase) == true) ||
+             (d.UserName?.Contains(searchString, StringComparison.OrdinalIgnoreCase) == true) ||
+             d.UserId.Contains(searchString, StringComparison.OrdinalIgnoreCase) ||
+             (d.ZoneName?.Contains(searchString, StringComparison.OrdinalIgnoreCase) == true) ||
+             (d.PeripheriqueLogiqueName?.Contains(searchString, StringComparison.OrdinalIgnoreCase) == true)) &&
+            (string.IsNullOrEmpty(selectedResourceTypeFilter) || 
+             (selectedResourceTypeFilter == "Zone" && d.ZoneId.HasValue) ||
+             (selectedResourceTypeFilter == "Peripherique" && d.PeripheriqueLogiqueId.HasValue)) &&
+            (string.IsNullOrEmpty(selectedAccessTypeFilter) || d.Type == selectedAccessTypeFilter)
+        );
+
+    // ✅ AMÉLIORATION 4: Modèle d'édition avec validation
+    public class DroitAccesEditModel
     {
         public int Id { get; set; }
-        public string Name { get; set; } = "";
-        public string Role { get; set; } = "Membre";
-        public List<ZoneModel> AccessibleZones { get; set; } = new List<ZoneModel>();
-        public List<Device> AccessibleDevices { get; set; } = new List<Device>();
-        public bool IsActive { get; set; } = true;
-
-        public override bool Equals(object? obj) => obj is User user && Id == user.Id;
-        public override int GetHashCode() => Id.GetHashCode();
-    }
-
-    public class ZoneModel
-    {
-        public int Id { get; set; }
-        public string Name { get; set; } = "";
-        public string Icon { get; set; } = "";
-
-        public override bool Equals(object? obj) => obj is ZoneModel zone && Id == zone.Id;
-        public override int GetHashCode() => Id.GetHashCode();
-    }
-
-    public class Device
-    {
-        public int Id { get; set; }
-        public string DeviceName { get; set; } = "";
-        public string Icon { get; set; } = "";
-
-        public override bool Equals(object? obj) => obj is Device device && Id == device.Id;
-        public override int GetHashCode() => Id.GetHashCode();
-    }
-
-    protected override void OnInitialized()
-    {
-        devices = new List<Device>
+        public string UserId { get; set; } = "";
+        public string? UserEmail { get; set; }
+        public int? ZoneId { get; set; }
+        public int? PeripheriqueLogiqueId { get; set; }
+        public string AccessType { get; set; } = "Controle";
+        public string ResourceType { get; set; } = "Zone";
+        
+        public bool IsValid()
         {
-            new Device { Id = 1, DeviceName = "Climatiseur", Icon = Icons.Material.Filled.AcUnit },
-            new Device { Id = 2, DeviceName = "Lumières", Icon = Icons.Material.Filled.Lightbulb },
-            new Device { Id = 3, DeviceName = "Thermostat", Icon = Icons.Material.Filled.Thermostat },
-            new Device { Id = 4, DeviceName = "Routeur", Icon = Icons.Material.Filled.Router }
-        };
-
-        zones = new List<ZoneModel>
-        {
-            new ZoneModel { Id = 1, Name = "Salon", Icon = Icons.Material.Filled.MeetingRoom },
-            new ZoneModel { Id = 2, Name = "Chambre", Icon = Icons.Material.Filled.BedroomParent },
-            new ZoneModel { Id = 3, Name = "Cuisine", Icon = Icons.Material.Filled.Kitchen },
-            new ZoneModel { Id = 4, Name = "Bureau", Icon = Icons.Material.Filled.Work },
-            new ZoneModel { Id = 5, Name = "Garage", Icon = Icons.Material.Filled.Garage },
-            new ZoneModel { Id = 6, Name = "Salle de bain", Icon = Icons.Material.Filled.Bathroom }
-        };
-
-        users = new List<User>
-        {
-            new User { Id = 1, Name = "Scarlett", Role = "Admin", IsActive = true, AccessibleZones = new List<ZoneModel>(zones), AccessibleDevices = new List<Device>(devices) },
-            new User { Id = 2, Name = "Nariya", Role = "Membre", IsActive = true, AccessibleZones = zones.Take(2).ToList(), AccessibleDevices = devices.Take(2).ToList() },
-            new User { Id = 3, Name = "Riya", Role = "Visiteur", IsActive = false, AccessibleZones = new List<ZoneModel>(), AccessibleDevices = new List<Device>() }
-        };
+            return !string.IsNullOrEmpty(UserId) &&
+                   !string.IsNullOrEmpty(AccessType) &&
+                   ((ResourceType == "Zone" && ZoneId.HasValue) ||
+                    (ResourceType == "Peripherique" && PeripheriqueLogiqueId.HasValue));
+        }
     }
 
-    private List<User> FilterUsers()
+    protected override async Task OnInitializedAsync()
     {
-        if (string.IsNullOrWhiteSpace(searchString))
-            return users;
-
-        return users.Where(u => 
-            u.Name.ToLower().Contains(searchString.ToLower()) ||
-            u.Role.ToLower().Contains(searchString.ToLower())
-        ).ToList();
+        // ✅ Charger les claims pour debug
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        _currentUser = authState.User;
+        _userClaims = _currentUser.Claims.ToList();
+        
+        // Log les claims pour diagnostic
+        Logger.LogInformation("🔍 Claims utilisateur:");
+        foreach (var claim in _userClaims)
+        {
+            Logger.LogInformation("  - {Type}: {Value}", claim.Type, claim.Value);
+        }
+        
+        await Task.WhenAll(
+            LoadData(),
+            LoadZones(),
+            LoadDevices()
+        );
     }
+
+    private async Task LoadData()
+    {
+        isLoading = true;
+        StateHasChanged();
+        
+        try
+        {
+            var response = await DroitAccesService.GetDroitsAccesAsync();
+            
+            if (response.IsSuccess && response.Data != null)
+            {
+                droitsAcces = response.Data;
+                Logger.LogInformation("✅ {Count} droits d'accès chargés", droitsAcces.Count);
+            }
+            else
+            {
+                Snackbar.Add("Erreur lors du chargement des droits d'accès", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "❌ Erreur lors du chargement des données");
+            Snackbar.Add("Erreur lors du chargement des droits d'accès", Severity.Error);
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    // ✅ NOUVEAU: Chargement zones
+    private async Task LoadZones()
+    {
+        isLoadingZones = true;
+        try
+        {
+            var response = await ZoneService.GetAllZonesAsync();
+            if (response.IsSuccess && response.Data != null)
+            {
+                availableZones = response.Data;
+                Logger.LogInformation("✅ {Count} zones chargées", availableZones.Count);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "❌ Erreur chargement zones");
+        }
+        finally
+        {
+            isLoadingZones = false;
+        }
+    }
+
+    // ✅ NOUVEAU: Chargement devices
+    private async Task LoadDevices()
+    {
+        isLoadingDevices = true;
+        try
+        {
+            var devices = await DeviceService.GetAllDevicesLegacyAsync();
+            availableDevices = devices.ToList();
+            Logger.LogInformation("✅ {Count} devices chargés", availableDevices.Count);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "❌ Erreur chargement devices");
+        }
+        finally
+        {
+            isLoadingDevices = false;
+        }
+    }
+
+    // ✅ NOUVEAU: Recherche utilisateurs pour autocomplete
+    private async Task<IEnumerable<UserDetailsDto>> SearchUsers(string searchTerm, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(searchTerm) || searchTerm.Length < 2)
+            return Array.Empty<UserDetailsDto>();
+
+        try
+        {
+            var response = await UserManagementService.SearchUsersAsync(searchTerm);
+            if (response.IsSuccess && response.Data != null)
+            {
+                return response.Data;
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "❌ Erreur recherche utilisateurs");
+        }
+
+        return Array.Empty<UserDetailsDto>();
+    }
+
+    private async Task RefreshData() => await LoadData();
 
     private void OpenAddDialog()
     {
         isAdding = true;
-        editingUser = new User();
-        selectedZones = new List<ZoneModel>();
-        selectedDevices = new List<Device>();
+        selectedUser = null;
+        editingDroit = new DroitAccesEditModel();
         isDialogOpen = true;
     }
 
-    private void OpenEditDialog(User user)
+    private void OpenEditDialog(DroitAccesDto droit)
     {
         isAdding = false;
-        editingUser = new User
+        selectedUser = null;
+        editingDroit = new DroitAccesEditModel
         {
-            Id = user.Id,
-            Name = user.Name,
-            Role = user.Role,
-            IsActive = user.IsActive,
-            AccessibleZones = new List<ZoneModel>(user.AccessibleZones),
-            AccessibleDevices = new List<Device>(user.AccessibleDevices)
+            Id = droit.Id,
+            UserId = droit.UserId,
+            UserEmail = droit.UserEmail ?? droit.UserName,
+            ZoneId = droit.ZoneId,
+            PeripheriqueLogiqueId = droit.PeripheriqueLogiqueId,
+            AccessType = droit.Type,
+            ResourceType = droit.ZoneId.HasValue ? "Zone" : "Peripherique"
         };
-        selectedZones = user.AccessibleZones;
-        selectedDevices = user.AccessibleDevices;
         isDialogOpen = true;
     }
 
-    private void OnCancel()
+    protected override void OnParametersSet()
     {
-        isDialogOpen = false;
-        editingUser = new User();
-        selectedZones = new List<ZoneModel>();
-        selectedDevices = new List<Device>();
-    }
-
-    private void OnSave()
-    {
-        if (string.IsNullOrWhiteSpace(editingUser.Name))
-            return;
-
-        editingUser.AccessibleZones = selectedZones.ToList();
-        editingUser.AccessibleDevices = selectedDevices.ToList();
-
-        if (isAdding)
+        base.OnParametersSet();
+        
+        // Observer changement ResourceType
+        if (editingDroit != null)
         {
-            editingUser.Id = nextId++;
-            users.Add(editingUser);
-        }
-        else
-        {
-            var existingUser = users.FirstOrDefault(u => u.Id == editingUser.Id);
-            if (existingUser != null)
+            if (editingDroit.ResourceType == "Zone")
             {
-                existingUser.Name = editingUser.Name;
-                existingUser.Role = editingUser.Role;
-                existingUser.IsActive = editingUser.IsActive;
-                existingUser.AccessibleZones = editingUser.AccessibleZones;
-                existingUser.AccessibleDevices = editingUser.AccessibleDevices;
+                editingDroit.PeripheriqueLogiqueId = null;
+            }
+            else if (editingDroit.ResourceType == "Peripherique")
+            {
+                editingDroit.ZoneId = null;
             }
         }
-
-        isDialogOpen = false;
-        editingUser = new User();
-        selectedZones = new List<ZoneModel>();
-        selectedDevices = new List<Device>();
     }
 
-    private async Task DeleteUser(User user)
+    private void CloseDialog()
+    {
+        isDialogOpen = false;
+        selectedUser = null;
+        editingDroit = new DroitAccesEditModel();
+    }
+
+    private void OnResourceTypeChanged(string newType)
+    {
+        editingDroit.ResourceType = newType;
+        
+        // Réinitialiser les champs selon la sélection
+        if (newType == "Zone")
+        {
+            editingDroit.PeripheriqueLogiqueId = null;
+        }
+        else if (newType == "Peripherique")
+        {
+            editingDroit.ZoneId = null;
+        }
+        
+        StateHasChanged();
+    }
+
+    private async Task SaveDroitAcces()
+    {
+        // ✅ AMÉLIORATION 5: Validation avant envoi
+        if (isAdding && selectedUser != null)
+        {
+            editingDroit.UserId = selectedUser.Id;
+        }
+
+        if (!editingDroit.IsValid())
+        {
+            Snackbar.Add("⚠️ Veuillez remplir tous les champs obligatoires", Severity.Warning);
+            return;
+        }
+
+        if (form != null)
+        {
+            await form.Validate();
+            if (!form.IsValid) return;
+        }
+
+        isSaving = true;
+        StateHasChanged();
+
+        try
+        {
+            var creationDto = new DroitAccesCreationDto(
+                editingDroit.UserId,
+                editingDroit.ZoneId,
+                editingDroit.PeripheriqueLogiqueId,
+                editingDroit.AccessType
+            );
+
+            if (isAdding)
+            {
+                var result = await DroitAccesService.AddDroitAccesAsync(creationDto);
+                if (result.IsSuccess)
+                {
+                    Snackbar.Add("✅ Droit d'accès créé avec succès", Severity.Success);
+                    await LoadData();
+                    CloseDialog();
+                }
+                else
+                {
+                    Snackbar.Add($"❌ Erreur: {result.ErrorMessage}", Severity.Error);
+                }
+            }
+            else
+            {
+                var result = await DroitAccesService.UpdateDroitAccesAsync(editingDroit.Id, creationDto);
+                if (result.IsSuccess)
+                {
+                    Snackbar.Add("✅ Droit d'accès mis à jour avec succès", Severity.Success);
+                    await LoadData();
+                    CloseDialog();
+                }
+                else
+                {
+                    Snackbar.Add($"❌ Erreur: {result.ErrorMessage}", Severity.Error);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "❌ Erreur sauvegarde droit accès");
+            Snackbar.Add("❌ Erreur lors de la sauvegarde", Severity.Error);
+        }
+        finally
+        {
+            isSaving = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task DeleteDroitAcces(DroitAccesDto droit)
     {
         bool? result = await DialogService.ShowMessageBox(
-            "Confirmation",
-            $"Êtes-vous sûr de vouloir supprimer l'utilisateur '{user.Name}' ?",
-            yesText:"Supprimer", cancelText:"Annuler");
+            "⚠️ Confirmation de suppression",
+            $"Supprimer le droit d'accès de {droit.UserFullName ?? droit.UserName ?? droit.UserId} ?",
+            yesText: "Supprimer",
+            cancelText: "Annuler");
 
         if (result == true)
         {
-            users.Remove(user);
+            var deleteResult = await DroitAccesService.DeleteDroitAccesAsync(droit.Id);
+            if (deleteResult.IsSuccess)
+            {
+                Snackbar.Add("✅ Droit d'accès supprimé avec succès", Severity.Success);
+                await LoadData();
+            }
+            else
+            {
+                Snackbar.Add("❌ Erreur lors de la suppression", Severity.Error);
+            }
         }
     }
+
+    private string GetTypeDisplay(string type) => type switch
+    {
+        "Lecture" => "👁️ Lecture",
+        "Controle" => "🎮 Contrôle",
+        _ => type
+    };
+
+    private Color GetTypeColor(string type) => type switch
+    {
+        "Lecture" => Color.Info,
+        "Controle" => Color.Warning,
+        _ => Color.Default
+    };
 }

@@ -1,5 +1,12 @@
 @page "/profile"
 @using MudBlazor
+@using MySmartApp.Ui.Services
+@using MySmartApp.Ui.Models
+@inject IUserManagementService UserManagementService
+@inject IAuthService AuthService
+@inject IDialogService DialogService
+@inject ILogger<Profile> Logger
+@attribute [Authorize]
 
 <style>
     .profile-container {
@@ -202,14 +209,28 @@
         <div class="profile-card">
             <!-- Profile Header -->
             <div class="profile-header">
-                <img src="@userProfile.AvatarUrl" alt="Profile Picture" class="profile-avatar" />
+                <img src="@(userProfile.AvatarUrl ?? "/img/admin.jpg")" alt="Profile Picture" class="profile-avatar" />
                 <div class="profile-info">
-                    <h2>@userProfile.FullName</h2>
+                    <h2>@(userProfile.FullName ?? "Nom non défini")</h2>
                     <p>@userProfile.Email</p>
+                    @if (currentUser != null && currentUser.Roles.Any())
+                    {
+                        <div class="d-flex gap-1 mt-1">
+                            @foreach (var role in currentUser.Roles.Take(3))
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="@GetRoleColor(role)">
+                                    @role
+                                </MudChip>
+                            }
+                        </div>
+                    }
                 </div>
-                <button class="edit-btn" @onclick="ToggleEdit">
-                    @(isEditing ? "Cancel" : "Edit")
-                </button>
+                <MudButton OnClick="ToggleEdit" 
+                           Variant="@(isEditing ? Variant.Outlined : Variant.Filled)" 
+                           Color="Color.Primary"
+                           Class="ml-auto">
+                    @(isEditing ? "Annuler" : "Modifier")
+                </MudButton>
             </div>
 
             <!-- Profile Form -->
@@ -292,6 +313,11 @@
                     </button>
                 </div>
 
+                <!-- Droits d'accès Section -->
+                <div class="email-section">
+                    <UserAccessRightsComponent ShowRefreshButton="false" />
+                </div>
+
                 @if (isEditing)
                 {
                     <div class="save-section">
@@ -299,8 +325,13 @@
                                    Variant="Variant.Filled" 
                                    Color="Color.Primary" 
                                    Size="Size.Large"
+                                   Disabled="@isSaving"
                                    Style="border-radius: 6px; text-transform: none; font-weight: 500;">
-                            Save Changes
+                            @if (isSaving)
+                            {
+                                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                            }
+                            Sauvegarder
                         </MudButton>
                     </div>
                 }
@@ -311,7 +342,10 @@
 
 @code {
     private UserProfileModel userProfile = new UserProfileModel();
+    private UserProfileDto? currentUser;
     private bool isEditing = false;
+    private bool isSaving = false;
+    private bool isLoading = true;
 
     // Modèle de données pour le profil utilisateur
     public class UserProfileModel
@@ -333,28 +367,84 @@
         public string AddedDate { get; set; } = string.Empty;
     }
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        // Données de profil fictives basées sur l'image
-        userProfile = new UserProfileModel
+        await LoadUserProfile();
+    }
+
+    private async Task LoadUserProfile()
+    {
+        isLoading = true;
+        StateHasChanged();
+
+        try
         {
-            FullName = "Alexa Rawles",
-            NickName = "Alexa",
-            Email = "alexarawles@gmail.com",
-            Gender = "Female",
-            Country = "France",
-            Language = "English",
-            TimeZone = "Europe/Paris",
-            AvatarUrl = "/img/admin.jpg", // Image par défaut du projet
-            EmailAddresses = new List<EmailAddress>
+            // Récupérer l'utilisateur actuel depuis le token JWT
+            currentUser = await AuthService.GetCurrentUserAsync();
+            
+            if (currentUser != null)
             {
-                new EmailAddress 
-                { 
-                    Address = "alexarawles@gmail.com", 
-                    AddedDate = "1 month ago" 
+                // Récupérer le profil détaillé depuis l'API backend
+                var profileResponse = await UserManagementService.GetUserProfileAsync();
+                
+                if (profileResponse.IsSuccess && profileResponse.Data != null)
+                {
+                    var backendProfile = profileResponse.Data;
+                    
+                    userProfile = new UserProfileModel
+                    {
+                        FullName = backendProfile.FullName ?? currentUser.FirstName + " " + currentUser.LastName,
+                        Email = backendProfile.Email,
+                        AvatarUrl = "/img/admin.jpg", // Image par défaut
+                        EmailAddresses = new List<EmailAddress>
+                        {
+                            new EmailAddress 
+                            { 
+                                Address = backendProfile.Email, 
+                                AddedDate = "Principal" 
+                            }
+                        }
+                    };
+                }
+                else
+                {
+                    // Fallback avec les données du token JWT
+                    userProfile = new UserProfileModel
+                    {
+                        FullName = (currentUser.FirstName + " " + currentUser.LastName).Trim(),
+                        Email = currentUser.Email,
+                        AvatarUrl = "/img/admin.jpg",
+                        EmailAddresses = new List<EmailAddress>
+                        {
+                            new EmailAddress 
+                            { 
+                                Address = currentUser.Email, 
+                                AddedDate = "Principal" 
+                            }
+                        }
+                    };
                 }
             }
-        };
+            
+            Logger.LogInformation("? Profil utilisateur chargé");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "? Erreur lors du chargement du profil utilisateur");
+            
+            // Fallback en cas d'erreur
+            userProfile = new UserProfileModel
+            {
+                FullName = "Utilisateur",
+                Email = "email@example.com",
+                AvatarUrl = "/img/admin.jpg"
+            };
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
     }
 
     private void ToggleEdit()
@@ -363,28 +453,72 @@
         StateHasChanged();
     }
 
-    private void SaveChanges()
+    private async Task SaveChanges()
     {
-        // Logique pour sauvegarder les changements du profil
-        // (Par exemple, un appel à une API)
-        isEditing = false;
-        
-        // Ici vous pourriez ajouter une notification de succès
-        // par exemple avec MudBlazor Snackbar
+        if (isSaving) return;
+
+        isSaving = true;
         StateHasChanged();
+
+        try
+        {
+            var updateDto = new UserProfileUpdateDto(
+                Email: userProfile.Email,
+                FullName: userProfile.FullName
+            );
+
+            var result = await UserManagementService.UpdateUserProfileAsync(updateDto);
+            
+            if (result.IsSuccess)
+            {
+                isEditing = false;
+                Logger.LogInformation("? Profil utilisateur mis à jour avec succès");
+            }
+            else
+            {
+                Logger.LogWarning("?? Échec de la mise à jour du profil: {ErrorMessage}", result.ErrorMessage);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "? Erreur lors de la sauvegarde du profil");
+        }
+        finally
+        {
+            isSaving = false;
+            StateHasChanged();
+        }
     }
 
-    private void AddEmailAddress()
+    private async Task AddEmailAddress()
     {
-        // Logique pour ajouter une nouvelle adresse email
-        // Vous pourriez ouvrir un dialog ou ajouter un champ inline
-        var newEmail = new EmailAddress
+        // Simuler l'ajout d'une nouvelle adresse email
+        // Dans une vraie application, on utiliserait un dialog approprié
+        var newEmail = $"nouveau{userProfile.EmailAddresses.Count + 1}@example.com";
+        
+        var emailAddress = new EmailAddress
         {
-            Address = "new@example.com", // Placeholder
-            AddedDate = "Just now"
+            Address = newEmail,
+            AddedDate = "Maintenant"
         };
         
-        userProfile.EmailAddresses.Add(newEmail);
+        userProfile.EmailAddresses.Add(emailAddress);
         StateHasChanged();
+        
+        Logger.LogInformation("Nouvelle adresse email ajoutée: {Email}", newEmail);
     }
+
+    private Color GetRoleColor(string role) => role.ToLower() switch
+    {
+        "admin" => Color.Error,
+        "manager" => Color.Warning,
+        "employee" => Color.Primary,
+        "viewer" => Color.Info,
+        _ => Color.Default
+    };
 }
+
+@* Dialog pour ajouter une adresse email *@
+<MudDialog @if="false">
+    @* Cette partie sera implementée si nécessaire *@
+</MudDialog>

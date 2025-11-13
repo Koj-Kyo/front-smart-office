@@ -1,0 +1,842 @@
+@page "/incidents"
+@using MySmartApp.Ui.Services
+@using MySmartApp.Ui.Models
+@inject IIncidentTicketService IncidentTicketService
+@inject IBackendZoneService ZoneService
+@inject IDeviceService DeviceService
+@inject IDialogService DialogService
+@inject ILogger<Incidents> Logger
+@attribute [Authorize]
+
+<RequireAuth>
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="my-8">
+    <MudText Typo="Typo.h4" Class="mb-4"> Gestion des Incidents</MudText>
+    <MudText Typo="Typo.body1" Class="mb-4">Gérez les tickets d'incidents techniques de votre environnement IoT.</MudText>
+
+    <!-- Statistiques rapides -->
+    <MudGrid Class="mb-6">
+        @if (statistics.Any())
+        {
+            @foreach (var stat in statistics.Take(4))
+            {
+                <MudItem xs="6" sm="3">
+                    <MudPaper Class="pa-4 text-center" Elevation="2">
+                        <MudText Typo="Typo.h4" Color="@GetStatColor(stat.Key)">@stat.Value</MudText>
+                        <MudText Typo="Typo.body2">@stat.Key</MudText>
+                    </MudPaper>
+                </MudItem>
+            }
+        }
+    </MudGrid>
+
+    <!-- Actions principales -->
+    <div class="d-flex justify-space-between align-center mb-6">
+        <MudButton OnClick="OpenCreateDialog" 
+                   Variant="Variant.Filled" 
+                   Color="Color.Primary" 
+                   StartIcon="@Icons.Material.Filled.Add">
+            Créer un ticket
+        </MudButton>
+        
+        <div class="d-flex gap-2">
+            <MudTextField T="string" 
+                          @bind-Value="searchString"
+                          Placeholder="Rechercher..." 
+                          Adornment="Adornment.Start" 
+                          AdornmentIcon="@Icons.Material.Filled.Search" 
+                          IconSize="Size.Medium"
+                          Style="max-width:300px;" />
+            
+            <MudSelect T="string?" @bind-Value="selectedStatusFilter" Label="Statut" Clearable Style="min-width:150px;">
+                @foreach (var status in availableStatuses)
+                {
+                    <MudSelectItem T="string?" Value="@status">@status</MudSelectItem>
+                }
+            </MudSelect>
+            
+            <MudSwitch @bind-Value="showMyTicketsOnly" 
+                       Label="Mes tickets" 
+                       Color="Color.Primary" />
+            
+            <MudButton OnClick="RefreshData" 
+                       Variant="Variant.Outlined" 
+                       StartIcon="@Icons.Material.Filled.Refresh"
+                       Disabled="@isLoading">
+                Actualiser
+            </MudButton>
+        </div>
+    </div>
+
+    @if (isLoading)
+    {
+        <div class="d-flex justify-center align-center pa-8">
+            <MudProgressCircular Size="Size.Large" Indeterminate="true" />
+            <MudText Class="ml-4">Chargement des tickets...</MudText>
+        </div>
+    }
+    else
+    {
+        <!-- Table des tickets -->
+        <MudTable Items="@filteredTickets" 
+                  Dense="true" 
+                  Hover="true" 
+                  Class="rounded-xl" 
+                  Elevation="2"
+                  T="IncidentTicketDto">
+            <ToolBarContent>
+                <MudText Typo="Typo.h6">Tickets d'Incidents ({filteredTickets.Count()})</MudText>
+                <MudSpacer />
+                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                    @($"Dernière mise à jour: {DateTime.Now:HH:mm:ss}")
+                </MudText>
+            </ToolBarContent>
+            
+            <HeaderContent>
+                <MudTh>ID</MudTh>
+                <MudTh>Sujet</MudTh>
+                <MudTh>Priorité</MudTh>
+                <MudTh>Statut</MudTh>
+                <MudTh>Créé par</MudTh>
+                <MudTh>Assigné à</MudTh>
+                <MudTh>Ressource</MudTh>
+                <MudTh>Créé le</MudTh>
+                <MudTh>Actions</MudTh>
+            </HeaderContent>
+            
+            <RowTemplate>
+                <MudTd DataLabel="ID">
+                    <MudChip T="string" Size="Size.Small" Color="Color.Default">
+                        #@context.Id
+                    </MudChip>
+                </MudTd>
+                <MudTd DataLabel="Sujet">
+                    <div>
+                        <MudText Typo="Typo.body2" Style="font-weight:500;">@context.Sujet</MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">
+                            @{
+                                var desc = context.Description ?? string.Empty;
+                                @((desc.Length > 50) ? desc.Substring(0,50) + "..." : desc)
+                            }
+                        </MudText>
+                    </div>
+                </MudTd>
+                <MudTd DataLabel="Priorite">
+                    @if (!string.IsNullOrEmpty(context.Priorite))
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="@GetPriorityColor(context.Priorite)">
+                            @context.Priorite
+                        </MudChip>
+                    }
+                </MudTd>
+                <MudTd DataLabel="Statut">
+                    <MudChip T="string" Size="Size.Small" Color="@GetStatusColor(context.Statut)">
+                        @context.Statut
+                    </MudChip>
+                </MudTd>
+                <MudTd DataLabel="CreatedBy">
+                    <div class="d-flex align-center">
+                        <MudIcon Icon="@Icons.Material.Filled.Person" Class="mr-2" Size="Size.Small" />
+                        @(context.CreatedByName ?? context.CreatedById)
+                    </div>
+                </MudTd>
+                <MudTd DataLabel="AssignedTo">
+                    @if (!string.IsNullOrEmpty(context.AssignedToId))
+                    {
+                        <div class="d-flex align-center">
+                            <MudIcon Icon="@Icons.Material.Filled.Assignment" Class="mr-2" Size="Size.Small" />
+                            @(context.AssignedToName ?? context.AssignedToId)
+                        </div>
+                    }
+                    else
+                    {
+                        <MudText Color="Color.Secondary">Non assigné</MudText>
+                    }
+                </MudTd>
+                <MudTd DataLabel="Resource">
+                    @if (context.ZoneId.HasValue)
+                    {
+                        <div class="d-flex align-center">
+                            <MudIcon Icon="@Icons.Material.Filled.LocationOn" Class="mr-2" Size="Size.Small" />
+                            @(context.ZoneName ?? $"Zone {context.ZoneId}")
+                        </div>
+                    }
+                    else if (context.PeripheriqueLogiqueId.HasValue)
+                    {
+                        <div class="d-flex align-center">
+                            <MudIcon Icon="@Icons.Material.Filled.DeviceHub" Class="mr-2" Size="Size.Small" />
+                            @(context.PeripheriqueName ?? $"Périphérique {context.PeripheriqueLogiqueId}")
+                        </div>
+                    }
+                    else
+                    {
+                        <MudText Color="Color.Secondary">Général</MudText>
+                    }
+                </MudTd>
+                <MudTd DataLabel="CreatedAt">@context.CreatedAt.ToString("dd/MM/yyyy HH:mm")</MudTd>
+                <MudTd DataLabel="Actions">
+                    <div class="d-flex gap-1">
+                        <MudIconButton Icon="@Icons.Material.Filled.Visibility" 
+                                       Color="Color.Info" 
+                                       Size="Size.Small"
+                                       OnClick="@(() => ViewTicketDetails(context))"
+                                       Title="Voir les détails" />
+                        
+                        <!-- Marquer comme Résolu -->
+                        <MudIconButton Icon="@Icons.Material.Filled.CheckCircle"
+                                       Color="Color.Success"
+                                       Size="Size.Small"
+                                       Disabled="@(context.Statut == "Résolu")"
+                                       OnClick="@(() => SetTicketResolved(context))"
+                                       Title="Marquer comme résolu" />
+                        
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit" 
+                                       Color="Color.Primary" 
+                                       Size="Size.Small"
+                                       OnClick="@(() => UpdateTicketStatus(context))"
+                                       Title="Changer le statut" />
+                        
+                        <AuthorizeView Roles="Manager,Admin" Context="authContext">
+                            <MudIconButton Icon="@Icons.Material.Filled.AssignmentInd" 
+                                           Color="Color.Secondary" 
+                                           Size="Size.Small"
+                                           OnClick="@(() => AssignTicket(context))"
+                                           Title="Assigner" />
+                        </AuthorizeView>
+                        
+                        <AuthorizeView Roles="Admin" Context="authContext">
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" 
+                                           Color="Color.Error" 
+                                           Size="Size.Small"
+                                           OnClick="@(() => DeleteTicket(context))"
+                                           Title="Supprimer" />
+                        </AuthorizeView>
+                    </div>
+                </MudTd>
+            </RowTemplate>
+            
+            <NoRecordsContent>
+                <div class="d-flex flex-column align-center pa-8">
+                    <MudIcon Icon="@Icons.Material.Filled.ConfirmationNumber" Size="Size.Large" Color="Color.Secondary" Class="mb-4" />
+                    <MudText Typo="Typo.h6" Color="Color.Secondary">Aucun ticket trouvé</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                        @(string.IsNullOrEmpty(searchString) ? "Créez votre premier ticket d'incident" : "Aucun résultat pour votre recherche")
+                    </MudText>
+                </div>
+            </NoRecordsContent>
+        </MudTable>
+    }
+</MudContainer>
+
+<!-- Dialog de création -->
+<MudOverlay @bind-Visible="isCreateDialogOpen" DarkBackground="true" Absolute="false">
+    <MudPaper Class="pa-6" Style="max-width:700px; margin:50px auto;">
+        <MudText Typo="Typo.h6" Class="mb-4">
+            <MudIcon Icon="@Icons.Material.Filled.BugReport" Class="mr-2" />
+            Créer un nouveau ticket
+        </MudText>
+
+        <MudForm @ref="createForm" Model="@newTicket">
+            <MudGrid>
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="newTicket.Sujet"
+                                  Label="Sujet"
+                                  Required="true"
+                                  RequiredError="Le sujet est obligatoire"
+                                  MaxLength="100" />
+                </MudItem>
+                
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="newTicket.Description"
+                                  Label="Description"
+                                  Required="true"
+                                  RequiredError="La description est obligatoire"
+                                  Lines="4"
+                                  MaxLength="500" />
+                </MudItem>
+                
+                <MudItem xs="12" sm="6">
+                    <MudSelect T="string" @bind-Value="newTicket.Statut"
+                               Label="Statut initial"
+                               Required="true"
+                               RequiredError="Le statut est obligatoire">
+                        @foreach (var status in availableStatuses.Take(3))
+                        {
+                            <MudSelectItem T="string" Value="@status">@status</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                
+                <!-- ? NOUVEAU: Champ Priorité -->
+                <MudItem xs="12" sm="6">
+                    <MudSelect T="string" @bind-Value="newTicket.Priorite"
+                               Label="Priorité"
+                               Required="true">
+                        <MudSelectItem T="string" Value="@("Basse")">
+                            <MudText>Basse</MudText>
+                        </MudSelectItem>
+                        <MudSelectItem T="string" Value="@("Moyenne")">
+                            <MudText>Moyenne</MudText>
+                        </MudSelectItem>
+                        <MudSelectItem T="string" Value="@("Haute")">
+                            <MudText Color="Color.Warning">?? Haute</MudText>
+                        </MudSelectItem>
+                        <MudSelectItem T="string" Value="@("Critique")">
+                            <MudText Color="Color.Error">?? Critique</MudText>
+                        </MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+                
+                <MudItem xs="12" sm="6">
+                    <MudSelect T="string" @bind-Value="resourceType"
+                               Label="Type de ressource"
+                               @bind-Value:after="OnResourceTypeChanged">
+                        <MudSelectItem T="string" Value="@("None")">Général</MudSelectItem>
+                        <MudSelectItem T="string" Value="@("Zone")">Zone spécifique</MudSelectItem>
+                        <MudSelectItem T="string" Value="@("Peripherique")">Périphérique spécifique</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+                
+                <!-- ? AMÉLIORATION: Select Zones au lieu de saisie manuelle -->
+                @if (resourceType == "Zone")
+                {
+                    <MudItem xs="12">
+                        @if (isLoadingZones)
+                        {
+                            <MudProgressLinear Indeterminate="true" Class="mb-2" />
+                            <MudText Typo="Typo.caption">Chargement des zones...</MudText>
+                        }
+                        else if (availableZones.Any())
+                        {
+                            <MudSelect T="int?" @bind-Value="newTicket.ZoneId"
+                                      Label="Zone"
+                                      Required="true"
+                                      HelperText="Sélectionnez la zone concernée par l'incident">
+                                @foreach (var zone in availableZones)
+                                {
+                                    <MudSelectItem T="int?" Value="@zone.Id">
+                                        <div class="d-flex align-center">
+                                            <MudIcon Icon="@Icons.Material.Filled.LocationOn" Class="mr-2" Size="Size.Small" />
+                                            <MudText>@zone.Nom</MudText>
+                                        </div>
+                                    </MudSelectItem>
+                                }
+                            </MudSelect>
+                        }
+                        else
+                        {
+                            <MudAlert Severity="Severity.Warning">Aucune zone disponible</MudAlert>
+                        }
+                    </MudItem>
+                }
+                
+                <!-- ? AMÉLIORATION: Select Périphériques au lieu de saisie manuelle -->
+                @if (resourceType == "Peripherique")
+                {
+                    <MudItem xs="12">
+                        @if (isLoadingDevices)
+                        {
+                            <MudProgressLinear Indeterminate="true" Class="mb-2" />
+                            <MudText Typo="Typo.caption">Chargement des périphériques...</MudText>
+                        }
+                        else if (availableDevices.Any())
+                        {
+                            <MudSelect T="int?" @bind-Value="newTicket.PeripheriqueLogiqueId"
+                                      Label="Périphérique"
+                                      Required="true"
+                                      HelperText="Sélectionnez le périphérique concerné par l'incident">
+                                @foreach (var device in availableDevices)
+                                {
+                                    <MudSelectItem T="int?" Value="@device.Id">
+                                        <div class="d-flex align-center">
+                                            <MudIcon Icon="@Icons.Material.Filled.DeviceHub" Class="mr-2" Size="Size.Small" />
+                                            <div>
+                                                <MudText Typo="Typo.body2">@device.Name</MudText>
+                                                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                                    @device.DeviceType - Zone @device.ZoneId
+                                                </MudText>
+                                            </div>
+                                        </div>
+                                    </MudSelectItem>
+                                }
+                            </MudSelect>
+                        }
+                        else
+                        {
+                            <MudAlert Severity="Severity.Warning">Aucun périphérique disponible</MudAlert>
+                        }
+                    </MudItem>
+                }
+            </MudGrid>
+        </MudForm>
+
+        <div class="d-flex justify-end mt-4">
+            <MudButton OnClick="CloseCreateDialog" Color="Color.Default" Class="mr-2">
+                Annuler
+            </MudButton>
+            <MudButton OnClick="CreateTicket" 
+                       Color="Color.Primary" 
+                       Variant="Variant.Filled"
+                       Disabled="@isCreating">
+                @if (isCreating)
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                }
+                Créer le ticket
+            </MudButton>
+        </div>
+    </MudPaper>
+</MudOverlay>
+
+<!-- Dialog de détails -->
+<MudOverlay @bind-Visible="isDetailsDialogOpen" DarkBackground="true" Absolute="false">
+    <MudPaper Class="pa-6" Style="max-width:900px; margin:50px auto; max-height:80vh; overflow-y: auto;">
+        @if (selectedTicket != null)
+        {
+            <MudText Typo="Typo.h6" Class="mb-4">
+                <MudIcon Icon="@Icons.Material.Filled.BugReport" Class="mr-2" />
+                Ticket #@selectedTicket.Id - @selectedTicket.Sujet
+            </MudText>
+
+            <MudGrid>
+                <MudItem xs="12" md="8">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.h6" Class="mb-2">Description</MudText>
+                        <MudText Typo="Typo.body1">@selectedTicket.Description</MudText>
+                    </MudPaper>
+                </MudItem>
+                
+                <MudItem xs="12" md="4">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.h6" Class="mb-4">Informations</MudText>
+                        
+                        <div class="mb-3">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Statut</MudText>
+                            <MudChip T="string" Color="@GetStatusColor(selectedTicket.Statut)">
+                                @selectedTicket.Statut
+                            </MudChip>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Créé par</MudText>
+                            <MudText Typo="Typo.body2">@(selectedTicket.CreatedByName ?? selectedTicket.CreatedById)</MudText>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Assigné à</MudText>
+                            <MudText Typo="Typo.body2">
+                                @(selectedTicket.AssignedToName ?? selectedTicket.AssignedToId ?? "Non assigné")
+                            </MudText>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Créé le</MudText>
+                            <MudText Typo="Typo.body2">@selectedTicket.CreatedAt.ToString("dd/MM/yyyy HH:mm")</MudText>
+                        </div>
+                        
+                        @if (selectedTicket.UpdatedAt.HasValue)
+                        {
+                            <div class="mb-3">
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">Modifié le</MudText>
+                                <MudText Typo="Typo.body2">@selectedTicket.UpdatedAt.Value.ToString("dd/MM/yyyy HH:mm")</MudText>
+                            </div>
+                        }
+                    </MudPaper>
+                </MudItem>
+            </MudGrid>
+        }
+
+        <div class="d-flex justify-end mt-4">
+            <MudButton OnClick="CloseDetailsDialog" Color="Color.Primary">
+                Fermer
+            </MudButton>
+            @if (selectedTicket is not null)
+            {
+                <MudButton OnClick="@(() => SetTicketResolved(selectedTicket))"
+                           Color="Color.Success"
+                           Class="ml-2"
+                           Disabled="@(selectedTicket.Statut == "Résolu")"
+                           StartIcon="@Icons.Material.Filled.CheckCircle">
+                    Marquer résolu
+                </MudButton>
+            }
+        </div>
+    </MudPaper>
+</MudOverlay>
+
+</RequireAuth>
+
+@code {
+    // État de la page
+    private bool isLoading = true;
+    private string searchString = "";
+    private string? selectedStatusFilter;
+    private bool showMyTicketsOnly = false;
+    private string? currentUserId;
+    
+    // Dialogs
+    private bool isCreateDialogOpen = false;
+    private bool isDetailsDialogOpen = false;
+    private bool isCreating = false;
+    private MudForm? createForm;
+    
+    // Données
+    private List<IncidentTicketDto> tickets = new();
+    private List<string> availableStatuses = new();
+    private Dictionary<string, int> statistics = new();
+    
+    // ? NOUVEAU: Listes pour selects
+    private List<BackendZoneDto> availableZones = new();
+    private List<DeviceDto> availableDevices = new();
+    private bool isLoadingZones = false;
+    private bool isLoadingDevices = false;
+    
+    // Modèles
+    private IncidentTicketCreateDto newTicket = new() { Sujet = "", Description = "", Statut = "Ouvert", Priorite = "Moyenne" };
+    private IncidentTicketDto? selectedTicket;
+    private string resourceType = "None";
+
+    // Propriétés calculées
+    private IEnumerable<IncidentTicketDto> filteredTickets =>
+        tickets.Where(t => 
+            (string.IsNullOrEmpty(searchString) || 
+             t.Sujet.Contains(searchString, StringComparison.OrdinalIgnoreCase) ||
+             t.Description.Contains(searchString, StringComparison.OrdinalIgnoreCase) ||
+             (t.CreatedByName?.Contains(searchString, StringComparison.OrdinalIgnoreCase) == true)) &&
+            (string.IsNullOrEmpty(selectedStatusFilter) || t.Statut == selectedStatusFilter) &&
+            (!showMyTicketsOnly || IsMyTicket(t))
+        );
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Récupérer l'ID utilisateur courant
+        currentUserId = await IncidentTicketService.GetCurrentUserIdAsync();
+        
+        availableStatuses = await IncidentTicketService.GetAvailableStatusesAsync();
+        
+        // ? NOUVEAU: Charger zones et devices en parallèle
+        await Task.WhenAll(
+            LoadData(),
+            LoadZones(),
+            LoadDevices()
+        );
+    }
+
+    // ? NOUVEAU: Chargement zones
+    private async Task LoadZones()
+    {
+        isLoadingZones = true;
+        try
+        {
+            var response = await ZoneService.GetAllZonesAsync();
+            if (response.IsSuccess && response.Data != null)
+            {
+                availableZones = response.Data;
+                Logger.LogInformation("? {Count} zones chargées", availableZones.Count);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "? Erreur chargement zones");
+        }
+        finally
+        {
+            isLoadingZones = false;
+        }
+    }
+
+    // ? NOUVEAU: Chargement devices
+    private async Task LoadDevices()
+    {
+        isLoadingDevices = true;
+        try
+        {
+            var devices = await DeviceService.GetAllDevicesLegacyAsync();
+            availableDevices = devices.ToList();
+            Logger.LogInformation("? {Count} devices chargés", availableDevices.Count);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "? Erreur chargement devices");
+        }
+        finally
+        {
+            isLoadingDevices = false;
+        }
+    }
+
+    private async Task LoadData()
+    {
+        isLoading = true;
+        StateHasChanged();
+        
+        try
+        {
+            // Charger tickets et statistiques en parallèle
+            var ticketsTask = IncidentTicketService.GetAllTicketsAsync();
+            var statsTask = IncidentTicketService.GetTicketStatisticsAsync();
+            
+            await Task.WhenAll(ticketsTask, statsTask);
+            
+            var ticketsResponse = await ticketsTask;
+            if (ticketsResponse.IsSuccess && ticketsResponse.Data != null)
+            {
+                tickets = ticketsResponse.Data;
+            }
+            
+            statistics = await statsTask;
+            
+            Logger.LogInformation("? {Count} tickets chargés", tickets.Count);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "? Erreur lors du chargement des données");
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task SetTicketResolved(IncidentTicketDto ticket)
+    {
+        if (ticket.Statut == "Résolu")
+        {
+            return;
+        }
+        
+        await SetTicketStatus(ticket, "Résolu");
+    }
+
+    private async Task SetTicketStatus(IncidentTicketDto ticket, string newStatus)
+    {
+        var updateResult = await IncidentTicketService.UpdateTicketStatusAsync(ticket.Id, newStatus);
+        if (updateResult.IsSuccess)
+        {
+            await LoadData();
+            if (isDetailsDialogOpen && selectedTicket?.Id == ticket.Id)
+            {
+                // Mettre à jour la vue détails si ouverte
+                var refreshed = await IncidentTicketService.GetTicketByIdAsync(ticket.Id);
+                if (refreshed.IsSuccess && refreshed.Data is not null)
+                {
+                    selectedTicket = refreshed.Data;
+                    StateHasChanged();
+                }
+            }
+        }
+    }
+
+    private async Task RefreshData()
+    {
+        await LoadData();
+    }
+
+    private void OpenCreateDialog()
+    {
+        newTicket = new IncidentTicketCreateDto { Sujet = "", Description = "", Statut = "Ouvert", Priorite = "Moyenne" };
+        resourceType = "None";
+        isCreateDialogOpen = true;
+    }
+
+    private void CloseCreateDialog()
+    {
+        isCreateDialogOpen = false;
+        newTicket = new IncidentTicketCreateDto { Sujet = "", Description = "", Statut = "Ouvert", Priorite = "Moyenne" };
+        resourceType = "None";
+    }
+
+    private void OnResourceTypeChanged()
+    {
+        if (resourceType == "Zone")
+        {
+            newTicket.PeripheriqueLogiqueId = null;
+        }
+        else if (resourceType == "Peripherique")
+        {
+            newTicket.ZoneId = null;
+        }
+        else
+        {
+            newTicket.ZoneId = null;
+            newTicket.PeripheriqueLogiqueId = null;
+        }
+    }
+
+    private async Task CreateTicket()
+    {
+        if (createForm != null)
+        {
+            await createForm.Validate();
+            if (!createForm.IsValid) return;
+        }
+
+        isCreating = true;
+        StateHasChanged();
+
+        try
+        {
+            Logger.LogInformation("?? Début création ticket: {Sujet}", newTicket.Sujet);
+            Logger.LogInformation("?? DTO envoyé: Sujet={Sujet}, Priorite={Priorite}, ZoneId={ZoneId}", 
+                newTicket.Sujet, newTicket.Priorite, newTicket.ZoneId);
+            
+            var result = await IncidentTicketService.CreateTicketAsync(newTicket);
+            
+            Logger.LogInformation("?? Résultat: IsSuccess={IsSuccess}, ErrorMessage={Error}, Data={HasData}", 
+                result.IsSuccess, result.ErrorMessage, result.Data != null);
+            
+            if (result.IsSuccess)
+            {
+                Logger.LogInformation("? Ticket créé avec succès, rechargement données...");
+                await LoadData();
+                CloseCreateDialog();
+                Logger.LogInformation("? Dialog fermé");
+            }
+            else
+            {
+                Logger.LogError("? Échec création: {Error}", result.ErrorMessage);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "?? Exception lors de la création: {Message}", ex.Message);
+        }
+        finally
+        {
+            isCreating = false;
+            StateHasChanged();
+            Logger.LogInformation("?? Fin tentative création ticket");
+        }
+    }
+
+    private async Task ViewTicketDetails(IncidentTicketDto ticket)
+    {
+        // Recharger les détails complets depuis l'API
+        var response = await IncidentTicketService.GetTicketByIdAsync(ticket.Id);
+        if (response.IsSuccess && response.Data != null)
+        {
+            selectedTicket = response.Data;
+            isDetailsDialogOpen = true;
+        }
+    }
+
+    private void CloseDetailsDialog()
+    {
+        isDetailsDialogOpen = false;
+        selectedTicket = null;
+    }
+
+    private async Task UpdateTicketStatus(IncidentTicketDto ticket)
+    {
+        // Créer une liste des statuts possibles pour le changement
+        var statusOptions = availableStatuses.Where(s => s != ticket.Statut).ToArray();
+        
+        var result = await DialogService.ShowMessageBox(
+            $"?? Changer le statut du ticket #{ticket.Id}",
+            $"Statut actuel: {ticket.Statut}\n\nLe statut sera changé au suivant dans la liste.",
+            yesText: "Modifier",
+            cancelText: "Annuler");
+
+        if (result == true)
+        {
+            // Prendre le statut suivant dans la liste
+            var currentIndex = availableStatuses.IndexOf(ticket.Statut);
+            var nextStatus = availableStatuses[(currentIndex + 1) % availableStatuses.Count];
+            
+            var updateResult = await IncidentTicketService.UpdateTicketStatusAsync(ticket.Id, nextStatus);
+            if (updateResult.IsSuccess)
+            {
+                await LoadData();
+            }
+        }
+    }
+
+    private async Task AssignTicket(IncidentTicketDto ticket)
+    {
+        if (string.IsNullOrEmpty(currentUserId))
+        {
+            Logger.LogWarning("?? Impossible d'obtenir l'ID utilisateur courant");
+            return;
+        }
+
+        var result = await DialogService.ShowMessageBox(
+            $"?? Assigner le ticket #{ticket.Id}",
+            $"Voulez-vous vous assigner ce ticket ?\n\nSujet: {ticket.Sujet}",
+            yesText: "M'assigner",
+            cancelText: "Annuler");
+
+        if (result == true)
+        {
+            var assignResult = await IncidentTicketService.AssignTicketAsync(ticket.Id, currentUserId);
+            if (assignResult.IsSuccess)
+            {
+                await LoadData();
+            }
+        }
+    }
+
+    private async Task DeleteTicket(IncidentTicketDto ticket)
+    {
+        bool? result = await DialogService.ShowMessageBox(
+            "?? Confirmation de suppression",
+            $"Êtes-vous sûr de vouloir supprimer le ticket #{ticket.Id} ?\n\n" +
+            $"Sujet: {ticket.Sujet}\n" +
+            $"Statut: {ticket.Statut}\n\n" +
+            $"?? Cette action est irréversible.",
+            yesText: "Oui, supprimer",
+            cancelText: "Annuler");
+
+        if (result == true)
+        {
+            var deleteResult = await IncidentTicketService.DeleteTicketAsync(ticket.Id);
+            if (deleteResult.IsSuccess)
+            {
+                await LoadData();
+                
+                if (isDetailsDialogOpen && selectedTicket?.Id == ticket.Id)
+                {
+                    CloseDetailsDialog();
+                }
+            }
+        }
+    }
+
+    // Méthodes utilitaires
+    private bool IsMyTicket(IncidentTicketDto ticket)
+    {
+        if (string.IsNullOrEmpty(currentUserId))
+            return false;
+        
+        return ticket.CreatedById == currentUserId || ticket.AssignedToId == currentUserId;
+    }
+
+    private Color GetStatusColor(string status) => status switch
+    {
+        "Ouvert" => Color.Warning,
+        "En cours" => Color.Info,
+        "En attente" => Color.Secondary,
+        "Résolu" => Color.Success,
+        "Fermé" => Color.Default,
+        "Annulé" => Color.Error,
+        _ => Color.Default
+    };
+
+    private Color GetStatColor(string statName) => statName switch
+    {
+        "Total" => Color.Primary,
+        "Ouvert" => Color.Warning,
+        "En cours" => Color.Info,
+        "Résolu" => Color.Success,
+        _ => Color.Default
+    };
+
+    // ? NOUVEAU: Couleur selon priorité
+    private Color GetPriorityColor(string priorite) => priorite switch
+    {
+        "Basse" => Color.Default,
+        "Moyenne" => Color.Info,
+        "Haute" => Color.Warning,
+        "Critique" => Color.Error,
+        _ => Color.Default
+    };
+}

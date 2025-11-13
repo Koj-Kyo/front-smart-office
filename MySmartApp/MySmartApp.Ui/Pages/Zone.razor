@@ -1,7 +1,13 @@
 ﻿@page "/zones"
 @using MudBlazor
+@using MySmartApp.Ui.Services
+@using MySmartApp.Ui.Models
 @inject IDialogService DialogService
+@inject IBackendZoneService BackendZoneService
+@inject ILogger<Zone> Logger
+@attribute [Authorize]
 
+<RequireAuth>
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="my-8">
     <MudText Typo="Typo.h4" Class="mb-4">Gestion des zones</MudText>
     <MudText Typo="Typo.body1" Class="mb-8">En tant qu'administrateur, vous pouvez ici gérer les zones, affecter des appareils et des utilisateurs.</MudText>
@@ -20,55 +26,89 @@
                       Style="max-width: 300px;"></MudTextField>
     </div>
 
-    <MudExpansionPanels MultiExpansion="true" Class="rounded-xl">
-        @foreach (var zone in filteredZones)
-        {
-            <MudExpansionPanel Text="@zone.Name">
-                <ChildContent>
-                    <div class="d-flex flex-column pa-4">
-                        <MudGrid>
-                            <MudItem xs="12" sm="6">
-                                <MudText Typo="Typo.h6">Appareils</MudText>
-                                @if (zone.Devices.Any())
-                                {
-                                    <MudList T="Device">
-                                        @foreach (var device in zone.Devices)
-                                        {
-                                            <MudListItem T="Device" Icon="@device.Icon" Text="@device.DeviceName" />
-                                        }
-                                    </MudList>
-                                }
-                                else
-                                {
-                                    <MudText>Aucun appareil assigné.</MudText>
-                                }
-                            </MudItem>
-                            <MudItem xs="12" sm="6">
-                                <MudText Typo="Typo.h6">Membres</MudText>
-                                @if (zone.Members.Any())
-                                {
-                                    <MudList T="Member">
-                                        @foreach (var member in zone.Members)
-                                        {
-                                            <MudListItem T="Member" Text="@member.Name" />
-                                        }
-                                    </MudList>
-                                }
-                                else
-                                {
-                                    <MudText>Aucun membre assigné.</MudText>
-                                }
-                            </MudItem>
-                        </MudGrid>
-                    </div>
-                    <div class="d-flex justify-end pa-2">
-                        <MudIconButton OnClick="@(() => OpenEditDialog(zone))" Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" />
-                        <MudIconButton OnClick="@(() => DeleteZone(zone))" Icon="@Icons.Material.Filled.Delete" Color="Color.Error" />
-                    </div>
-                </ChildContent>
-            </MudExpansionPanel>
-        }
-    </MudExpansionPanels>
+    @if (isLoading)
+    {
+        <div class="d-flex justify-center align-center pa-8">
+            <MudProgressCircular Size="Size.Large" Indeterminate="true" Class="mr-4" />
+            <MudText Typo="Typo.h6">Chargement des zones...</MudText>
+        </div>
+    }
+    else if (filteredZones.Any())
+    {
+        <MudExpansionPanels MultiExpansion="true" Class="rounded-xl">
+            @foreach (var zone in filteredZones)
+            {
+                <MudExpansionPanel Text="@zone.Nom">
+                    <ChildContent>
+                        <div class="d-flex flex-column pa-4">
+                            <MudGrid>
+                                <MudItem xs="12" sm="6">
+                                    <MudText Typo="Typo.h6">Informations</MudText>
+                                    <MudText Typo="Typo.body2" Class="mb-2">
+                                        <strong>ID:</strong> @zone.Id
+                                    </MudText>
+                                    <MudText Typo="Typo.body2" Class="mb-2">
+                                        <strong>Nom:</strong> @zone.Nom
+                                    </MudText>
+                                    <MudText Typo="Typo.body2" Class="mb-4">
+                                        <strong>Longueur du nom:</strong> @zone.Nom.Length caractères
+                                    </MudText>
+                                </MudItem>
+                                <MudItem xs="12" sm="6">
+                                    <MudText Typo="Typo.h6">Statistiques</MudText>
+                                    <MudText Typo="Typo.body2" Class="mb-2">
+                                        <MudIcon Icon="@Icons.Material.Filled.Devices" Size="Size.Small" Class="mr-2" />
+                                        Périphériques: En cours d'implémentation
+                                    </MudText>
+                                    <MudText Typo="Typo.body2" Class="mb-2">
+                                        <MudIcon Icon="@Icons.Material.Filled.People" Size="Size.Small" Class="mr-2" />
+                                        Utilisateurs: En cours d'implémentation
+                                    </MudText>
+                                    <MudText Typo="Typo.body2">
+                                        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Small" Class="mr-2" Color="Color.Success" />
+                                        Statut: Active
+                                    </MudText>
+                                </MudItem>
+                            </MudGrid>
+                        </div>
+                        <div class="d-flex justify-end pa-2">
+                            <MudIconButton OnClick="@(() => OpenEditDialog(zone))" 
+                                         Icon="@Icons.Material.Filled.Edit" 
+                                         Color="Color.Primary"
+                                         Title="Modifier cette zone" />
+                            <MudIconButton OnClick="@(() => DeleteZone(zone))" 
+                                         Icon="@Icons.Material.Filled.Delete" 
+                                         Color="Color.Error"
+                                         Title="Supprimer cette zone" />
+                        </div>
+                    </ChildContent>
+                </MudExpansionPanel>
+            }
+        </MudExpansionPanels>
+    }
+    else
+    {
+        <MudPaper Class="pa-8 text-center" Elevation="2">
+            <MudIcon Icon="@Icons.Material.Filled.LocationOff" Size="Size.Large" Color="Color.Secondary" Class="mb-4" />
+            <MudText Typo="Typo.h5" Color="Color.Secondary">Aucune zone trouvée</MudText>
+            <MudText Typo="Typo.body1" Color="Color.Secondary" Class="mb-4">
+                @if (string.IsNullOrEmpty(searchString))
+                {
+                    <text>Commencez par créer votre première zone.</text>
+                }
+                else
+                {
+                    <text>Aucune zone ne correspond à votre recherche "@searchString".</text>
+                }
+            </MudText>
+            <MudButton OnClick="OpenAddDialog" 
+                       Variant="Variant.Filled" 
+                       Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.Add">
+                Créer la première zone
+            </MudButton>
+        </MudPaper>
+    }
 </MudContainer>
 
 <MudOverlay @bind-Visible="isDialogOpen" DarkBackground="true" Absolute="false">
@@ -78,268 +118,202 @@
             @(isAdding ? "Ajouter une zone" : "Modifier la zone")
         </MudText>
 
-        <MudForm @ref="form">
-            <MudTextField @bind-Value="editingZone.Name" 
+        <MudForm @ref="form" @bind-IsValid="@isFormValid">
+            <MudTextField @bind-Value="editingZone.Nom" 
                          Label="Nom de la zone" 
                          Required="true" 
-                         RequiredError="Le nom est obligatoire!" 
+                         RequiredError="Le nom est obligatoire!"
+                         MaxLength="100"
+                         Counter="100"
+                         HelperText="Donnez un nom descriptif à votre zone"
                          Class="mb-4" />
-            
-            <MudSelect @bind-Value="editingZone.Icon" 
-                      Label="Icône" 
-                      Required="true" 
-                      RequiredError="L'icône est obligatoire!"
-                      Class="mb-4">
-                <MudSelectItem Value="@Icons.Material.Filled.MeetingRoom">🛋️ Salon</MudSelectItem>
-                <MudSelectItem Value="@Icons.Material.Filled.BedroomParent">🛏️ Chambre</MudSelectItem>
-                <MudSelectItem Value="@Icons.Material.Filled.Kitchen">🍳 Cuisine</MudSelectItem>
-                <MudSelectItem Value="@Icons.Material.Filled.Work">💼 Bureau</MudSelectItem>
-                <MudSelectItem Value="@Icons.Material.Filled.Garage">🚗 Garage</MudSelectItem>
-                <MudSelectItem Value="@Icons.Material.Filled.Bathroom">🛁 Salle de bain</MudSelectItem>
-                <MudSelectItem Value="@Icons.Material.Filled.Deck">🌿 Terrasse</MudSelectItem>
-                <MudSelectItem Value="@Icons.Material.Filled.Stairs">🪜 Escalier</MudSelectItem>
-            </MudSelect>
-            
-            <MudSelect T="Device" 
-                      Label="Appareils" 
-                      MultiSelection="true" 
-                      @bind-SelectedValues="selectedDevices"
-                      Class="mb-4">
-                @foreach (var device in MockDevices)
-                {
-                    <MudSelectItem Value="@device">@device.DeviceName</MudSelectItem>
-                }
-            </MudSelect>
-            
-            <MudSelect T="Member" 
-                      Label="Membres" 
-                      MultiSelection="true" 
-                      @bind-SelectedValues="selectedMembers"
-                      Class="mb-4">
-                @foreach (var member in MockMembers)
-                {
-                    <MudSelectItem Value="@member">@member.Name</MudSelectItem>
-                }
-            </MudSelect>
         </MudForm>
+
+        @if (isEditing && currentZone != null)
+        {
+            <MudDivider Class="my-4" />
+            <MudText Typo="Typo.subtitle2" Class="mb-2">Informations système</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">ID: @currentZone.Id</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">Longueur actuelle: @currentZone.Nom.Length caractères</MudText>
+        }
 
         <MudGrid Class="mt-4">
             <MudItem xs="6">
                 <MudButton OnClick="OnCancel" FullWidth="true" Color="Color.Default">Annuler</MudButton>
             </MudItem>
             <MudItem xs="6">
-                <MudButton OnClick="OnSave" FullWidth="true" Color="Color.Primary" Variant="Variant.Filled">
-                    Sauvegarder
+                <MudButton OnClick="OnSave" 
+                           FullWidth="true" 
+                           Color="Color.Primary" 
+                           Variant="Variant.Filled"
+                           Disabled="@(!isFormValid || isProcessing)">
+                    @if (isProcessing)
+                    {
+                        <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                    }
+                    @(isAdding ? "Créer" : "Modifier")
                 </MudButton>
             </MudItem>
         </MudGrid>
     </MudPaper>
 </MudOverlay>
 
+</RequireAuth>
+
 @code {
-    private List<ZoneModel> zones = new List<ZoneModel>();
-    private List<ZoneModel> filteredZones => FilterZones();
-    private string searchString = "";
+    // État de la page
+    private bool isLoading = true;
     private bool isDialogOpen = false;
     private bool isAdding = true;
-    private ZoneModel editingZone = new ZoneModel();
+    private bool isEditing = false;
+    private bool isFormValid = false;
+    private bool isProcessing = false;
+    private string searchString = "";
     private MudForm? form;
-    private IEnumerable<Device> selectedDevices = new List<Device>();
-    private IEnumerable<Member> selectedMembers = new List<Member>();
-    private int nextId = 4;
+    
+    // Données
+    private List<BackendZoneDto> zones = new();
+    private BackendZoneDto? currentZone;
+    
+    // Modèle pour le formulaire
+    private ZoneFormModel editingZone = new();
+    
+    // Propriétés calculées
+    private List<BackendZoneDto> filteredZones => 
+        string.IsNullOrEmpty(searchString) 
+            ? zones 
+            : zones.Where(z => z.Nom.Contains(searchString, StringComparison.OrdinalIgnoreCase)).ToList();
 
-    // Modèles de données
-    public class ZoneModel
+    protected override async Task OnInitializedAsync()
     {
-        public int Id { get; set; }
-        public string Name { get; set; } = "";
-        public string Icon { get; set; } = Icons.Material.Filled.MeetingRoom;
-        public List<Device> Devices { get; set; } = new List<Device>();
-        public List<Member> Members { get; set; } = new List<Member>();
-
-        public override string ToString() => Name;
-        public override bool Equals(object? obj) => obj is ZoneModel zone && Id == zone.Id;
-        public override int GetHashCode() => Id.GetHashCode();
+        await LoadZones();
     }
 
-    public class Device
+    private async Task LoadZones()
     {
-        public int Id { get; set; }
-        public string DeviceName { get; set; } = "";
-        public string Icon { get; set; } = "";
-        public string DeviceColor { get; set; } = "";
-        public bool IsOn { get; set; }
+        isLoading = true;
+        StateHasChanged();
 
-        public override string ToString() => DeviceName;
-        public override bool Equals(object? obj) => obj is Device device && Id == device.Id;
-        public override int GetHashCode() => Id.GetHashCode();
-    }
-
-    public class Member
-    {
-        public int Id { get; set; }
-        public string Name { get; set; } = "";
-        public string ImageUrl { get; set; } = "";
-        public string Role { get; set; } = "";
-
-        public override string ToString() => Name;
-        public override bool Equals(object? obj) => obj is Member member && Id == member.Id;
-        public override int GetHashCode() => Id.GetHashCode();
-    }
-
-    private List<Device> MockDevices = new List<Device>
-    {
-        new Device { Id = 1, DeviceName = "Climatiseur", Icon = Icons.Material.Filled.AcUnit, DeviceColor = "#5850EC", IsOn = true },
-        new Device { Id = 2, DeviceName = "Lumières", Icon = Icons.Material.Filled.Lightbulb, DeviceColor = "#FFD700", IsOn = true },
-        new Device { Id = 3, DeviceName = "Thermostat", Icon = Icons.Material.Filled.Thermostat, DeviceColor = "#FF7F50", IsOn = true },
-        new Device { Id = 4, DeviceName = "Routeur", Icon = Icons.Material.Filled.Router, DeviceColor = "#00CED1", IsOn = false },
-        new Device { Id = 5, DeviceName = "TV", Icon = Icons.Material.Filled.Tv, DeviceColor = "#9C27B0", IsOn = false },
-        new Device { Id = 6, DeviceName = "Haut-parleur", Icon = Icons.Material.Filled.Speaker, DeviceColor = "#4CAF50", IsOn = true }
-    };
-
-    private List<Member> MockMembers = new List<Member>
-    {
-        new Member { Id = 1, Name = "Scarlett", ImageUrl = "https://i.pravatar.cc/100?img=1", Role = "Admin" },
-        new Member { Id = 2, Name = "Nariya", ImageUrl = "https://i.pravatar.cc/100?img=2", Role = "Membre" },
-        new Member { Id = 3, Name = "Riya", ImageUrl = "https://i.pravatar.cc/100?img=3", Role = "Membre" },
-        new Member { Id = 4, Name = "Alexandre", ImageUrl = "https://i.pravatar.cc/100?img=4", Role = "Visiteur" }
-    };
-
-    protected override void OnInitialized()
-    {
-        zones = new List<ZoneModel>
+        try
         {
-            new ZoneModel 
-            { 
-                Id = 1, 
-                Name = "Salon", 
-                Icon = Icons.Material.Filled.MeetingRoom, 
-                Devices = MockDevices.GetRange(0, 2).ToList(), 
-                Members = MockMembers.GetRange(0, 2).ToList() 
-            },
-            new ZoneModel 
-            { 
-                Id = 2, 
-                Name = "Chambre", 
-                Icon = Icons.Material.Filled.BedroomParent, 
-                Devices = MockDevices.GetRange(2, 2).ToList(), 
-                Members = MockMembers.GetRange(0, 1).ToList() 
-            },
-            new ZoneModel 
-            { 
-                Id = 3, 
-                Name = "Cuisine", 
-                Icon = Icons.Material.Filled.Kitchen, 
-                Devices = new List<Device>(), 
-                Members = new List<Member>() 
+            var response = await BackendZoneService.GetAllZonesAsync();
+            
+            if (response.IsSuccess && response.Data != null)
+            {
+                zones = response.Data;
+                Logger.LogInformation("✅ {Count} zones chargées", zones.Count);
             }
-        };
-    }
-
-    private List<ZoneModel> FilterZones()
-    {
-        if (string.IsNullOrWhiteSpace(searchString))
-            return zones;
-
-        return zones.Where(z => 
-            z.Name.ToLower().Contains(searchString.ToLower())
-        ).ToList();
+            else
+            {
+                Logger.LogWarning("⚠️ Erreur lors du chargement des zones: {Error}", response.ErrorMessage);
+                zones = new List<BackendZoneDto>();
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "❌ Erreur lors du chargement des zones");
+            zones = new List<BackendZoneDto>();
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
     }
 
     private void OpenAddDialog()
     {
         isAdding = true;
-        editingZone = new ZoneModel 
-        { 
-            Name = "",
-            Icon = Icons.Material.Filled.MeetingRoom
-        };
-        selectedDevices = new List<Device>();
-        selectedMembers = new List<Member>();
+        isEditing = false;
+        currentZone = null;
+        editingZone = new ZoneFormModel();
         isDialogOpen = true;
     }
 
-    private void OpenEditDialog(ZoneModel zone)
+    private void OpenEditDialog(BackendZoneDto zone)
     {
         isAdding = false;
-        // Créer une copie pour éviter la modification directe
-        editingZone = new ZoneModel
-        {
-            Id = zone.Id,
-            Name = zone.Name,
-            Icon = zone.Icon,
-            Devices = new List<Device>(zone.Devices),
-            Members = new List<Member>(zone.Members)
-        };
-        selectedDevices = zone.Devices;
-        selectedMembers = zone.Members;
+        isEditing = true;
+        currentZone = zone;
+        editingZone = new ZoneFormModel { Nom = zone.Nom };
         isDialogOpen = true;
     }
 
     private void OnCancel()
     {
         isDialogOpen = false;
-        editingZone = new ZoneModel();
-        selectedDevices = new List<Device>();
-        selectedMembers = new List<Member>();
+        editingZone = new ZoneFormModel();
+        currentZone = null;
+        isFormValid = false;
     }
 
     private async Task OnSave()
     {
-        bool isValid = true;
-        
         if (form != null)
         {
             await form.Validate();
-            isValid = form.IsValid;
+            if (!form.IsValid) return;
         }
 
-        if (!isValid || string.IsNullOrWhiteSpace(editingZone.Name))
-        {
-            return;
-        }
+        isProcessing = true;
+        StateHasChanged();
 
-        // Mettre à jour les listes d'appareils et de membres
-        editingZone.Devices = selectedDevices.ToList();
-        editingZone.Members = selectedMembers.ToList();
-
-        if (isAdding)
+        try
         {
-            // Ajouter la nouvelle zone avec un ID unique
-            editingZone.Id = nextId++;
-            zones.Add(editingZone);
-        }
-        else
-        {
-            // Modifier la zone existante
-            var existingZone = zones.FirstOrDefault(z => z.Id == editingZone.Id);
-            if (existingZone != null)
+            if (isAdding)
             {
-                existingZone.Name = editingZone.Name;
-                existingZone.Icon = editingZone.Icon;
-                existingZone.Devices = editingZone.Devices;
-                existingZone.Members = editingZone.Members;
+                // Création
+                var createDto = new ZoneCreationDto(editingZone.Nom);
+                var result = await BackendZoneService.CreateZoneAsync(createDto);
+                
+                if (result.IsSuccess)
+                {
+                    OnCancel();
+                    await LoadZones();
+                }
+            }
+            else if (currentZone != null)
+            {
+                // Modification
+                var updateDto = new ZoneUpdateDto(editingZone.Nom);
+                var result = await BackendZoneService.UpdateZoneAsync(currentZone.Id, updateDto);
+                
+                if (result.IsSuccess)
+                {
+                    OnCancel();
+                    await LoadZones();
+                }
             }
         }
-
-        isDialogOpen = false;
-        editingZone = new ZoneModel();
-        selectedDevices = new List<Device>();
-        selectedMembers = new List<Member>();
-        StateHasChanged();
-    }
-
-    private async Task DeleteZone(ZoneModel zone)
-    {
-        bool? result = await DialogService.ShowMessageBox(
-            "Confirmation",
-            $"Êtes-vous sûr de vouloir supprimer la zone '{zone.Name}' ?",
-            yesText:"Supprimer", cancelText:"Annuler");
-
-        if (result == true)
+        finally
         {
-            zones.Remove(zone);
+            isProcessing = false;
             StateHasChanged();
         }
+    }
+
+    private async Task DeleteZone(BackendZoneDto zone)
+    {
+        bool? confirmed = await DialogService.ShowMessageBox(
+            "🗑️ Confirmation de suppression",
+            $"Êtes-vous sûr de vouloir supprimer la zone '{zone.Nom}' ?\n\nCette action est irréversible.",
+            yesText: "Supprimer",
+            cancelText: "Annuler");
+
+        if (confirmed == true)
+        {
+            var result = await BackendZoneService.DeleteZoneAsync(zone.Id);
+            
+            if (result.IsSuccess)
+            {
+                await LoadZones();
+            }
+        }
+    }
+
+    // Modèle pour le formulaire
+    public class ZoneFormModel
+    {
+        public string Nom { get; set; } = "";
     }
 }

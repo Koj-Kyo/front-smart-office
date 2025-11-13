@@ -1,0 +1,498 @@
+@using MySmartApp.Ui.Services
+@using MySmartApp.Ui.Models
+@inject IDeviceStatusService DeviceStatusService
+@inject ILogger<DeviceStatusMonitor> Logger
+
+<MudPaper Elevation="2" Class="pa-4">
+    <MudStack Spacing="3">
+        <!-- Header -->
+        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+            <MudText Typo="Typo.h5">
+                <MudIcon Icon="@Icons.Material.Filled.Monitor" Class="mr-2" />
+                Device Status - @DeviceId
+            </MudText>
+            <MudStack Row="true" Spacing="2">
+                <MudSwitch T="bool" @bind-Checked="@_autoRefresh" Color="Color.Primary" Label="Auto Refresh" />
+                <MudButton OnClick="RefreshData" 
+                          Variant="Variant.Filled" 
+                          Color="Color.Primary" 
+                          StartIcon="@Icons.Material.Filled.Refresh"
+                          Disabled="@_isLoading">
+                    Refresh
+                </MudButton>
+            </MudStack>
+        </MudStack>
+
+        @if (_isLoading)
+        {
+            <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
+        }
+
+        @if (_errorMessage != null)
+        {
+            <MudAlert Severity="Severity.Error" ShowCloseIcon="true" CloseIconClicked="@(() => _errorMessage = null)">
+                @_errorMessage
+            </MudAlert>
+        }
+
+        @if (_fullStatus != null)
+        {
+            <!-- Alarme Fumée Active -->
+            @if (_fullStatus.ActiveAlarm != null)
+            {
+                <MudAlert Severity="Severity.Error" Icon="@Icons.Material.Filled.Warning" Variant="Variant.Filled">
+                    <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                        <MudStack Spacing="1">
+                            <MudText Typo="Typo.h6">?? ALARME FUMÉE ACTIVE</MudText>
+                            <MudText Typo="Typo.body2">
+                                Zone: @_fullStatus.ActiveAlarm.ZoneName - 
+                                Déclenchée: @_fullStatus.ActiveAlarm.StartTime.ToString("dd/MM/yyyy HH:mm:ss")
+                            </MudText>
+                        </MudStack>
+                        <MudButton OnClick="DeactivateAlarmDialog" 
+                                  Variant="Variant.Filled" 
+                                  Color="Color.Warning">
+                            Désactiver
+                        </MudButton>
+                    </MudStack>
+                </MudAlert>
+            }
+
+            <!-- Métriques Système -->
+            @if (_fullStatus.LatestMetrics != null)
+            {
+                <MudCard>
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h6">?? Métriques Système</MudText>
+                        </CardHeaderContent>
+                        <CardHeaderActions>
+                            <MudChip T="string" Size="Size.Small" Color="@GetHealthColor(_fullStatus.LatestMetrics)">
+                                @GetHealthLabel(_fullStatus.LatestMetrics)
+                            </MudChip>
+                        </CardHeaderActions>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudGrid>
+                            <MudItem xs="12" md="3">
+                                <MudStack Spacing="1">
+                                    <MudText Typo="Typo.body2" Color="Color.Secondary">Signal WiFi (RSSI)</MudText>
+                                    <MudText Typo="Typo.h5">@(_fullStatus.LatestMetrics.Rssi ?? 0) dBm</MudText>
+                                    <MudProgressLinear Value="@GetRssiPercentage(_fullStatus.LatestMetrics.Rssi)" 
+                                                      Color="@GetRssiColor(_fullStatus.LatestMetrics.Rssi)" 
+                                                      Size="Size.Small" />
+                                </MudStack>
+                            </MudItem>
+                            <MudItem xs="12" md="3">
+                                <MudStack Spacing="1">
+                                    <MudText Typo="Typo.body2" Color="Color.Secondary">Heap Free</MudText>
+                                    <MudText Typo="Typo.h5">@FormatBytes(_fullStatus.LatestMetrics.HeapFree ?? 0)</MudText>
+                                    <MudProgressLinear Value="@GetHeapPercentage(_fullStatus.LatestMetrics.HeapFree)" 
+                                                      Color="@GetHeapColor(_fullStatus.LatestMetrics.HeapFree)" 
+                                                      Size="Size.Small" />
+                                </MudStack>
+                            </MudItem>
+                            <MudItem xs="12" md="3">
+                                <MudStack Spacing="1">
+                                    <MudText Typo="Typo.body2" Color="Color.Secondary">Uptime</MudText>
+                                    <MudText Typo="Typo.h5">@FormatUptime(_fullStatus.LatestMetrics.UptimeSeconds ?? 0)</MudText>
+                                    <MudText Typo="Typo.caption">@_fullStatus.LatestMetrics.Timestamp.ToString("HH:mm:ss")</MudText>
+                                </MudStack>
+                            </MudItem>
+                            <MudItem xs="12" md="3">
+                                <MudStack Spacing="1">
+                                    <MudText Typo="Typo.body2" Color="Color.Secondary">Firmware</MudText>
+                                    <MudText Typo="Typo.h6">@_fullStatus.LatestMetrics.FirmwareVersion</MudText>
+                                    <MudText Typo="Typo.caption">@_fullStatus.LatestMetrics.FirmwareCommit?.Substring(0, Math.Min(8, _fullStatus.LatestMetrics.FirmwareCommit?.Length ?? 0))</MudText>
+                                </MudStack>
+                            </MudItem>
+                        </MudGrid>
+                    </MudCardContent>
+                </MudCard>
+            }
+
+            <!-- Événements RFID Récents -->
+            @if (_fullStatus.RecentRfidEvents?.Any() == true)
+            {
+                <MudCard>
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h6">?? Événements RFID Récents</MudText>
+                        </CardHeaderContent>
+                        <CardHeaderActions>
+                            <MudChip T="string" Size="Size.Small" Color="Color.Info">
+                                @_fullStatus.RecentRfidEvents.Count événement(s)
+                            </MudChip>
+                        </CardHeaderActions>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudTimeline TimelineOrientation="TimelineOrientation.Vertical">
+                            @foreach (var evt in _fullStatus.RecentRfidEvents.OrderByDescending(e => e.Timestamp).Take(5))
+                            {
+                                <MudTimelineItem Color="@(evt.AccessGranted ? Color.Success : Color.Error)" 
+                                               Size="Size.Small">
+                                    <ItemContent>
+                                        <MudStack Spacing="1">
+                                            <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+                                                <MudIcon Icon="@(evt.AccessGranted ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.Cancel)" 
+                                                        Size="Size.Small" />
+                                                <MudText Typo="Typo.body1" Style="font-weight: 500">
+                                                    @(evt.AccessGranted ? "Accès accordé" : "Accès refusé")
+                                                </MudText>
+                                                <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">@evt.CardUid</MudChip>
+                                            </MudStack>
+                                            @if (!evt.AccessGranted && !string.IsNullOrEmpty(evt.DenialReason))
+                                            {
+                                                <MudText Typo="Typo.caption" Color="Color.Error">
+                                                    Raison: @evt.DenialReason
+                                                </MudText>
+                                            }
+                                            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                                @evt.Timestamp.ToString("dd/MM/yyyy HH:mm:ss")
+                                            </MudText>
+                                        </MudStack>
+                                    </ItemContent>
+                                </MudTimelineItem>
+                            }
+                        </MudTimeline>
+                    </MudCardContent>
+                </MudCard>
+            }
+
+            <!-- Périphériques -->
+            @if (_fullStatus.Peripherals?.Any() == true)
+            {
+                <MudCard>
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h6">?? Périphériques</MudText>
+                        </CardHeaderContent>
+                        <CardHeaderActions>
+                            <MudChip T="string" Size="Size.Small" Color="Color.Info">
+                                @_fullStatus.Peripherals.Count périphérique(s)
+                            </MudChip>
+                        </CardHeaderActions>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudSimpleTable Dense="true" Hover="true">
+                            <thead>
+                                <tr>
+                                    <th>Nom</th>
+                                    <th>Type</th>
+                                    <th>GPIO</th>
+                                    <th>État</th>
+                                    <th>Dernière MAJ</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var peripheral in _fullStatus.Peripherals)
+                                {
+                                    <tr>
+                                        <td>@peripheral.Name</td>
+                                        <td>
+                                            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">@peripheral.Type</MudChip>
+                                        </td>
+                                        <td>GPIO @peripheral.Gpio</td>
+                                        <td>
+                                            <MudChip T="string" Size="Size.Small" 
+                                                   Color="@(GetPeripheralIsOn(peripheral) ? Color.Success : Color.Default)">
+                                                @(GetPeripheralIsOn(peripheral) ? "ON" : "OFF")
+                                            </MudChip>
+                                        </td>
+                                        <td>@peripheral.LastUpdate?.ToString("HH:mm:ss")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </MudSimpleTable>
+                    </MudCardContent>
+                </MudCard>
+            }
+        }
+        else if (!_isLoading)
+        {
+            <MudAlert Severity="Severity.Info">
+                Aucune donnée disponible. Cliquez sur "Refresh" pour charger les informations.
+            </MudAlert>
+        }
+
+        <!-- Dernière mise à jour -->
+        @if (_fullStatus != null)
+        {
+            <MudText Typo="Typo.caption" Align="Align.Right" Color="Color.Secondary">
+                Dernière mise à jour: @_fullStatus.RetrievedAt.ToString("dd/MM/yyyy HH:mm:ss")
+            </MudText>
+        }
+    </MudStack>
+</MudPaper>
+
+<!-- Dialog Désactivation Alarme -->
+<MudDialog @bind-IsVisible="_showDeactivateDialog" Options="_dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Désactiver l'alarme fumée</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudStack Spacing="3">
+            <MudAlert Severity="Severity.Warning">
+                Vous êtes sur le point de désactiver l'alarme fumée. Assurez-vous que la situation est sécurisée.
+            </MudAlert>
+            <MudTextField @bind-Value="_deactivationReason" 
+                         Label="Raison de la désactivation" 
+                         Variant="Variant.Outlined" 
+                         Lines="3"
+                         Required="true" />
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@(() => _showDeactivateDialog = false)">Annuler</MudButton>
+        <MudButton Color="Color.Warning" 
+                  Variant="Variant.Filled" 
+                  OnClick="DeactivateAlarm"
+                  Disabled="@string.IsNullOrWhiteSpace(_deactivationReason)">
+            Désactiver
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [Parameter] public string DeviceId { get; set; } = string.Empty;
+    [Parameter] public int RefreshIntervalSeconds { get; set; } = 30;
+
+    private DeviceFullStatusDto? _fullStatus;
+    private bool _isLoading;
+    private string? _errorMessage;
+    private bool _autoRefresh;
+    private System.Threading.Timer? _refreshTimer;
+
+    private bool _showDeactivateDialog;
+    private string _deactivationReason = string.Empty;
+
+    private DialogOptions _dialogOptions = new() 
+    { 
+        MaxWidth = MaxWidth.Small, 
+        FullWidth = true,
+        CloseButton = true
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await RefreshData();
+    }
+
+    protected override void OnParametersSet()
+    {
+        if (_autoRefresh)
+        {
+            StartAutoRefresh();
+        }
+        else
+        {
+            StopAutoRefresh();
+        }
+    }
+
+    private async Task RefreshData()
+    {
+        if (string.IsNullOrEmpty(DeviceId))
+        {
+            _errorMessage = "DeviceId est requis";
+            return;
+        }
+
+        _isLoading = true;
+        _errorMessage = null;
+        StateHasChanged();
+
+        try
+        {
+            var response = await DeviceStatusService.GetFullDeviceStatusAsync(DeviceId);
+
+            if (response.IsSuccess && response.Data != null)
+            {
+                _fullStatus = response.Data;
+                Logger.LogInformation("? Statut device {DeviceId} rechargé", DeviceId);
+            }
+            else
+            {
+                _errorMessage = response.ErrorMessage ?? "Erreur lors du chargement des données";
+                Logger.LogError("? Erreur chargement statut device: {Error}", _errorMessage);
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Erreur technique: {ex.Message}";
+            Logger.LogError(ex, "? Exception lors du chargement statut device");
+        }
+        finally
+        {
+            _isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void DeactivateAlarmDialog()
+    {
+        _deactivationReason = string.Empty;
+        _showDeactivateDialog = true;
+    }
+
+    private async Task DeactivateAlarm()
+    {
+        if (_fullStatus?.ActiveAlarm == null) return;
+
+        try
+        {
+            var request = new DeactivateSmokeAlarmRequest
+            {
+                DeactivatedBy = "admin@example.com", // TODO: Get from auth context
+                Reason = _deactivationReason
+            };
+
+            var response = await DeviceStatusService.DeactivateSmokeAlarmAsync(DeviceId, request);
+
+            if (response.IsSuccess)
+            {
+                _showDeactivateDialog = false;
+                await RefreshData();
+            }
+            else
+            {
+                _errorMessage = response.ErrorMessage ?? "Erreur lors de la désactivation";
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Erreur technique: {ex.Message}";
+            Logger.LogError(ex, "? Exception lors de la désactivation alarme");
+        }
+    }
+
+    private void StartAutoRefresh()
+    {
+        StopAutoRefresh();
+        _refreshTimer = new System.Threading.Timer(async _ => 
+        {
+            await InvokeAsync(async () => await RefreshData());
+        }, null, TimeSpan.FromSeconds(RefreshIntervalSeconds), TimeSpan.FromSeconds(RefreshIntervalSeconds));
+
+        Logger.LogInformation("?? Auto-refresh activé ({Interval}s)", RefreshIntervalSeconds);
+    }
+
+    private void StopAutoRefresh()
+    {
+        _refreshTimer?.Dispose();
+        _refreshTimer = null;
+    }
+
+    // Helpers Métriques
+
+    private Color GetHealthColor(DeviceMetricsDto metrics)
+    {
+        if (metrics.Rssi < -80 || metrics.HeapFree < 50000) return Color.Error;
+        if (metrics.Rssi < -70 || metrics.HeapFree < 100000) return Color.Warning;
+        return Color.Success;
+    }
+
+    private string GetHealthLabel(DeviceMetricsDto metrics)
+    {
+        if (metrics.Rssi < -80 || metrics.HeapFree < 50000) return "Critique";
+        if (metrics.Rssi < -70 || metrics.HeapFree < 100000) return "Attention";
+        return "Bon";
+    }
+
+    private double GetRssiPercentage(int? rssi)
+    {
+        if (!rssi.HasValue) return 0;
+        // RSSI range: -90 (bad) to -30 (excellent)
+        return Math.Max(0, Math.Min(100, ((rssi.Value + 90) / 60.0) * 100));
+    }
+
+    private Color GetRssiColor(int? rssi)
+    {
+        if (!rssi.HasValue || rssi < -80) return Color.Error;
+        if (rssi < -70) return Color.Warning;
+        return Color.Success;
+    }
+
+    private double GetHeapPercentage(int? heap)
+    {
+        if (!heap.HasValue) return 0;
+        // Assume max heap ~250KB
+        return Math.Max(0, Math.Min(100, (heap.Value / 250000.0) * 100));
+    }
+
+    private Color GetHeapColor(int? heap)
+    {
+        if (!heap.HasValue || heap < 50000) return Color.Error;
+        if (heap < 100000) return Color.Warning;
+        return Color.Success;
+    }
+
+    private string FormatBytes(int bytes)
+    {
+        if (bytes < 1024) return $"{bytes} B";
+        if (bytes < 1024 * 1024) return $"{bytes / 1024.0:F1} KB";
+        return $"{bytes / (1024.0 * 1024):F1} MB";
+    }
+
+    private string FormatUptime(long seconds)
+    {
+        var ts = TimeSpan.FromSeconds(seconds);
+        if (ts.TotalDays >= 1) return $"{(int)ts.TotalDays}j {ts.Hours}h";
+        if (ts.TotalHours >= 1) return $"{(int)ts.TotalHours}h {ts.Minutes}m";
+        return $"{ts.Minutes}m {ts.Seconds}s";
+    }
+
+    private bool GetPeripheralIsOn(PeripheralDto peripheral)
+    {
+        // Essayer d'extraire l'état ON/OFF depuis State
+        if (peripheral.State == null) return false;
+        
+        try
+        {
+            // Si State est un booléen
+            if (peripheral.State is bool boolState)
+                return boolState;
+            
+            // Si State est un dictionnaire avec une clé "on" ou "isOn"
+            if (peripheral.State is System.Collections.Generic.IDictionary<string, object> dict)
+            {
+                if (dict.TryGetValue("on", out var onValue) && onValue is bool on)
+                    return on;
+                if (dict.TryGetValue("isOn", out var isOnValue) && isOnValue is bool isOn)
+                    return isOn;
+            }
+            
+            // Si State est un objet JSON (System.Text.Json.JsonElement)
+            if (peripheral.State is System.Text.Json.JsonElement jsonElement)
+            {
+                if (jsonElement.ValueKind == System.Text.Json.JsonValueKind.True)
+                    return true;
+                if (jsonElement.ValueKind == System.Text.Json.JsonValueKind.False)
+                    return false;
+                    
+                // Essayer de chercher une propriété "on" ou "isOn"
+                if (jsonElement.ValueKind == System.Text.Json.JsonValueKind.Object)
+                {
+                    if (jsonElement.TryGetProperty("on", out var onProp) && onProp.ValueKind == System.Text.Json.JsonValueKind.True)
+                        return true;
+                    if (jsonElement.TryGetProperty("isOn", out var isOnProp) && isOnProp.ValueKind == System.Text.Json.JsonValueKind.True)
+                        return true;
+                }
+            }
+            
+            // Fallback: convertir en string et checker
+            var stateStr = peripheral.State.ToString()?.ToLower();
+            return stateStr == "true" || stateStr == "on" || stateStr == "1";
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Erreur extraction état périphérique {Name}", peripheral.Name);
+            return false;
+        }
+    }
+
+    public void Dispose()
+    {
+        StopAutoRefresh();
+    }
+}

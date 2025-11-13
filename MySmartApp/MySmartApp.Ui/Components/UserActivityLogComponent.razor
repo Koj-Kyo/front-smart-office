@@ -1,0 +1,438 @@
+@using MySmartApp.Ui.Services
+@using MySmartApp.Ui.Models
+@inject IUserActivityService UserActivityService
+@inject ILogger<UserActivityLogComponent> Logger
+
+<MudPaper Elevation="2" Class="pa-4">
+    <MudStack Spacing="3">
+        <!-- Header -->
+        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+            <MudText Typo="Typo.h5">
+                <MudIcon Icon="@Icons.Material.Filled.History" Class="mr-2" />
+                Audit Log @(string.IsNullOrEmpty(UserId) ? "" : $"- User {UserId}")
+            </MudText>
+            <MudButton OnClick="ExportToCsv" 
+                      Variant="Variant.Outlined" 
+                      Color="Color.Primary" 
+                      StartIcon="@Icons.Material.Filled.Download"
+                      Disabled="@_isLoading">
+                Export CSV
+            </MudButton>
+        </MudStack>
+
+        <!-- Filtres -->
+        <MudGrid>
+            <MudItem xs="12" md="4">
+                <MudSelect @bind-Value="_selectedActivityType" 
+                          Label="Type d'activité" 
+                          Variant="Variant.Outlined"
+                          Clearable="true"
+                          OnClearButtonClick="@(() => { _selectedActivityType = null; _ = LoadActivitiesAsync(); })">
+                    <MudSelectItem Value="@((string?)null)">Tous</MudSelectItem>
+                    <MudSelectItem Value="@("Commande")">Commandes</MudSelectItem>
+                    <MudSelectItem Value="@("Audit")">Audits</MudSelectItem>
+                    <MudSelectItem Value="@("Login")">Connexions</MudSelectItem>
+                    <MudSelectItem Value="@("Logout")">Déconnexions</MudSelectItem>
+                    <MudSelectItem Value="@("Create")">Créations</MudSelectItem>
+                    <MudSelectItem Value="@("Update")">Modifications</MudSelectItem>
+                    <MudSelectItem Value="@("Delete")">Suppressions</MudSelectItem>
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" md="3">
+                <MudDatePicker @bind-Date="_startDate" 
+                              Label="Date début" 
+                              Variant="Variant.Outlined"
+                              Clearable="true" />
+            </MudItem>
+            <MudItem xs="12" md="3">
+                <MudDatePicker @bind-Date="_endDate" 
+                              Label="Date fin" 
+                              Variant="Variant.Outlined"
+                              Clearable="true" />
+            </MudItem>
+            <MudItem xs="12" md="2">
+                <MudButton OnClick="LoadActivitiesAsync" 
+                          Variant="Variant.Filled" 
+                          Color="Color.Primary" 
+                          FullWidth="true"
+                          Disabled="@_isLoading">
+                    Filtrer
+                </MudButton>
+            </MudItem>
+        </MudGrid>
+
+        <!-- Statistiques (si UserId spécifié) -->
+        @if (!string.IsNullOrEmpty(UserId) && _stats != null)
+        {
+            <MudGrid>
+                <MudItem xs="6" md="3">
+                    <MudCard>
+                        <MudCardContent>
+                            <MudStack Spacing="1">
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">Total Activités</MudText>
+                                <MudText Typo="Typo.h4">@_stats.TotalActivities</MudText>
+                            </MudStack>
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
+                <MudItem xs="6" md="3">
+                    <MudCard>
+                        <MudCardContent>
+                            <MudStack Spacing="1">
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">Commandes</MudText>
+                                <MudText Typo="Typo.h4">@_stats.CommandesCount</MudText>
+                            </MudStack>
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
+                <MudItem xs="6" md="3">
+                    <MudCard>
+                        <MudCardContent>
+                            <MudStack Spacing="1">
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">Audits</MudText>
+                                <MudText Typo="Typo.h4">@_stats.AuditsCount</MudText>
+                            </MudStack>
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
+                <MudItem xs="6" md="3">
+                    <MudCard>
+                        <MudCardContent>
+                            <MudStack Spacing="1">
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">Dernière Activité</MudText>
+                                <MudText Typo="Typo.body1">@_stats.LastActivity?.ToString("dd/MM HH:mm")</MudText>
+                            </MudStack>
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
+            </MudGrid>
+        }
+
+        @if (_errorMessage != null)
+        {
+            <MudAlert Severity="Severity.Error" ShowCloseIcon="true" CloseIconClicked="@(() => _errorMessage = null)">
+                @_errorMessage
+            </MudAlert>
+        }
+
+        <!-- Table Paginée -->
+        <MudTable @ref="_table"
+                 TItem="UserActivityDto"
+                 ServerData="ServerReload"
+                 Dense="true"
+                 Hover="true"
+                 Loading="@_isLoading"
+                 LoadingProgressColor="Color.Primary">
+            <ToolBarContent>
+                <MudText Typo="Typo.h6">Activités</MudText>
+                <MudSpacer />
+                @if (_paginatedActivities != null)
+                {
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                        @_paginatedActivities.TotalCount activité(s)
+                    </MudText>
+                }
+            </ToolBarContent>
+            <HeaderContent>
+                <MudTh>Date/Heure</MudTh>
+                <MudTh>Type</MudTh>
+                <MudTh>Description</MudTh>
+                <MudTh>Ressource</MudTh>
+                <MudTh>IP</MudTh>
+                <MudTh>Actions</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Date/Heure">
+                    <MudText Typo="Typo.body2">@context.Timestamp.ToString("dd/MM/yyyy")</MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">@context.Timestamp.ToString("HH:mm:ss")</MudText>
+                </MudTd>
+                <MudTd DataLabel="Type">
+                    <MudChip T="string" Size="Size.Small" Color="@GetActivityTypeColor(context.ActivityType)">
+                        @context.ActivityType
+                    </MudChip>
+                </MudTd>
+                <MudTd DataLabel="Description">
+                    <MudText Typo="Typo.body2">@context.Description</MudText>
+                </MudTd>
+                <MudTd DataLabel="Ressource">
+                    @if (!string.IsNullOrEmpty(context.ResourceType))
+                    {
+                        <MudStack Spacing="1">
+                            <MudText Typo="Typo.caption">@context.ResourceType</MudText>
+                            @if (context.ResourceId.HasValue)
+                            {
+                                <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">ID: @context.ResourceId</MudChip>
+                            }
+                        </MudStack>
+                    }
+                    else
+                    {
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">-</MudText>
+                    }
+                </MudTd>
+                <MudTd DataLabel="IP">
+                    <MudText Typo="Typo.caption">@(context.IpAddress ?? "-")</MudText>
+                </MudTd>
+                <MudTd DataLabel="Actions">
+                    <MudIconButton Icon="@Icons.Material.Filled.Info" 
+                                  Size="Size.Small" 
+                                  OnClick="@(() => ShowDetails(context))" />
+                </MudTd>
+            </RowTemplate>
+            <NoRecordsContent>
+                <MudText Typo="Typo.body2" Color="Color.Secondary" Align="Align.Center">
+                    Aucune activité trouvée
+                </MudText>
+            </NoRecordsContent>
+            <LoadingContent>
+                <MudText Typo="Typo.body2" Color="Color.Secondary" Align="Align.Center">
+                    Chargement...
+                </MudText>
+            </LoadingContent>
+            <PagerContent>
+                <MudTablePager PageSizeOptions="new int[] { 10, 25, 50, 100 }" />
+            </PagerContent>
+        </MudTable>
+    </MudStack>
+</MudPaper>
+
+<!-- Dialog Détails -->
+<MudDialog @bind-IsVisible="_showDetailsDialog" Options="_dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Détails de l'activité</MudText>
+    </TitleContent>
+    <DialogContent>
+        @if (_selectedActivity != null)
+        {
+            <MudStack Spacing="2">
+                <MudGrid>
+                    <MudItem xs="6">
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Type</MudText>
+                        <MudChip T="string" Color="@GetActivityTypeColor(_selectedActivity.ActivityType)">
+                            @_selectedActivity.ActivityType
+                        </MudChip>
+                    </MudItem>
+                    <MudItem xs="6">
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Date/Heure</MudText>
+                        <MudText>@_selectedActivity.Timestamp.ToString("dd/MM/yyyy HH:mm:ss")</MudText>
+                    </MudItem>
+                    <MudItem xs="12">
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Description</MudText>
+                        <MudText>@_selectedActivity.Description</MudText>
+                    </MudItem>
+                    @if (!string.IsNullOrEmpty(_selectedActivity.ResourceType))
+                    {
+                        <MudItem xs="6">
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">Type de Ressource</MudText>
+                            <MudText>@_selectedActivity.ResourceType</MudText>
+                        </MudItem>
+                        <MudItem xs="6">
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">ID Ressource</MudText>
+                            <MudText>@_selectedActivity.ResourceId</MudText>
+                        </MudItem>
+                    }
+                    @if (!string.IsNullOrEmpty(_selectedActivity.OldValue) || !string.IsNullOrEmpty(_selectedActivity.NewValue))
+                    {
+                        <MudItem xs="6">
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">Ancienne Valeur</MudText>
+                            <MudText>@(_selectedActivity.OldValue ?? "-")</MudText>
+                        </MudItem>
+                        <MudItem xs="6">
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">Nouvelle Valeur</MudText>
+                            <MudText>@(_selectedActivity.NewValue ?? "-")</MudText>
+                        </MudItem>
+                    }
+                    <MudItem xs="6">
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Adresse IP</MudText>
+                        <MudText>@(_selectedActivity.IpAddress ?? "-")</MudText>
+                    </MudItem>
+                    <MudItem xs="6">
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">User Agent</MudText>
+                        <MudText Typo="Typo.caption">@(_selectedActivity.UserAgent ?? "-")</MudText>
+                    </MudItem>
+                </MudGrid>
+            </MudStack>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@(() => _showDetailsDialog = false)">Fermer</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [Parameter] public string? UserId { get; set; }
+    [Parameter] public int PageSize { get; set; } = 25;
+
+    private MudTable<UserActivityDto>? _table;
+    private PaginatedResponse<UserActivityDto>? _paginatedActivities;
+    private UserActivityStatsDto? _stats;
+    private bool _isLoading;
+    private string? _errorMessage;
+
+    private string? _selectedActivityType;
+    private DateTime? _startDate;
+    private DateTime? _endDate;
+
+    private bool _showDetailsDialog;
+    private UserActivityDto? _selectedActivity;
+
+    private DialogOptions _dialogOptions = new() 
+    { 
+        MaxWidth = MaxWidth.Medium, 
+        FullWidth = true,
+        CloseButton = true
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!string.IsNullOrEmpty(UserId))
+        {
+            await LoadStatsAsync();
+        }
+    }
+
+    private async Task<TableData<UserActivityDto>> ServerReload(TableState state, CancellationToken cancellationToken)
+    {
+        _isLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            Services.ApiResponse<PaginatedResponse<UserActivityDto>> response;
+
+            if (!string.IsNullOrEmpty(UserId))
+            {
+                response = await UserActivityService.GetUserActivitiesAsync(
+                    UserId,
+                    state.Page + 1,
+                    state.PageSize,
+                    _selectedActivityType,
+                    _startDate,
+                    _endDate
+                );
+            }
+            else
+            {
+                response = await UserActivityService.GetAllActivitiesAsync(
+                    state.Page + 1,
+                    state.PageSize,
+                    _selectedActivityType,
+                    null,
+                    _startDate,
+                    _endDate
+                );
+            }
+
+            if (response.IsSuccess && response.Data != null)
+            {
+                _paginatedActivities = response.Data;
+                Logger.LogInformation("? {Count} activités chargées (page {Page})", 
+                    response.Data.Data.Count, state.Page + 1);
+
+                return new TableData<UserActivityDto>
+                {
+                    Items = response.Data.Data,
+                    TotalItems = response.Data.TotalCount
+                };
+            }
+            else
+            {
+                _errorMessage = response.ErrorMessage ?? "Erreur lors du chargement";
+                Logger.LogError("? Erreur chargement activités: {Error}", _errorMessage);
+                return new TableData<UserActivityDto> { Items = new List<UserActivityDto>(), TotalItems = 0 };
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Erreur technique: {ex.Message}";
+            Logger.LogError(ex, "? Exception lors du chargement activités");
+            return new TableData<UserActivityDto> { Items = new List<UserActivityDto>(), TotalItems = 0 };
+        }
+        finally
+        {
+            _isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadActivitiesAsync()
+    {
+        if (_table != null)
+        {
+            await _table.ReloadServerData();
+        }
+    }
+
+    private async Task LoadStatsAsync()
+    {
+        if (string.IsNullOrEmpty(UserId)) return;
+
+        try
+        {
+            var response = await UserActivityService.GetUserStatsAsync(UserId, 30);
+
+            if (response.IsSuccess && response.Data != null)
+            {
+                _stats = response.Data;
+                Logger.LogInformation("? Stats utilisateur chargées");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "? Exception lors du chargement stats");
+        }
+    }
+
+    private async Task ExportToCsv()
+    {
+        if (string.IsNullOrEmpty(UserId))
+        {
+            _errorMessage = "Export disponible uniquement pour un utilisateur spécifique";
+            return;
+        }
+
+        try
+        {
+            var start = _startDate ?? DateTime.Now.AddMonths(-1);
+            var end = _endDate ?? DateTime.Now;
+
+            var response = await UserActivityService.ExportActivitiesAsync(UserId, start, end, "csv");
+
+            if (response.IsSuccess && response.Data != null)
+            {
+                // TODO: Trigger download in browser
+                Logger.LogInformation("? Export CSV généré: {Size} bytes", response.Data.Length);
+            }
+            else
+            {
+                _errorMessage = response.ErrorMessage ?? "Erreur lors de l'export";
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Erreur technique: {ex.Message}";
+            Logger.LogError(ex, "? Exception lors de l'export");
+        }
+    }
+
+    private void ShowDetails(UserActivityDto activity)
+    {
+        _selectedActivity = activity;
+        _showDetailsDialog = true;
+    }
+
+    private Color GetActivityTypeColor(string activityType)
+    {
+        return activityType switch
+        {
+            "Commande" => Color.Primary,
+            "Audit" => Color.Info,
+            "Login" => Color.Success,
+            "Logout" => Color.Default,
+            "Create" => Color.Success,
+            "Update" => Color.Warning,
+            "Delete" => Color.Error,
+            _ => Color.Default
+        };
+    }
+}

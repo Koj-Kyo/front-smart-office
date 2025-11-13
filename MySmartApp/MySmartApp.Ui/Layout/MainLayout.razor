@@ -7,6 +7,7 @@
 @inject IThemeService ThemeService
 @implements IDisposable
 
+<MudThemeProvider @bind-IsDarkMode="@_isDarkMode" Theme="@_currentTheme" />
 <MudLayout>
     <MudDrawer id="nav-drawer"
                @bind-Open="_drawerOpen"
@@ -17,6 +18,7 @@
         <NavMenu IsDarkMode="@_isDarkMode" OnToggleDarkMode="@DarkModeToggle" />
     </MudDrawer>
     <MudMainContent Class="pa-4">
+        
         @Body
     </MudMainContent>
 </MudLayout>
@@ -29,28 +31,29 @@
 </div>
 
 @code {
-    private bool _drawerOpen = true;
-    private bool _isDarkMode = true;
+private bool _drawerOpen = true;
+private bool _isDarkMode = true;
+private MudTheme _currentTheme = MyTheme.GetTheme();
 
-    protected override void OnInitialized()
+protected override void OnInitialized()
+{
+    try
     {
-        try
-        {
-            Logger.LogDebug("🏗️ Initialisation du MainLayout");
+        Logger.LogDebug("🏗️ Initialisation du MainLayout");
             
-            // S'abonner aux changements de thème
-            ThemeService.OnThemeChanged += OnThemeChanged;
-            _isDarkMode = ThemeService.IsDarkMode;
+        // S'abonner aux changements de thème
+        ThemeService.OnThemeChanged += OnThemeChanged;
+        _isDarkMode = ThemeService.IsDarkMode;
             
-            base.OnInitialized();
-            Logger.LogDebug("✅ MainLayout initialisé avec succès - Mode sombre: {IsDarkMode}", _isDarkMode);
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "❌ Erreur lors de l'initialisation du MainLayout");
-            throw; // Remonter l'erreur pour qu'elle soit capturée par l'ErrorBoundary
-        }
+        base.OnInitialized();
+        Logger.LogDebug("✅ MainLayout initialisé avec succès - Mode sombre: {IsDarkMode}", _isDarkMode);
     }
+    catch (Exception ex)
+    {
+        Logger.LogError(ex, "❌ Erreur lors de l'initialisation du MainLayout");
+        throw; // Remonter l'erreur pour qu'elle soit capturée par l'ErrorBoundary
+    }
+}
 
     private void OnThemeChanged()
     {
@@ -68,6 +71,7 @@
     private async Task DarkModeToggle()
     {
         await ThemeService.ToggleThemeAsync();
+        _isDarkMode = ThemeService.IsDarkMode;
         Logger.LogDebug("🌙 Mode sombre basculé via service: {IsDarkMode}", ThemeService.IsDarkMode);
     }
 

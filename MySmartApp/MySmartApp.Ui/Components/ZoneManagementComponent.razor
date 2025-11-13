@@ -1,0 +1,193 @@
+@using MySmartApp.Ui.Services
+@using MySmartApp.Ui.Models
+@inject IBackendZoneService BackendZoneService
+@inject ILogger<ZoneManagementComponent> Logger
+
+<MudPaper Class="pa-4 rounded-xl" Elevation="2">
+    <div class="d-flex justify-space-between align-center mb-4">
+        <div class="d-flex align-center">
+            <MudIcon Icon="@Icons.Material.Filled.LocationOn" Color="Color.Success" Class="mr-2" />
+            <MudText Typo="Typo.h6">Gestion des Zones</MudText>
+     </div>
+      <div class="d-flex gap-2">
+            <MudIconButton Icon="@Icons.Material.Filled.Refresh" 
+         Size="Size.Small"
+        OnClick="RefreshZones"
+       Disabled="@isLoading"
+        Title="Actualiser" />
+            <AuthorizeView Roles="Admin">
+  <MudIconButton Icon="@Icons.Material.Filled.Add" 
+ Size="Size.Small"
+   OnClick="OnCreateZoneRequested"
+      Color="Color.Primary"
+        Title="Ajouter une zone" />
+        </AuthorizeView>
+        </div>
+    </div>
+
+    @if (isLoading)
+    {
+        <div class="d-flex align-center pa-4">
+            <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+   <MudText>Chargement des zones...</MudText>
+        </div>
+    }
+    else if (zones.Any())
+    {
+        <MudGrid>
+     @foreach (var zone in zones.Take(ShowMaxZones))
+       {
+                <MudItem xs="12" sm="6" md="4">
+           <MudCard Class="mud-height-full" Elevation="1">
+             <MudCardContent>
+    <div class="d-flex justify-space-between align-start mb-2">
+        <MudText Typo="Typo.h6" Style="font-weight: 500;">
+      @zone.Nom
+        </MudText>
+        <MudChip T="string" Size="Size.Small" Color="Color.Primary">
+  ID: @zone.Id
+        </MudChip>
+  </div>
+         
+     <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-3">
+    Zone créée à @zone.Nom.Length caractères
+         </MudText>
+          
+    @if (ShowZoneStats)
+         {
+           <div class="d-flex justify-space-between mb-3">
+       <div class="text-center">
+  <MudText Typo="Typo.caption" Color="Color.Secondary">Périphériques</MudText>
+      <MudText Typo="Typo.body2" Style="font-weight: 500;">-</MudText>
+ </div>
+  <div class="text-center">
+             <MudText Typo="Typo.caption" Color="Color.Secondary">Utilisateurs</MudText>
+      <MudText Typo="Typo.body2" Style="font-weight: 500;">-</MudText>
+      </div>
+      <div class="text-center">
+       <MudText Typo="Typo.caption" Color="Color.Secondary">Statut</MudText>
+     <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Small" Color="Color.Success" />
+               </div>
+        </div>
+     }
+ </MudCardContent>
+  
+       @if (ShowZoneActions)
+            {
+       <MudCardActions>
+ <MudButton Size="Size.Small" 
+    Color="Color.Primary" 
+ OnClick="@(() => OnZoneSelected.InvokeAsync(zone))"
+      StartIcon="@Icons.Material.Filled.Visibility">
+    Détails
+     </MudButton>
+         
+                  <AuthorizeView Roles="Admin">
+              <MudButton Size="Size.Small" 
+             Color="Color.Secondary" 
+            OnClick="@(() => OnEditZoneRequested.InvokeAsync(zone))"
+  StartIcon="@Icons.Material.Filled.Edit">
+         Modifier
+  </MudButton>
+          </AuthorizeView>
+     </MudCardActions>
+   }
+    </MudCard>
+  </MudItem>
+     }
+     </MudGrid>
+        
+     @if (zones.Count > ShowMaxZones)
+        {
+            <div class="text-center mt-4">
+         <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-2">
+    Affichage de @ShowMaxZones sur @zones.Count zones
+     </MudText>
+     <MudButton Size="Size.Small" 
+        Color="Color.Primary" 
+         Variant="Variant.Outlined"
+       OnClick="@(() => OnShowAllZonesRequested.InvokeAsync())">
+      Voir toutes les zones
+         </MudButton>
+          </div>
+        }
+    }
+    else
+    {
+        <div class="text-center pa-4">
+        <MudIcon Icon="@Icons.Material.Filled.LocationOff" Size="Size.Large" Color="Color.Secondary" Class="mb-2" />
+  <MudText Typo="Typo.body1" Color="Color.Secondary">Aucune zone disponible</MudText>
+         
+            <AuthorizeView Roles="Admin">
+        <MudButton Size="Size.Small" 
+       Color="Color.Primary" 
+                  Class="mt-2"
+       OnClick="OnCreateZoneRequested"
+            StartIcon="@Icons.Material.Filled.Add">
+              Créer la première zone
+  </MudButton>
+            </AuthorizeView>
+        </div>
+    }
+</MudPaper>
+
+@code {
+    [Parameter] public bool ShowZoneStats { get; set; } = true;
+    [Parameter] public bool ShowZoneActions { get; set; } = true;
+    [Parameter] public int ShowMaxZones { get; set; } = 6;
+    [Parameter] public EventCallback<BackendZoneDto> OnZoneSelected { get; set; }
+    [Parameter] public EventCallback<BackendZoneDto> OnEditZoneRequested { get; set; }
+    [Parameter] public EventCallback OnCreateZoneRequested { get; set; }
+    [Parameter] public EventCallback OnShowAllZonesRequested { get; set; }
+
+    private bool isLoading = true;
+    private List<BackendZoneDto> zones = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadZones();
+    }
+
+    public async Task LoadZones()
+    {
+        isLoading = true;
+     StateHasChanged();
+
+        try
+        {
+            var response = await BackendZoneService.GetAllZonesAsync();
+    
+    if (response.IsSuccess && response.Data != null)
+            {
+        zones = response.Data;
+    Logger.LogDebug("{Count} zones chargées dans le composant", zones.Count);
+      }
+            else
+     {
+          Logger.LogWarning("Erreur lors du chargement des zones: {Error}", response.ErrorMessage);
+        zones = new List<BackendZoneDto>();
+            }
+        }
+        catch (Exception ex)
+        {
+          Logger.LogError(ex, "Erreur lors du chargement des zones");
+          zones = new List<BackendZoneDto>();
+     }
+        finally
+        {
+         isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task RefreshZones()
+    {
+        BackendZoneService.InvalidateCache();
+        await LoadZones();
+    }
+
+  public void ForceRefresh()
+    {
+        _ = Task.Run(async () => await RefreshZones());
+    }
+}

@@ -1,0 +1,541 @@
+@using MySmartApp.Ui.Services
+@using MySmartApp.Ui.Models
+@inject IDroitAccesService DroitAccesService
+@inject IBackendZoneService ZoneService
+@inject IDeviceService DeviceService
+@inject IAdminUserManagementService AdminUserService
+@inject ILogger<AccessRightsManagementComponent> Logger
+
+<MudPaper Elevation="2" Class="pa-4">
+    <MudStack Spacing="3">
+        <!-- Header -->
+        <MudText Typo="Typo.h5">
+            <MudIcon Icon="@Icons.Material.Filled.Security" Class="mr-2" />
+            Gestion des Droits d'Accès
+        </MudText>
+
+        @if (_errorMessage != null)
+        {
+            <MudAlert Severity="Severity.Error" ShowCloseIcon="true" CloseIconClicked="@(() => _errorMessage = null)">
+                @_errorMessage
+            </MudAlert>
+        }
+
+        <!-- Section Assignation -->
+        <MudCard>
+            <MudCardHeader>
+                <CardHeaderContent>
+                    <MudText Typo="Typo.h6">Assigner des droits d'accès</MudText>
+                </CardHeaderContent>
+            </MudCardHeader>
+            <MudCardContent>
+                <MudGrid>
+                    <!-- Sélection Utilisateur -->
+                    <MudItem xs="12" md="6">
+                        <MudAutocomplete T="UserDetailsDto" 
+                                        @bind-Value="_selectedUser"
+                                        Label="Utilisateur" 
+                                        SearchFunc="SearchUsers"
+                                        ToStringFunc="@(u => u?.Email ?? "")"
+                                        Variant="Variant.Outlined"
+                                        Required="true"
+                                        Clearable="true"
+                                        AdornmentIcon="@Icons.Material.Filled.Person"
+                                        AdornmentColor="Color.Primary">
+                            <ItemTemplate Context="user">
+                                <MudStack Spacing="1">
+                                    <MudText Typo="Typo.body1">@user.FullName</MudText>
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">@user.Email</MudText>
+                                </MudStack>
+                            </ItemTemplate>
+                        </MudAutocomplete>
+                    </MudItem>
+
+                    <!-- Type d'accès -->
+                    <MudItem xs="12" md="6">
+                        <MudSelect @bind-Value="_selectedAccessType" 
+                                  Label="Type d'accès" 
+                                  Variant="Variant.Outlined"
+                                  Required="true">
+                            <MudSelectItem Value="@("Lecture")">Lecture seule</MudSelectItem>
+                            <MudSelectItem Value="@("Controle")">Contrôle complet</MudSelectItem>
+                        </MudSelect>
+                    </MudItem>
+
+                    <!-- Sélection Zones (Multiple) -->
+                    <MudItem xs="12" md="6">
+                        <MudSelect T="int" 
+                                  @bind-SelectedValues="_selectedZoneIds"
+                                  Label="Zones à assigner" 
+                                  Variant="Variant.Outlined"
+                                  MultiSelection="true"
+                                  SelectAll="true"
+                                  SelectAllText="Sélectionner toutes les zones">
+                            @foreach (var zone in _availableZones)
+                            {
+                                <MudSelectItem Value="@zone.Id">@zone.Name</MudSelectItem>
+                            }
+                        </MudSelect>
+                        @if (_selectedZoneIds?.Any() == true)
+                        {
+                            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-1">
+                                @_selectedZoneIds.Count() zone(s) sélectionnée(s)
+                            </MudText>
+                        }
+                    </MudItem>
+
+                    <!-- Sélection Devices (Multiple) -->
+                    <MudItem xs="12" md="6">
+                        <MudSelect T="int" 
+                                  @bind-SelectedValues="_selectedDeviceIds"
+                                  Label="Devices à assigner" 
+                                  Variant="Variant.Outlined"
+                                  MultiSelection="true"
+                                  SelectAll="true"
+                                  SelectAllText="Sélectionner tous les devices">
+                            @foreach (var device in _availableDevices)
+                            {
+                                <MudSelectItem Value="@device.Id">
+                                    @device.Name (@(device.DeviceType ?? "N/A"))
+                                </MudSelectItem>
+                            }
+                        </MudSelect>
+                        @if (_selectedDeviceIds?.Any() == true)
+                        {
+                            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-1">
+                                @_selectedDeviceIds.Count() device(s) sélectionné(s)
+                            </MudText>
+                        }
+                    </MudItem>
+
+                    <!-- Boutons Action -->
+                    <MudItem xs="12">
+                        <MudStack Row="true" Spacing="2" Justify="Justify.FlexEnd">
+                            <MudButton OnClick="ResetForm" 
+                                      Variant="Variant.Outlined"
+                                      Disabled="@_isProcessing">
+                                Réinitialiser
+                            </MudButton>
+                            <MudButton OnClick="AssignRights" 
+                                      Variant="Variant.Filled" 
+                                      Color="Color.Primary"
+                                      StartIcon="@Icons.Material.Filled.Add"
+                                      Disabled="@(_selectedUser == null || (_selectedZoneIds?.Any() != true && _selectedDeviceIds?.Any() != true) || _isProcessing)">
+                                @if (_isProcessing)
+                                {
+                                    <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+                                    <span class="ml-2">Assignation...</span>
+                                }
+                                else
+                                {
+                                    <span>Assigner les droits</span>
+                                }
+                            </MudButton>
+                        </MudStack>
+                    </MudItem>
+                </MudGrid>
+            </MudCardContent>
+        </MudCard>
+
+        <!-- Section Liste Droits -->
+        @if (_selectedUser != null)
+        {
+            <MudCard>
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6">
+                            Droits actuels de @_selectedUser.FullName
+                        </MudText>
+                    </CardHeaderContent>
+                    <CardHeaderActions>
+                        <MudIconButton Icon="@Icons.Material.Filled.Refresh" 
+                                      OnClick="LoadUserRights"
+                                      Disabled="@_isLoadingRights" />
+                    </CardHeaderActions>
+                </MudCardHeader>
+                <MudCardContent>
+                    @if (_isLoadingRights)
+                    {
+                        <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+                    }
+                    else if (_userRights?.Any() == true)
+                    {
+                        <MudSimpleTable Dense="true" Hover="true">
+                            <thead>
+                                <tr>
+                                    <th>Type</th>
+                                    <th>Ressource</th>
+                                    <th>Type d'accès</th>
+                                    <th>Date création</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var right in _userRights.OrderBy(r => r.ZoneId.HasValue ? 0 : 1).ThenBy(r => r.ZoneName ?? r.PeripheriqueLogiqueName))
+                                {
+                                    <tr>
+                                        <td>
+                                            @if (right.ZoneId.HasValue)
+                                            {
+                                                <MudChip T="string" Size="Size.Small" Color="Color.Info" Icon="@Icons.Material.Filled.LocationOn">
+                                                    @right.ZoneName
+                                                </MudChip>
+                                            }
+                                            else
+                                            {
+                                                <MudChip T="string" Size="Size.Small" Color="Color.Success" Icon="@Icons.Material.Filled.Devices">
+                                                    @right.PeripheriqueLogiqueName
+                                                </MudChip>
+                                            }
+                                        </td>
+                                        <td>
+                                            <MudStack Spacing="1">
+                                                <MudText Typo="Typo.body1">
+                                                    @(right.ZoneName ?? right.PeripheriqueLogiqueName)
+                                                </MudText>
+                                                @if (!string.IsNullOrEmpty(right.ZoneDescription ?? right.PeripheriqueLogiqueType))
+                                                {
+                                                    <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                                        @(right.ZoneDescription ?? right.PeripheriqueLogiqueType)
+                                                    </MudText>
+                                                }
+                                            </MudStack>
+                                        </td>
+                                        <td>
+                                            <MudChip T="string" Size="Size.Small" 
+                                                   Color="@(right.Type == "Controle" ? Color.Primary : Color.Info)">
+                                                @right.Type
+                                            </MudChip>
+                                        </td>
+                                        <td>
+                                            <MudText Typo="Typo.caption">
+                                                @right.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                                            </MudText>
+                                        </td>
+                                        <td>
+                                            <MudIconButton Icon="@Icons.Material.Filled.Delete" 
+                                                          Size="Size.Small" 
+                                                          Color="Color.Error"
+                                                          OnClick="@(() => RevokeRight(right))"
+                                                          Disabled="@_isProcessing" />
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </MudSimpleTable>
+
+                        <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-2">
+                            Total: @_userRights.Count droit(s) d'accès
+                        </MudText>
+                    }
+                    else
+                    {
+                        <MudAlert Severity="Severity.Info">
+                            Aucun droit d'accès assigné pour cet utilisateur
+                        </MudAlert>
+                    }
+                </MudCardContent>
+            </MudCard>
+        }
+    </MudStack>
+</MudPaper>
+
+<!-- Dialog Confirmation Révocation -->
+<MudDialog @bind-IsVisible="_showRevokeDialog" Options="_dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Confirmer la révélation</MudText>
+    </TitleContent>
+    <DialogContent>
+        @if (_rightToRevoke != null)
+        {
+            <MudAlert Severity="Severity.Warning">
+                Êtes-vous sûr de vouloir révoquer l'accès à 
+                <strong>@(_rightToRevoke.ZoneName ?? _rightToRevoke.PeripheriqueLogiqueName)</strong> 
+                pour <strong>@_selectedUser?.FullName</strong> ?
+            </MudAlert>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@(() => _showRevokeDialog = false)">Annuler</MudButton>
+        <MudButton Color="Color.Error" 
+                  Variant="Variant.Filled" 
+                  OnClick="ConfirmRevoke"
+                  Disabled="@_isProcessing">
+            Révoquer
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    // State
+    private UserDetailsDto? _selectedUser;
+    private string _selectedAccessType = "Lecture";
+    private IEnumerable<int>? _selectedZoneIds;
+    private IEnumerable<int>? _selectedDeviceIds;
+
+    // Data
+    private List<ZoneDto> _availableZones = new();
+    private List<DeviceDto> _availableDevices = new();
+    private List<DroitAccesDto>? _userRights;
+    private List<UserDetailsDto> _allUsers = new();
+
+    // UI State
+    private bool _isProcessing;
+    private bool _isLoadingRights;
+    private bool _isLoadingUsers = false;
+    private string? _errorMessage;
+
+    // Revoke Dialog
+    private bool _showRevokeDialog;
+    private DroitAccesDto? _rightToRevoke;
+
+    private DialogOptions _dialogOptions = new() 
+    { 
+        MaxWidth = MaxWidth.Small, 
+        FullWidth = true,
+        CloseButton = true
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDataAsync();
+    }
+
+    private async Task LoadDataAsync()
+    {
+        try
+        {
+            // Charger zones
+            var zones = await ZoneService.GetAllZonesForUIAsync();
+            _availableZones = zones;
+
+            // Charger devices
+            var devices = await DeviceService.GetAllDevicesLegacyAsync();
+            _availableDevices = devices.ToList();
+
+            Logger.LogInformation("? {Zones} zones et {Devices} devices chargés", 
+                _availableZones.Count, _availableDevices.Count);
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Erreur lors du chargement des données: {ex.Message}";
+            Logger.LogError(ex, "? Exception chargement données");
+        }
+    }
+
+    private async Task<IEnumerable<UserDetailsDto>> SearchUsers(string searchTerm, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(searchTerm) || searchTerm.Length < 2)
+        {
+            return Enumerable.Empty<UserDetailsDto>();
+        }
+
+        _isLoadingUsers = true;
+        StateHasChanged();
+
+        try
+        {
+            // Rechercher utilisateurs via AdminUserManagementService
+            var response = await AdminUserService.SearchUsersAsync(searchTerm);
+            
+            if (response.IsSuccess && response.Data != null)
+            {
+                return response.Data;
+            }
+            
+            return Enumerable.Empty<UserDetailsDto>();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Erreur lors de la recherche d'utilisateurs");
+            return Enumerable.Empty<UserDetailsDto>();
+        }
+        finally
+        {
+            _isLoadingUsers = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadUserRights()
+    {
+        if (_selectedUser == null) return;
+
+        try
+        {
+            _isLoadingRights = true;
+            StateHasChanged();
+
+            var response = await DroitAccesService.GetUserAccessRightsAsync(_selectedUser.Id);
+
+            if (response.IsSuccess && response.Data != null)
+            {
+                _userRights = response.Data;
+                Logger.LogInformation("? {Count} droits chargés pour {UserId}", 
+                    response.Data.Count, _selectedUser.Id);
+            }
+            else
+            {
+                _errorMessage = response.ErrorMessage ?? "Erreur lors du chargement des droits";
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Erreur technique: {ex.Message}";
+            Logger.LogError(ex, "? Exception chargement droits utilisateur");
+        }
+        finally
+        {
+            _isLoadingRights = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task AssignRights()
+    {
+        if (_selectedUser == null) return;
+
+        try
+        {
+            _isProcessing = true;
+            _errorMessage = null;
+            StateHasChanged();
+
+            var successCount = 0;
+
+            // Assigner zones (bulk si multiple)
+            if (_selectedZoneIds?.Any() == true)
+            {
+                var zoneIdsList = _selectedZoneIds.ToList();
+                
+                if (zoneIdsList.Count == 1)
+                {
+                    var response = await DroitAccesService.AssignZoneToUserAsync(
+                        _selectedUser.Id, zoneIdsList[0], _selectedAccessType);
+                    
+                    if (response.IsSuccess) successCount++;
+                }
+                else
+                {
+                    var response = await DroitAccesService.BulkAssignZonesAsync(
+                        _selectedUser.Id, zoneIdsList, _selectedAccessType);
+                    
+                    if (response.IsSuccess && response.Data != null)
+                    {
+                        successCount += response.Data.Count;
+                    }
+                }
+            }
+
+            // Assigner devices (bulk si multiple)
+            if (_selectedDeviceIds?.Any() == true)
+            {
+                var deviceIdsList = _selectedDeviceIds.ToList();
+                
+                if (deviceIdsList.Count == 1)
+                {
+                    var response = await DroitAccesService.AssignDeviceToUserAsync(
+                        _selectedUser.Id, deviceIdsList[0], _selectedAccessType);
+                    
+                    if (response.IsSuccess) successCount++;
+                }
+                else
+                {
+                    var response = await DroitAccesService.BulkAssignDevicesAsync(
+                        _selectedUser.Id, deviceIdsList, _selectedAccessType);
+                    
+                    if (response.IsSuccess && response.Data != null)
+                    {
+                        successCount += response.Data.Count;
+                    }
+                }
+            }
+
+            if (successCount > 0)
+            {
+                Logger.LogInformation("? {Count} droit(s) assigné(s) à {UserId}", 
+                    successCount, _selectedUser.Id);
+                
+                // Recharger les droits
+                await LoadUserRights();
+                
+                // Reset formulaire
+                ResetForm();
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Erreur technique: {ex.Message}";
+            Logger.LogError(ex, "? Exception assignation droits");
+        }
+        finally
+        {
+            _isProcessing = false;
+            StateHasChanged();
+        }
+    }
+
+    private void RevokeRight(DroitAccesDto right)
+    {
+        _rightToRevoke = right;
+        _showRevokeDialog = true;
+    }
+
+    private async Task ConfirmRevoke()
+    {
+        if (_rightToRevoke == null || _selectedUser == null) return;
+
+        try
+        {
+            _isProcessing = true;
+            _showRevokeDialog = false;
+            StateHasChanged();
+
+            Services.ApiResponse<bool> response;
+
+            if (_rightToRevoke.ZoneId.HasValue)
+            {
+                response = await DroitAccesService.RevokeZoneAccessAsync(
+                    _selectedUser.Id, _rightToRevoke.ZoneId.Value);
+            }
+            else if (_rightToRevoke.PeripheriqueLogiqueId.HasValue)
+            {
+                response = await DroitAccesService.RevokeDeviceAccessAsync(
+                    _selectedUser.Id, _rightToRevoke.PeripheriqueLogiqueId.Value);
+            }
+            else
+            {
+                _errorMessage = "Droit d'accès invalide (ni zone ni device)";
+                return;
+            }
+
+            if (response.IsSuccess)
+            {
+                Logger.LogInformation("? Droit révoqué pour {UserId}", _selectedUser.Id);
+                await LoadUserRights();
+            }
+            else
+            {
+                _errorMessage = response.ErrorMessage ?? "Erreur lors de la révocation";
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Erreur technique: {ex.Message}";
+            Logger.LogError(ex, "? Exception révocation droit");
+        }
+        finally
+        {
+            _isProcessing = false;
+            _rightToRevoke = null;
+            StateHasChanged();
+        }
+    }
+
+    private void ResetForm()
+    {
+        _selectedZoneIds = null;
+        _selectedDeviceIds = null;
+        _selectedAccessType = "Lecture";
+    }
+}

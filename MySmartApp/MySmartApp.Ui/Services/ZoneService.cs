@@ -46,15 +46,15 @@ public class ZoneService : IZoneService, IDisposable
         await _semaphore.WaitAsync();
         try
         {
-            // Vérifier le cache d'abord
+            // Vï¿½rifier le cache d'abord
             if (_cache.TryGetValue(ZONES_CACHE_KEY, out List<ZoneDto>? cachedZones))
             {
-                _logger.LogDebug("?? Zones récupérées depuis le cache ({Count})", cachedZones?.Count ?? 0);
+                _logger.LogDebug("?? Zones rï¿½cupï¿½rï¿½es depuis le cache ({Count})", cachedZones?.Count ?? 0);
                 return cachedZones ?? new List<ZoneDto>();
             }
 
-            _logger.LogDebug("?? Récupération des zones depuis l'API...");
-            var response = await _apiService.GetAsync<List<ZoneDto>>("/Zones");
+            _logger.LogDebug("?? Rï¿½cupï¿½ration des zones depuis l'API...");
+            var response = await _apiService.GetAsync<List<ZoneDto>>("api/Zones");
 
             if (response.IsSuccess && response.Data != null)
             {
@@ -67,24 +67,24 @@ public class ZoneService : IZoneService, IDisposable
                 };
                 _cache.Set(ZONES_CACHE_KEY, response.Data, cacheOptions);
 
-                // Mettre à jour l'état global
+                // Mettre ï¿½ jour l'ï¿½tat global
                 await _appState.UpdateZonesAsync(response.Data);
                 
-                // Notifier les abonnés
+                // Notifier les abonnï¿½s
                 ZonesUpdated?.Invoke(response.Data);
 
-                _logger.LogInformation("? {Count} zones récupérées avec succès", response.Data.Count);
+                _logger.LogInformation("? {Count} zones rï¿½cupï¿½rï¿½es avec succï¿½s", response.Data.Count);
                 return response.Data;
             }
 
-            var errorMessage = response.ErrorMessage ?? "Erreur inconnue lors de la récupération des zones";
+            var errorMessage = response.ErrorMessage ?? "Erreur inconnue lors de la rï¿½cupï¿½ration des zones";
             await _appState.SetErrorAsync(errorMessage);
             
             return new List<ZoneDto>();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Erreur lors de la récupération des zones");
+            _logger.LogError("? Erreur lors de la rï¿½cupï¿½ration des zones: {Message}", ex.Message);
             await _appState.SetErrorAsync($"Erreur: {ex.Message}");
             return new List<ZoneDto>();
         }
@@ -98,13 +98,13 @@ public class ZoneService : IZoneService, IDisposable
     {
         try
         {
-            _logger.LogDebug("?? Récupération de la zone {ZoneId}...", id);
+            _logger.LogDebug("?? Rï¿½cupï¿½ration de la zone {ZoneId}...", id);
             
-            var response = await _apiService.GetAsync<ZoneDto>($"/Zones/{id}");
+            var response = await _apiService.GetAsync<ZoneDto>($"api/Zones/{id}");
             
             if (response.IsSuccess)
             {
-                _logger.LogDebug("? Zone {ZoneId} récupérée: {ZoneName}", id, response.Data?.Name);
+                _logger.LogDebug("? Zone {ZoneId} rï¿½cupï¿½rï¿½e: {ZoneName}", id, response.Data?.Name);
                 return response.Data;
             }
 
@@ -114,12 +114,12 @@ public class ZoneService : IZoneService, IDisposable
                 return null;
             }
 
-            await _appState.SetErrorAsync(response.ErrorMessage ?? $"Erreur lors de la récupération de la zone {id}");
+            await _appState.SetErrorAsync(response.ErrorMessage ?? $"Erreur lors de la rï¿½cupï¿½ration de la zone {id}");
             return null;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Erreur lors de la récupération de la zone {ZoneId}", id);
+            _logger.LogError("? Erreur lors de la rï¿½cupï¿½ration de la zone {ZoneId}: {Message}", id, ex.Message);
             await _appState.SetErrorAsync($"Erreur: {ex.Message}");
             return null;
         }
@@ -129,25 +129,25 @@ public class ZoneService : IZoneService, IDisposable
     {
         try
         {
-            _logger.LogDebug("?? Récupération des appareils de la zone {ZoneId}...", zoneId);
+            _logger.LogDebug("?? Rï¿½cupï¿½ration des appareils de la zone {ZoneId}...", zoneId);
             
-            var response = await _apiService.GetAsync<List<DeviceDto>>($"/zones/{zoneId}/devices");
+            var response = await _apiService.GetAsync<List<DeviceDto>>($"api/zones/{zoneId}/devices");
             
             if (response.IsSuccess && response.Data != null)
             {
-                _logger.LogInformation("? {Count} appareils récupérés pour la zone {ZoneId}", 
+                _logger.LogInformation("? {Count} appareils rï¿½cupï¿½rï¿½s pour la zone {ZoneId}", 
                     response.Data.Count, zoneId);
                 return response.Data;
             }
 
-            var errorMessage = response.ErrorMessage ?? $"Erreur lors de la récupération des appareils de la zone {zoneId}";
+            var errorMessage = response.ErrorMessage ?? $"Erreur lors de la rï¿½cupï¿½ration des appareils de la zone {zoneId}";
             await _appState.SetErrorAsync(errorMessage);
             
             return new List<DeviceDto>();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Erreur lors de la récupération des appareils de la zone {ZoneId}", zoneId);
+            _logger.LogError("? Erreur lors de la rï¿½cupï¿½ration des appareils de la zone {ZoneId}: {Message}", zoneId, ex.Message);
             await _appState.SetErrorAsync($"Erreur: {ex.Message}");
             return new List<DeviceDto>();
         }
@@ -157,9 +157,9 @@ public class ZoneService : IZoneService, IDisposable
     {
         try
         {
-            _logger.LogInformation("? Création de la zone '{ZoneName}'...", request.Name);
+            _logger.LogInformation("? Crï¿½ation de la zone '{ZoneName}'...", request.Name);
             
-            var response = await _apiService.PostAsync<ZoneDto>("/Zones", request);
+            var response = await _apiService.PostAsync<ZoneDto>("api/Zones", request);
             
             if (response.IsSuccess)
             {
@@ -169,20 +169,20 @@ public class ZoneService : IZoneService, IDisposable
                 // Recharger les zones
                 _ = Task.Run(async () => await GetAllZonesAsync());
                 
-                await _appState.ShowNotificationAsync($"Zone '{request.Name}' créée avec succès", NotificationType.Success);
-                _logger.LogInformation("? Zone '{ZoneName}' créée avec l'ID {ZoneId}", request.Name, response.Data?.Id);
+                await _appState.ShowNotificationAsync($"Zone '{request.Name}' crï¿½ï¿½e avec succï¿½s", NotificationType.Success);
+                _logger.LogInformation("? Zone '{ZoneName}' crï¿½ï¿½e avec l'ID {ZoneId}", request.Name, response.Data?.Id);
             }
             else
             {
-                await _appState.ShowNotificationAsync($"Erreur lors de la création de la zone: {response.ErrorMessage}", NotificationType.Error);
+                await _appState.ShowNotificationAsync($"Erreur lors de la crï¿½ation de la zone: {response.ErrorMessage}", NotificationType.Error);
             }
 
             return response;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Erreur lors de la création de la zone '{ZoneName}'", request.Name);
-            var errorMessage = $"Erreur lors de la création: {ex.Message}";
+            _logger.LogError("? Erreur lors de la crï¿½ation de la zone '{ZoneName}': {Message}", request.Name, ex.Message);
+            var errorMessage = $"Erreur lors de la crï¿½ation: {ex.Message}";
             await _appState.ShowNotificationAsync(errorMessage, NotificationType.Error);
             return ApiResponse<ZoneDto>.Error(errorMessage);
         }
@@ -192,9 +192,9 @@ public class ZoneService : IZoneService, IDisposable
     {
         try
         {
-            _logger.LogInformation("?? Mise à jour de la zone {ZoneId}...", id);
+            _logger.LogInformation("?? Mise ï¿½ jour de la zone {ZoneId}...", id);
             
-            var response = await _apiService.PutAsync<ZoneDto>($"/Zones/{id}", request);
+            var response = await _apiService.PutAsync<ZoneDto>($"api/Zones/{id}", request);
             
             if (response.IsSuccess)
             {
@@ -204,20 +204,20 @@ public class ZoneService : IZoneService, IDisposable
                 // Recharger les zones
                 _ = Task.Run(async () => await GetAllZonesAsync());
                 
-                await _appState.ShowNotificationAsync("Zone mise à jour avec succès", NotificationType.Success);
-                _logger.LogInformation("? Zone {ZoneId} mise à jour", id);
+                await _appState.ShowNotificationAsync("Zone mise ï¿½ jour avec succï¿½s", NotificationType.Success);
+                _logger.LogInformation("? Zone {ZoneId} mise ï¿½ jour", id);
             }
             else
             {
-                await _appState.ShowNotificationAsync($"Erreur lors de la mise à jour: {response.ErrorMessage}", NotificationType.Error);
+                await _appState.ShowNotificationAsync($"Erreur lors de la mise ï¿½ jour: {response.ErrorMessage}", NotificationType.Error);
             }
 
             return response;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Erreur lors de la mise à jour de la zone {ZoneId}", id);
-            var errorMessage = $"Erreur lors de la mise à jour: {ex.Message}";
+            _logger.LogError("? Erreur lors de la mise ï¿½ jour de la zone {ZoneId}: {Message}", id, ex.Message);
+            var errorMessage = $"Erreur lors de la mise ï¿½ jour: {ex.Message}";
             await _appState.ShowNotificationAsync(errorMessage, NotificationType.Error);
             return ApiResponse<ZoneDto>.Error(errorMessage);
         }
@@ -229,7 +229,7 @@ public class ZoneService : IZoneService, IDisposable
         {
             _logger.LogInformation("??? Suppression de la zone {ZoneId}...", id);
             
-            var response = await _apiService.DeleteAsync($"/Zones/{id}");
+            var response = await _apiService.DeleteAsync($"api/Zones/{id}");
             
             if (response.IsSuccess)
             {
@@ -239,8 +239,8 @@ public class ZoneService : IZoneService, IDisposable
                 // Recharger les zones
                 _ = Task.Run(async () => await GetAllZonesAsync());
                 
-                await _appState.ShowNotificationAsync("Zone supprimée avec succès", NotificationType.Success);
-                _logger.LogInformation("? Zone {ZoneId} supprimée", id);
+                await _appState.ShowNotificationAsync("Zone supprimï¿½e avec succï¿½s", NotificationType.Success);
+                _logger.LogInformation("? Zone {ZoneId} supprimï¿½e", id);
             }
             else
             {
@@ -251,7 +251,7 @@ public class ZoneService : IZoneService, IDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Erreur lors de la suppression de la zone {ZoneId}", id);
+            _logger.LogError("? Erreur lors de la suppression de la zone {ZoneId}: {Message}", id, ex.Message);
             var errorMessage = $"Erreur lors de la suppression: {ex.Message}";
             await _appState.ShowNotificationAsync(errorMessage, NotificationType.Error);
             return ApiResponse.Error(errorMessage);
@@ -266,6 +266,6 @@ public class ZoneService : IZoneService, IDisposable
     }
 }
 
-// DTOs pour les requêtes
+// DTOs pour les requï¿½tes
 public record ZoneCreationRequest(string Name, string? Description = null);
 public record ZoneUpdateRequest(string Name, string? Description = null);

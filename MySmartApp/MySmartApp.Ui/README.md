@@ -1,5 +1,34 @@
 # ?? MySmartApp - Application Smart Home
 
+## ? Démarrage rapide
+
+### ?? Comment lancer l'application
+
+**Dans Visual Studio**, appuyez sur:
+```
+Ctrl + F5  (Démarrer sans déboguer)
+```
+
+**Depuis le terminal**:
+```powershell
+cd D:\Memoire\FrontSmart\MySmartApp\MySmartApp.Ui
+dotnet run
+```
+
+Puis ouvrez: https://localhost:7152
+
+### ?? Important - Problème du débogueur WASM
+
+Si vous voyez des centaines d'erreurs `[MONO] * Assertion at .../debugger-agent.c:2017` dans la console:
+
+**? C'est normal !** C'est un bug connu du débogueur WASM de .NET 9.
+
+**Solution**: Utilisez **Ctrl+F5** au lieu de **F5**.
+
+?? **Documentation complète**: Voir [GUIDE_SIMPLE_DEMARRAGE.md](./GUIDE_SIMPLE_DEMARRAGE.md)
+
+---
+
 ## ?? Vue d'ensemble
 
 **MySmartApp** est une application de gestion de maison intelligente développée avec **Blazor WebAssembly** et **.NET 9**. Elle permet de contrôler et surveiller des appareils IoT connectés, gérer des zones de la maison, et administrer les utilisateurs avec un système d'authentification et d'autorisation complet.
@@ -572,6 +601,72 @@ builder.Services.AddAuthorizationCore();
 - **Branch actuelle** : `ui-wasm-only`
 - **Documentation API** : Voir les contrôleurs du backend
 - **Issues** : Utiliser le système GitHub Issues
+
+---
+
+## ?? Documentation complémentaire
+
+### Guides de démarrage
+
+- **[GUIDE_SIMPLE_DEMARRAGE.md](./GUIDE_SIMPLE_DEMARRAGE.md)** - ?? Guide ultra-simple pour démarrer l'app
+- **[WASM_DEBUGGER_RESOLUTION.md](./WASM_DEBUGGER_RESOLUTION.md)** - ? Résolution des erreurs du débogueur
+- **[DEBUGGER_WASM_FIXES.md](./DEBUGGER_WASM_FIXES.md)** - ?? Guide technique complet sur le débogage WASM
+
+### Documentation des corrections
+
+- **[CORRECTIONS_APPLIQUEES.md](./CORRECTIONS_APPLIQUEES.md)** - Historique des corrections d'authentification
+- **[CORRECTIONS_FIXES.md](./CORRECTIONS_FIXES.md)** - Corrections des problèmes de routes et services
+- **[CORRECTIONS_FINALES.md](./CORRECTIONS_FINALES.md)** - Dernières corrections appliquées
+- **[CORRECTIONS_DIALOGUES.md](./CORRECTIONS_DIALOGUES.md)** - Corrections des dialogues MudBlazor
+- **[CORRECTIONS_EXCEPTIONS_RESUME.md](./CORRECTIONS_EXCEPTIONS_RESUME.md)** - Résumé des exceptions résolues
+
+### Documentation technique
+
+- **[ARCHITECTURE_ROBUSTE.md](./ARCHITECTURE_ROBUSTE.md)** - Architecture de l'application
+- **[DEVICES_PAGE_IMPLEMENTATION.md](./DEVICES_PAGE_IMPLEMENTATION.md)** - Implémentation de la page Devices
+- **[CORRECTIONS_DEVICES_PAGE.md](./CORRECTIONS_DEVICES_PAGE.md)** - Corrections de la page Devices
+
+### ?? Problèmes connus
+
+#### Erreurs du débogueur WASM (.NET 9)
+
+**Symptôme**: Des centaines d'erreurs `[MONO] * Assertion...` dans la console du navigateur.
+
+**Cause**: Bug connu du débogueur Mono WASM dans .NET 9.
+
+**Solution**: 
+1. Utilisez **Ctrl+F5** au lieu de F5
+2. Ou utilisez le profil "https (No Debug)" dans Visual Studio
+
+**Impact**: ? Aucun - l'application fonctionne normalement malgré ces erreurs.
+
+**Documentation**: Voir [GUIDE_SIMPLE_DEMARRAGE.md](./GUIDE_SIMPLE_DEMARRAGE.md)
+
+---
+
+## ?? Changelog
+
+### Version 1.0.0 - Janvier 2025
+
+#### ? Corrections majeures
+- Désactivation du débogueur WASM pour éviter les assertions Mono
+- Correction des routes en double (Devices.razor)
+- Ajout de nouveaux profils de lancement sans débogage
+- Implémentation complète de la page Devices avec gestion des périphériques IoT
+- Création du service DevicePeripheralService
+
+#### ?? Fonctionnalités
+- Interface complète de gestion des devices IoT
+- Gestion des périphériques physiques (capteurs, relais, etc.)
+- Vue fusionnée (Desired vs Reported properties)
+- Exécution de commandes sur les périphériques
+- Statuts de connexion IoT Hub en temps réel
+
+#### ?? Documentation
+- Ajout de 10+ documents de documentation
+- Guide simple de démarrage (GUIDE_SIMPLE_DEMARRAGE.md)
+- Documentation technique complète du débogueur WASM
+- Historique complet des corrections
 
 ---
 

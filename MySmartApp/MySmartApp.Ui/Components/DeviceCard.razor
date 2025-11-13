@@ -1,4 +1,6 @@
-@* Composant DeviceCard pour afficher les appareils *@
+@* Composant DeviceCard pour afficher les appareils avec commandes IoT *@
+@inject ILogger<DeviceCard> Logger
+@inject ICommandeService CommandeService
 
 <MudPaper Class="pa-4 rounded-xl device-card" 
           Style="@GetCardStyle()" 
@@ -63,17 +65,52 @@
 </style>
 
 @code {
-    [Parameter] public string Icon { get; set; } = Icons.Material.Filled.DeviceHub;
-    [Parameter] public string DeviceName { get; set; } = "Device";
-    [Parameter] public string DeviceColor { get; set; } = "#5850EC";
-    [Parameter] public bool IsOn { get; set; } = false;
-    [Parameter] public EventCallback<bool> OnToggle { get; set; }
+[Parameter] public string Icon { get; set; } = Icons.Material.Filled.DeviceHub;
+[Parameter] public string DeviceName { get; set; } = "Device";
+[Parameter] public string DeviceColor { get; set; } = "#5850EC";
+[Parameter] public bool IsOn { get; set; } = false;
+[Parameter] public int? PeripheriqueId { get; set; } // ID pour envoyer les commandes
+[Parameter] public EventCallback<bool> OnToggle { get; set; }
 
     private async Task OnToggleChanged()
     {
         if (OnToggle.HasDelegate)
         {
             await OnToggle.InvokeAsync(IsOn);
+        }
+        else if (PeripheriqueId.HasValue)
+        {
+            // Envoyer la commande directement via le service si aucun callback personnalisé
+            await SendToggleCommand();
+        }
+    }
+
+    private async Task SendToggleCommand()
+    {
+        if (!PeripheriqueId.HasValue) return;
+
+        try
+        {
+            var result = await CommandeService.ToggleDeviceAsync(PeripheriqueId.Value, IsOn);
+            
+            if (result.IsSuccess)
+            {
+                Logger.LogDebug("DeviceCard: Commande toggle réussie pour {DeviceName}", DeviceName);
+            }
+            else
+            {
+                Logger.LogWarning("DeviceCard: Échec toggle pour {DeviceName}: {Message}", DeviceName, result.Message);
+                // Revenir à l'état précédent en cas d'échec
+                IsOn = !IsOn;
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "DeviceCard: Erreur lors du toggle de {DeviceName}", DeviceName);
+            // Revenir à l'état précédent en cas d'erreur
+            IsOn = !IsOn;
+            StateHasChanged();
         }
     }
 

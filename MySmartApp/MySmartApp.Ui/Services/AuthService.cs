@@ -16,6 +16,7 @@ public interface IAuthService
     Task<RegisterResult> RegisterAsync(RegisterDto request);
     Task<bool> ValidateTokenAsync();
     Task<UserProfileDto?> GetCurrentUserAsync();
+    Task<string?> GetCurrentUserIdAsync();
     Task LogoutAsync();
     Task<bool> IsAuthenticatedAsync();
     Task<bool> IsInRoleAsync(string role);
@@ -143,14 +144,14 @@ public class AuthService : IAuthService
         }
         catch (JsonException jsonEx)
         {
-            _logger.LogError(jsonEx, "?? Erreur de désérialisation JSON pour {Email}", email);
+            _logger.LogError("?? Erreur de désérialisation JSON pour {Email}: {Message}", email, jsonEx.Message);
             var errorMessage = "Erreur de format de réponse du serveur";
             await _appState.ShowNotificationAsync(errorMessage, NotificationType.Error);
             return new LoginResult(false, errorMessage);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Erreur inattendue lors de la connexion pour {Email}: {ExceptionType} - {Message}", 
+            _logger.LogError("? Erreur inattendue lors de la connexion pour {Email}: {ExceptionType} - {Message}", 
                 email, ex.GetType().Name, ex.Message);
             var errorMessage = $"Erreur inattendue: {ex.GetType().Name} - {ex.Message}";
             await _appState.ShowNotificationAsync(errorMessage, NotificationType.Error);
@@ -221,38 +222,33 @@ public class AuthService : IAuthService
     {
         try
         {
-            // Utiliser l'endpoint test-auth pour récupérer les informations utilisateur
+            // ? Utiliser le nouvel endpoint /api/User/profile du backend
             var httpClient = await GetHttpClientAsync();
-            var httpResponse = await httpClient.GetAsync("/api/Auth/test-auth");
+            var httpResponse = await httpClient.GetAsync("/api/User/profile");
             
             if (httpResponse.IsSuccessStatusCode)
             {
                 var responseContent = await httpResponse.Content.ReadAsStringAsync();
-                var testAuthResponse = JsonSerializer.Deserialize<JsonElement>(responseContent, new JsonSerializerOptions
+                var userProfile = JsonSerializer.Deserialize<CurrentUserDto>(responseContent, new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = true
                 });
                 
-                if (testAuthResponse.TryGetProperty("userId", out var userIdElement) &&
-                    testAuthResponse.TryGetProperty("email", out var emailElement))
+                if (userProfile != null)
                 {
-                    var userId = userIdElement.GetString() ?? "";
-                    var email = emailElement.GetString() ?? "";
-                    
-                    // Extraire les rôles
-                    var roles = new List<string>();
-                    if (testAuthResponse.TryGetProperty("roles", out var rolesElement) && rolesElement.ValueKind == JsonValueKind.Array)
-                    {
-                        roles = rolesElement.EnumerateArray()
-                            .Where(r => r.ValueKind == JsonValueKind.String)
-                            .Select(r => r.GetString()!)
-                            .Where(r => !string.IsNullOrEmpty(r))
-                            .ToList();
-                    }
-                    
-                    var userProfile = new UserProfileDto(userId, email, null, null, roles);
-                    _logger.LogDebug("?? Profil utilisateur récupéré: {Email}, Rôles: {Roles}", email, string.Join(", ", roles));
-                    return userProfile;
+                    // Convertir CurrentUserDto vers UserProfileDto
+                    var profile = new UserProfileDto(
+                        userProfile.Id,
+                        userProfile.Email ?? "",
+                        userProfile.FirstName,
+                        userProfile.LastName,
+                        userProfile.Roles ?? new List<string>()
+                    );
+                
+                    _logger.LogDebug("?? Profil utilisateur récupéré: {Email}, Nom: {FirstName} {LastName}, Rôles: {Roles}", 
+                        userProfile.Email, userProfile.FirstName, userProfile.LastName, string.Join(", ", userProfile.Roles));
+
+                    return profile;
                 }
             }
             
@@ -267,6 +263,23 @@ public class AuthService : IAuthService
         catch (Exception ex)
         {
             _logger.LogError(ex, "? Erreur lors de la récupération du profil utilisateur");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Récupère l'ID de l'utilisateur connecté depuis le JWT
+    /// </summary>
+    public async Task<string?> GetCurrentUserIdAsync()
+    {
+        try
+        {
+            var user = await GetCurrentUserAsync();
+            return user?.Id;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "? Erreur lors de la récupération de l'ID utilisateur");
             return null;
         }
     }

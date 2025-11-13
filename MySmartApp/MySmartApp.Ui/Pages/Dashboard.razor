@@ -1,210 +1,398 @@
 @page "/dashboard"
 @using MySmartApp.Ui.Layout
 @using MySmartApp.Ui.Services
+@using MySmartApp.Ui.Models
+@using MySmartApp.Ui.Components.Dashboard
 @inject IAuthService AuthService
 @inject ILogger<Dashboard> Logger
+@inject ICommandeService CommandeService
+@inject IWeatherService WeatherService
+@inject IDashboardStatsService DashboardStatsService
+@inject ISnackbar Snackbar
 @attribute [Authorize]
+@implements IDisposable
 
-<PageTitle>Dashboard</PageTitle>
+<PageTitle>Dashboard - Smart Office</PageTitle>
 
 <RequireAuth>
-@* Header avec barre de recherche et navigation *@
-<DashBoardHeader />
+    @* Header avec barre de recherche et navigation *@
+    <DashBoardHeader />
 
-    @* Le contenu principal est un MudGrid qui divise la page en deux colonnes *@
-    <MudGrid Class="pa-4">
-        @* Colonne de gauche (contenu principal) *@
-        <MudItem xs="12" md="8">
-            @* La grille de gauche contiendra les cartes 'Hello Scarlett' et les appareils *@
+    @* ? Barre d'outils Dashboard avec contrôles *@
+    <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="pa-2">
+        <MudPaper Class="pa-2 mb-4" Elevation="1">
+            <div class="d-flex justify-space-between align-center">
+                <div class="d-flex align-center">
+                    <MudIcon Icon="@Icons.Material.Filled.Dashboard" Class="mr-2" />
+                    <MudText Typo="Typo.h6">Dashboard Smart Office</MudText>
+                </div>
+                <div class="d-flex align-center gap-2">
+                    <MudSwitch T="bool" @bind-Checked="_autoRefreshEnabled"
+                              Label="Auto-actualisation"
+                              Color="Color.Primary"
+                              Size="Size.Small" />
+                    <MudIconButton Icon="@Icons.Material.Filled.Refresh" 
+                                  OnClick="RefreshDashboardAsync"
+                                  Disabled="_isDashboardLoading"
+                                  Color="Color.Primary"
+                                  Title="Actualiser le Dashboard" />
+                    @if (_isDashboardLoading)
+                    {
+                        <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+                    }
+                    else if (_lastUpdated.HasValue)
+                    {
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">
+                            Mis à jour: @_lastUpdated.Value.ToString("HH:mm:ss")
+                        </MudText>
+                    }
+                </div>
+            </div>
+        </MudPaper>
+    </MudContainer>
+
+    @* Contenu principal du Dashboard *@
+    <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="pa-4">
+        
+        @* Section 1: Hero Section avec météo (CONSERVÉE) *@
+        <MudPaper Class="pa-6 rounded-xl mb-4" Style="background: linear-gradient(135deg, #14B8A6 0%, #06B6D4 100%); color: white; position: relative; overflow: hidden;">
             <MudGrid>
-                @* Ligne 1 : Carte "Hello, Scarlett!" *@
-                <MudItem xs="12" Class="mb-4">
-                    <MudPaper Class="pa-6 rounded-xl" Style="background: linear-gradient(135deg, #14B8A6 0%, #06B6D4 100%); color: white;">
-                        <MudGrid>
-                            @* Colonne gauche : Le texte et la météo *@
-                            <MudItem xs="12" sm="7" md="8" >
-                               
-                                <MudText Typo="Typo.h5" GutterBottom="true" Style="color: white; font-weight: bold;">Hello, @(_currentUserName ?? "User")!</MudText>
-                                <MudText Typo="Typo.body2" Class="mb-4" Style="color: rgba(255, 255, 255, 0.9);">
-                                    Welcome Home! The air quality is good & fresh you can go out today.
-                                </MudText>
+                @* Colonne gauche : Le texte et la météo *@
+                <MudItem xs="12" sm="7" md="8">
+                    <MudText Typo="Typo.h5" GutterBottom="true" Style="color: white; font-weight: bold;">
+                        Bonjour, @(_currentUserName ?? "User") !
+                    </MudText>
+                    <MudText Typo="Typo.body2" Class="mb-4" Style="color: rgba(255, 255, 255, 0.9);">
+                        Bienvenue dans votre espace Smart Office. @(_weatherGreeting)
+                    </MudText>
 
-                                <div class="d-flex align-center mb-2">
-                                    <MudIcon Icon="@Icons.Material.Filled.DeviceThermostat" Style="color: rgba(255, 255, 255, 0.9);" Class="mr-2" />
-                                    <MudText Typo="Typo.body1" Class="font-weight-bold" Style="color: white;">+25°C</MudText>
-                                    <MudText Typo="Typo.body2" Class="ml-2" Style="color: rgba(255, 255, 255, 0.8);">Outdoor temperature</MudText>
-                                </div>
+                    @if (_weatherData != null)
+                    {
+                        <div class="d-flex align-center mb-2">
+                            <MudIcon Icon="@Icons.Material.Filled.DeviceThermostat" Style="color: rgba(255, 255, 255, 0.9);" Class="mr-2" />
+                            <MudText Typo="Typo.body1" Class="font-weight-bold" Style="color: white;">
+                                @(_weatherData.Temperature.ToString("F1"))°C
+                            </MudText>
+                            <MudText Typo="Typo.body2" Class="ml-2" Style="color: rgba(255, 255, 255, 0.8);">
+                                (ressenti @(_weatherData.FeelsLike.ToString("F1"))°C)
+                            </MudText>
+                        </div>
 
-                                <div class="d-flex align-center">
-                                    <MudIcon Icon="@Icons.Material.Filled.Cloud" Style="color: rgba(255, 255, 255, 0.9);" Class="mr-2" />
-                                    <MudText Typo="Typo.body2" Style="color: rgba(255, 255, 255, 0.8);">Fuzzy cloudy weather</MudText>
-                                </div>
-                            </MudItem>
+                        <div class="d-flex align-center mb-2">
+                            <MudIcon Icon="@_weatherData.GetWeatherIcon()" Style="color: rgba(255, 255, 255, 0.9);" Class="mr-2" />
+                            <MudText Typo="Typo.body2" Style="color: rgba(255, 255, 255, 0.8);">
+                                @_weatherData.Description
+                            </MudText>
+                        </div>
 
-                            @* Colonne droite : L'image de l'illustration *@
-                            <MudItem xs="12" sm="5" md="4" Class="d-flex justify-center">
-                                <MudImage Src="img/Humaaan.png" Style="max-height: 200px; width: auto;" />
-                            </MudItem>
-                        </MudGrid>
-                    </MudPaper>
-                </MudItem>
-               @* Ligne 2 : Titre "Smart Home" et les commandes en ligne *@
-                <MudItem xs="12">
-                    <MudGrid Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
-                        <MudItem xs="12" md="4">
-                            <MudText Typo="Typo.h6">@(_currentUserName ?? "User")'s Smart Office</MudText>
-                        </MudItem>
-                        <MudItem xs="12" md="8">
-                            <div class="d-flex align-center justify-end">
-                                <MudText Typo="Typo.subtitle2" Class="mr-4">35%</MudText>
-                                <MudText Typo="Typo.subtitle2" Class="mr-4">15°C</MudText>
-                                <MudSelect T="string" Label="Living Room" Class="mr-4 rounded-pill">
-                                    <MudSelectItem Value="@("Living Room")" />
-                                    <MudSelectItem Value="@("Bedroom")" />
-                                    <MudSelectItem Value="@("Kitchen")" />
-                                </MudSelect>
-                                <div class="d-flex align-center">
-                                    <MudText Class="mr-2">OFF</MudText>
-                                    <MudSwitch T="bool" @bind-Checked="_mainSwitch" Color="Color.Primary" />
-                                </div>
-                            </div>
-                        </MudItem>
-                    </MudGrid>
+                        <div class="d-flex align-center">
+                            <MudIcon Icon="@Icons.Material.Filled.Air" Style="color: rgba(255, 255, 255, 0.9);" Class="mr-2" />
+                            <MudText Typo="Typo.body2" Style="color: rgba(255, 255, 255, 0.8);">
+                                Vent: @(_weatherData.WindSpeed.ToString("F1")) km/h | Humidité: @_weatherData.Humidity%
+                            </MudText>
+                        </div>
+                    }
+                    else
+                    {
+                        <MudProgressCircular Color="Color.Surface" Size="Size.Small" Indeterminate="true" />
+                    }
                 </MudItem>
 
-                @* Ligne 2 (suite) : Les cartes des appareils *@
-                <MudItem xs="6" sm="3">
-                    <DeviceCard Icon="@Icons.Material.Filled.AcUnit" DeviceName="A/C" />
-                </MudItem>
-                <MudItem xs="6" sm="3">
-                    <DeviceCard Icon="@Icons.Material.Filled.Lightbulb" DeviceName="Lights" />
-                </MudItem>
-                <MudItem xs="6" sm="3">
-                    <DeviceCard Icon="@Icons.Material.Filled.Thermostat" DeviceName="Temperature" />
-                </MudItem>
-                <MudItem xs="6" sm="3">
-                    <DeviceCard Icon="@Icons.Material.Filled.Kitchen" DeviceName="Refrigerator" />
-                </MudItem>
-
-                @* Ligne 3 : Jauge de température *@
-                <MudItem xs="12" Class="mt-4">
-                    <TemperatureGauge />
+                @* Colonne droite : L'image de l'illustration *@
+                <MudItem xs="12" sm="5" md="4" Class="d-flex justify-center align-center">
+                    <MudImage Src="img/Humaaan.png" Style="max-height: 200px; width: auto;" />
                 </MudItem>
             </MudGrid>
-        </MudItem>
+        </MudPaper>
 
-        @* Colonne de droite (barre latérale) *@
-        <MudItem xs="12" md="4">
-            @* La grille de droite contiendra les listes et le graphique *@
-            <MudGrid>
-                <MudItem xs="12" Class="d-flex justify-space-between align-center pa-4 rounded-xl">
-                    
-                        <MudText Typo="Typo.h6">My Devices</MudText>
-                        <div>
-                            <MudSwitch T="bool" @bind-Checked="switchb" Color="Color.Primary" Class="d-inline-flex mr-2" />
-                            <MudIconButton OnClick="NavigateToDevices" Icon="@Icons.Material.Filled.ArrowForwardIos" Color="Color.Dark" />
-                        </div>
-                    
-                </MudItem>
-
-                <MudItem xs="6" sm="6">
-                    <DeviceCard Icon="@Icons.Material.Filled.AcUnit" DeviceName="A/C" DeviceColor="Purple" IsOn="true" />
-                </MudItem>
-                <MudItem xs="6" sm="6">
-                    <DeviceCard Icon="@Icons.Material.Filled.Router" DeviceName="Router" DeviceColor="Yellow" IsOn="false" />
-                </MudItem>
-                <MudItem xs="6" sm="6">
-                    <DeviceCard Icon="@Icons.Material.Filled.MusicNote" DeviceName="Music System" DeviceColor="Orange" IsOn="true" />
-                </MudItem>
-                <MudItem xs="6" sm="6">
-                    <DeviceCard Icon="@Icons.Material.Filled.Lightbulb" DeviceName="Lamps" DeviceColor="Cyan" IsOn="false" />
-                </MudItem>
-                
-                <MudItem xs="12" Class="mt-4 d-flex justify-space-between align-center pa-4 rounded-xl">
-                    <MudText Typo="Typo.h6">Members</MudText>
-                    <div class="d-flex align-center">
-                        <MudIconButton Icon="@Icons.Material.Filled.Add" 
-                                      Color="Color.Primary" 
-                                      Size="Size.Small"
-                                      OnClick="NavigateToMembers"
-                                      Variant="Variant.Filled"
-                                      Class="mr-2"
-                                      Title="Gérer les utilisateurs" />
-                        <MudIconButton OnClick="NavigateToMembers" Icon="@Icons.Material.Filled.ArrowForwardIos" Color="Color.Dark" Class="d-inline-flex" />     
-                    </div>
-                </MudItem>
-
-                <MudItem xs="12">
-                    <MudPaper Class="pa-4 rounded-xl">
-                        <MudStack Row="true" Spacing="4" Class="flex-wrap">
-                            <div class="d-flex flex-column align-center" style="cursor: pointer;" @onclick="NavigateToProfile">
-                                <MudAvatar Image="https://i.pravatar.cc/100?img=1" />
-                                <MudText Typo="Typo.body2">@(_currentUserName ?? "User")</MudText>
-                                <MudChip T="string" Size="Size.Small" Color="@GetRoleColor(_currentUserRole)">
-                                    @(_currentUserRole ?? "User")
+        @* Section 2: KPIs (Key Performance Indicators) *@
+        <MudGrid Class="mb-4">
+            <MudItem xs="12" sm="6" md="3">
+                <MudCard Class="rounded-xl" Style="height: 100%;">
+                    <MudCardContent>
+                        @if (_isDashboardLoading)
+                        {
+                            <div class="d-flex justify-center align-center" style="height: 100px;">
+                                <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="d-flex justify-space-between align-center mb-2">
+                                <MudIcon Icon="@Icons.Material.Filled.Devices" Color="Color.Primary" Size="Size.Large" />
+                                <MudChip T="string" Size="Size.Small" Color="@GetChangeColor(_stats?.DevicesChangePercent ?? 0)">
+                                    @FormatChangePercent(_stats?.DevicesChangePercent ?? 0)
                                 </MudChip>
                             </div>
-                            <div class="d-flex flex-column align-center">
-                                <MudAvatar Image="https://i.pravatar.cc/100?img=2" />
-                                <MudText Typo="Typo.body2">Team Member</MudText>
-                                <MudChip T="string" Size="Size.Small" Color="Color.Info">User</MudChip>
-                            </div>
-                            <div class="d-flex flex-column align-center">
-                                <MudAvatar Image="https://i.pravatar.cc/100?img=3" />
-                                <MudText Typo="Typo.body2">Manager</MudText>
-                                <MudChip T="string" Size="Size.Small" Color="Color.Warning">Manager</MudChip>
-                            </div>
-                            <div class="d-flex flex-column align-center">
-                                <MudAvatar Image="https://i.pravatar.cc/100?img=4" />
-                                <MudText Typo="Typo.body2">System Admin</MudText>
-                                <MudChip T="string" Size="Size.Small" Color="Color.Error">Admin</MudChip>
-                            </div>
-                        </MudStack>
-                        
-                        <!-- Outils Admin -->
-                        <MudDivider Class="my-4" />
-                        <div class="d-flex justify-space-between align-center">
-                            <MudText Typo="Typo.body2" Color="Color.Secondary">
-                                ?? Outils d'administration
+                            <MudText Typo="Typo.h4" Class="font-weight-bold">
+                                @(_stats?.ActiveDevices ?? 0)/@(_stats?.TotalDevices ?? 0)
                             </MudText>
-                            <div>
-                                <MudIconButton Icon="@Icons.Material.Filled.AdminPanelSettings" 
-                                              Color="Color.Warning"
-                                              Size="Size.Small"
-                                              OnClick="@(() => NavigateToMembers())"
-                                              Title="Panel d'administration" />
-                                <MudIconButton Icon="@Icons.Material.Filled.BugReport" 
-                                              Color="Color.Info"
-                                              Size="Size.Small"
-                                              OnClick="@(() => NavigationManager.NavigateTo("/diagnostics"))"
-                                              Title="Diagnostics système" />
-                            </div>
-                        </div>
-                    </MudPaper>
-                </MudItem>
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                Appareils Actifs
+                            </MudText>
+                        }
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
 
-              <MudItem xs="12" Class="mt-4">
-                    <MudPaper Class="pa-4 rounded-xl">
-                        <div class="d-flex justify-space-between align-center">
-                            <div class="d-flex align-center">
-                                <MudText Typo="Typo.h6">Power Consumed</MudText>
+            <MudItem xs="12" sm="6" md="3">
+                <MudCard Class="rounded-xl" Style="height: 100%;">
+                    <MudCardContent>
+                        @if (_isDashboardLoading)
+                        {
+                            <div class="d-flex justify-center align-center" style="height: 100px;">
+                                <MudProgressCircular Size="Size.Small" Indeterminate="true" />
                             </div>
-                            <div class="d-flex align-center">
-                                <MudSelect T="string" Label="Month" Variant="Variant.Outlined" Class="rounded-pill pa-2" Style="width: 150px;">
-                                    <MudSelectItem Value="@("Month")" />
-                                    <MudSelectItem Value="@("Week")" />
-                                    <MudSelectItem Value="@("Day")" />
-                                </MudSelect>
-                                <MudText Typo="Typo.body2" Class="ml-2">73% Spending</MudText>
-                                <MudIconButton OnClick="NavigateToAnalytics" Icon="@Icons.Material.Filled.ArrowForwardIos" Color="Color.Primary" />
+                        }
+                        else
+                        {
+                            <div class="d-flex justify-space-between align-center mb-2">
+                                <MudIcon Icon="@Icons.Material.Filled.People" Color="Color.Success" Size="Size.Large" />
+                                <MudChip T="string" Size="Size.Small" Color="@GetChangeColor(_stats?.UsersChangePercent ?? 0)">
+                                    @FormatChangePercent(_stats?.UsersChangePercent ?? 0)
+                                </MudChip>
                             </div>
-                        </div>
-                        <MudChart ChartType="ChartType.Line" ChartSeries="@_series" XAxisLabels="@_xAxisLabels" Width="100%" Height="300px" Class="mt-4" />
-                    </MudPaper>
-                </MudItem>
-            </MudGrid>
-        </MudItem>
-    </MudGrid>
+                            <MudText Typo="Typo.h4" Class="font-weight-bold">
+                                @(_stats?.ActiveUsers ?? 0)/@(_stats?.TotalUsers ?? 0)
+                            </MudText>
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                Utilisateurs Actifs
+                            </MudText>
+                        }
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <MudItem xs="12" sm="6" md="3">
+                <MudCard Class="rounded-xl" Style="height: 100%;">
+                    <MudCardContent>
+                        @if (_isDashboardLoading)
+                        {
+                            <div class="d-flex justify-center align-center" style="height: 100px;">
+                                <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="d-flex justify-space-between align-center mb-2">
+                                <MudIcon Icon="@Icons.Material.Filled.ConfirmationNumber" Color="Color.Warning" Size="Size.Large" />
+                                <MudChip T="string" Size="Size.Small" Color="@GetChangeColor(_stats?.IncidentsChangePercent ?? 0)">
+                                    @FormatChangePercent(_stats?.IncidentsChangePercent ?? 0)
+                                </MudChip>
+                            </div>
+                            <MudText Typo="Typo.h4" Class="font-weight-bold">
+                                @(_stats?.OpenIncidents ?? 0)/@(_stats?.TotalIncidents ?? 0)
+                            </MudText>
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                Tickets Ouverts
+                            </MudText>
+                        }
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <MudItem xs="12" sm="6" md="3">
+                <MudCard Class="rounded-xl" Style="height: 100%;">
+                    <MudCardContent>
+                        @if (_isDashboardLoading)
+                        {
+                            <div class="d-flex justify-center align-center" style="height: 100px;">
+                                <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="d-flex justify-space-between align-center mb-2">
+                                <MudIcon Icon="@Icons.Material.Filled.Bolt" Color="Color.Info" Size="Size.Large" />
+                                <MudChip T="string" Size="Size.Small" Color="@GetChangeColor(_stats?.EnergyChangePercent ?? 0)">
+                                    @FormatChangePercent(_stats?.EnergyChangePercent ?? 0)
+                                </MudChip>
+                            </div>
+                            <MudText Typo="Typo.h4" Class="font-weight-bold">
+                                @(_stats?.EnergyConsumed.ToString("F1") ?? "0") kWh
+                            </MudText>
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                Consommation Énergétique
+                            </MudText>
+                        }
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+
+        @* ========================================
+           ? SECTION WIDGETS PHASE 3.5 - NOUVEAU
+           ======================================== *@
+        <MudGrid Class="mb-4" Spacing="3">
+            @* Row 1: Alarmes + Activité Récente *@
+            <MudItem xs="12" md="6">
+                <ActiveAlarmsWidget MaxAlarmsDisplayed="5" 
+                                   RefreshIntervalSeconds="60" 
+                                   AutoRefresh="true" />
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <RecentActivityWidget MaxActivitiesDisplayed="10" 
+                                     PageSize="20" />
+            </MudItem>
+
+            @* Row 2: Logs Critiques + Métriques Devices *@
+            <MudItem xs="12" md="6">
+                <CriticalLogsWidget MaxLogsDisplayed="5" 
+                                   HoursBack="24" 
+                                   MaxResults="50" />
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <DeviceMetricsWidget MaxDevicesDisplayed="5" />
+            </MudItem>
+        </MudGrid>
+
+        @* Section 3: Layout principal en 2 colonnes (@* Conservé mais avec ajout de la classe "mt-4" *) *@
+        <MudGrid>
+            @* Colonne gauche (70%) *@
+            <MudItem xs="12" md="8">
+                @* Graphique de consommation d'énergie *@
+                <MudPaper Class="pa-4 rounded-xl mb-4">
+                    <div class="d-flex justify-space-between align-center mb-4">
+                        <MudText Typo="Typo.h6">Consommation énergétique</MudText>
+                        <MudSelect T="string" @bind-Value="_selectedPeriod" Variant="Variant.Outlined" 
+                                   Margin="Margin.Dense" Style="width: 150px;" OnChange="LoadEnergyData">
+                            <MudSelectItem Value="@("month")">Mensuel</MudSelectItem>
+                            <MudSelectItem Value="@("week")">Hebdomadaire</MudSelectItem>
+                            <MudSelectItem Value="@("day")">Quotidien</MudSelectItem>
+                        </MudSelect>
+                    </div>
+                    <MudChart ChartType="ChartType.Line" 
+                              ChartSeries="@_energySeries" 
+                              XAxisLabels="@_energyLabels" 
+                              Width="100%" 
+                              Height="350px"
+                              ChartOptions="@_chartOptions" />
+                </MudPaper>
+
+                @* Activité des appareils par type *@
+                <MudPaper Class="pa-4 rounded-xl mb-4">
+                    <div class="d-flex justify-space-between align-center mb-4">
+                        <MudText Typo="Typo.h6">Activité des Appareils</MudText>
+                        <MudIconButton Icon="@Icons.Material.Filled.Refresh" 
+                                      OnClick="@(async () => await LoadDeviceActivityAsync())" 
+                                      Color="Color.Primary" />
+                    </div>
+                    <MudChart ChartType="ChartType.Donut" 
+                              InputData="@_deviceActivityData" 
+                              InputLabels="@_deviceActivityLabels"
+                              Width="100%" 
+                              Height="300px" />
+                </MudPaper>
+
+                @* Contrôle rapide des appareils *@
+                <MudPaper Class="pa-4 rounded-xl">
+                    <div class="d-flex justify-space-between align-center mb-4">
+                        <MudText Typo="Typo.h6">Contrôle Rapide</MudText>
+                        <MudSwitch T="bool" @bind-Checked="_mainSwitch" 
+                                  Color="Color.Primary" 
+                                  Label="@(_mainSwitch ? "Tout éteindre" : "Tout allumer")" />
+                    </div>
+                    <MudGrid>
+                        <MudItem xs="6" sm="3">
+                            <DeviceCard Icon="@Icons.Material.Filled.AcUnit" 
+                                       DeviceName="Climatisation" 
+                                       PeripheriqueId="1"
+                                       OnToggle="@((isOn) => SendDeviceCommand(1, isOn ? "TurnOn" : "TurnOff"))" />
+                        </MudItem>
+                        <MudItem xs="6" sm="3">
+                            <DeviceCard Icon="@Icons.Material.Filled.Lightbulb" 
+                                       DeviceName="Éclairage"
+                                       PeripheriqueId="2"
+                                       OnToggle="@((isOn) => SendDeviceCommand(2, isOn ? "TurnOn" : "TurnOff"))" />
+                        </MudItem>
+                        <MudItem xs="6" sm="3">
+                            <DeviceCard Icon="@Icons.Material.Filled.Thermostat" 
+                                       DeviceName="Température"
+                                       PeripheriqueId="3" />
+                        </MudItem>
+                        <MudItem xs="6" sm="3">
+                            <DeviceCard Icon="@Icons.Material.Filled.Router" 
+                                       DeviceName="Réseau"
+                                       PeripheriqueId="4"
+                                       OnToggle="@((isOn) => SendDeviceCommand(4, isOn ? "TurnOn" : "TurnOff"))" />
+                        </MudItem>
+                    </MudGrid>
+                </MudPaper>
+            </MudItem>
+
+            @* Colonne droite (30%) *@
+            <MudItem xs="12" md="4">
+                @* Mes Appareils *@
+                <MudPaper Class="pa-4 rounded-xl mb-4">
+                    <div class="d-flex justify-space-between align-center mb-4">
+                        <MudText Typo="Typo.h6">Mes Appareils</MudText>
+                        <MudIconButton Icon="@Icons.Material.Filled.ArrowForwardIos" 
+                                      OnClick="NavigateToDevices" 
+                                      Color="Color.Primary" 
+                                      Size="Size.Small" />
+                    </div>
+                    <MudGrid>
+                        <MudItem xs="6">
+                            <DeviceCard Icon="@Icons.Material.Filled.AcUnit" 
+                                       DeviceName="A/C" 
+                                       DeviceColor="Purple" 
+                                       IsOn="true"
+                                       PeripheriqueId="11" 
+                                       OnToggle="@((isOn) => SendDeviceCommand(11, isOn ? "TurnOn" : "TurnOff"))" />
+                        </MudItem>
+                        <MudItem xs="6">
+                            <DeviceCard Icon="@Icons.Material.Filled.Router" 
+                                       DeviceName="Router" 
+                                       DeviceColor="Yellow" 
+                                       IsOn="false"
+                                       PeripheriqueId="12" 
+                                       OnToggle="@((isOn) => SendDeviceCommand(12, isOn ? "TurnOn" : "TurnOff"))" />
+                        </MudItem>
+                        <MudItem xs="6">
+                            <DeviceCard Icon="@Icons.Material.Filled.MusicNote" 
+                                       DeviceName="Audio" 
+                                       DeviceColor="Orange" 
+                                       IsOn="true"
+                                       PeripheriqueId="13" 
+                                       OnToggle="@((isOn) => SendDeviceCommand(13, isOn ? "TurnOn" : "TurnOff"))" />
+                        </MudItem>
+                        <MudItem xs="6">
+                            <DeviceCard Icon="@Icons.Material.Filled.Lightbulb" 
+                                       DeviceName="Lampes" 
+                                       DeviceColor="Cyan" 
+                                       IsOn="false"
+                                       PeripheriqueId="14" 
+                                       OnToggle="@((isOn) => SendDeviceCommand(14, isOn ? "TurnOn" : "TurnOff"))" />
+                        </MudItem>
+                    </MudGrid>
+                </MudPaper>
+
+                @* Widget télémétrie *@
+                <MudPaper Class="pa-4 rounded-xl mb-4">
+                    <TelemetrieWidgetComponent OnViewDetails="@(() => NavigationManager.NavigateTo("/telemetrie"))" />
+                </MudPaper>
+
+                @* Mes tickets *@
+                <MudPaper Class="pa-4 rounded-xl mb-4">
+                    <MyTicketsComponent MaxDisplayCount="3" />
+                </MudPaper>
+
+                @* Notifications récentes *@
+                <MudPaper Class="pa-4 rounded-xl mb-4">
+                    <NotificationsPanelComponent MaxDisplayCount="4" 
+                                               OnViewAll="@(() => NavigationManager.NavigateTo("/notifications"))" />
+                </MudPaper>
+
+                @* Gestion des zones (compacte) *@
+                <MudPaper Class="pa-4 rounded-xl">
+                    <ZoneManagementComponent ShowMaxZones="3"
+                                           ShowZoneStats="false"
+                                           OnZoneSelected="NavigateToZoneDetails"
+                                           OnShowAllZonesRequested="NavigateToAdminZones" />
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+    </MudContainer>
 </RequireAuth>
 
 @code{
@@ -214,66 +402,320 @@
     private string? _currentUserName;
     private string? _currentUserRole;
     private bool _mainSwitch = false;
+    private bool _isDashboardLoading = true;
+    private bool _autoRefreshEnabled = true;
+    private DateTime? _lastUpdated;
+    
+    // Données météo
+    private WeatherData? _weatherData;
+    private string _weatherGreeting = "Bonne journée !";
+  
+    // Statistiques du dashboard
+    private DashboardStats? _stats;
+    
+    // Données pour les graphiques
+    private string _selectedPeriod = "month";
+    private List<ChartSeries> _energySeries = new();
+    private string[] _energyLabels = Array.Empty<string>();
+    private double[] _deviceActivityData = Array.Empty<double>();
+    private string[] _deviceActivityLabels = Array.Empty<string>();
+    
+    // Timer pour rafraîchissement automatique
+    private Timer? _refreshTimer;
+    private readonly TimeSpan _refreshInterval = TimeSpan.FromSeconds(30);
+    
+    // Options pour les graphiques
+    private ChartOptions _chartOptions = new()
+    {
+        YAxisTicks = 50,
+        MaxNumYAxisTicks = 6,
+        YAxisLines = true,
+        XAxisLines = false,
+        LineStrokeWidth = 3
+    };
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
-            // Charger le profil utilisateur pour afficher son nom
-            var currentUser = await AuthService.GetCurrentUserAsync();
-            if (currentUser != null)
+            _isDashboardLoading = true;
+            
+            // Charger les données en parallèle pour optimiser le temps de chargement
+            var userTask = LoadUserDataAsync();
+            var weatherTask = LoadWeatherDataAsync();
+            var statsTask = LoadDashboardStatsAsync();
+            var energyTask = LoadEnergyDataAsync();
+            var devicesTask = LoadDeviceActivityAsync();
+
+            await Task.WhenAll(userTask, weatherTask, statsTask, energyTask, devicesTask);
+    
+            // ? Démarrer le rafraîchissement automatique
+     StartAutoRefresh();
+          
+  // ? Marquer comme mis à jour
+            _lastUpdated = DateTime.Now;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Erreur lors de l'initialisation du Dashboard");
+            Snackbar.Add("Erreur lors du chargement du Dashboard", Severity.Error);
+        }
+        finally
+        {
+      _isDashboardLoading = false;
+         StateHasChanged();
+        }
+    }
+
+    /// <summary>
+    /// ? Démarre le rafraîchissement automatique des données
+    /// </summary>
+    private void StartAutoRefresh()
+  {
+        if (!_autoRefreshEnabled) return;
+     
+        _refreshTimer = new Timer(async _ =>
+     {
+            try
+    {
+     await InvokeAsync(async () =>
+    {
+        Logger.LogDebug("?? Rafraîchissement automatique du Dashboard");
+            
+             // Rafraîchir seulement les données critiques (pas la météo)
+  var statsTask = LoadDashboardStatsAsync();
+      var energyTask = LoadEnergyDataAsync();
+  var devicesTask = LoadDeviceActivityAsync();
+ 
+             await Task.WhenAll(statsTask, energyTask, devicesTask);
+         StateHasChanged();
+      
+        // ? Mettre à jour le timestamp
+     _lastUpdated = DateTime.Now;
+      });
+  }
+    catch (Exception ex)
+ {
+       Logger.LogError(ex, "Erreur lors du rafraîchissement automatique");
+            }
+        }, null, _refreshInterval, _refreshInterval);
+  }
+
+    /// <summary>
+    /// ? Arrête le rafraîchissement automatique
+    /// </summary>
+    private void StopAutoRefresh()
+    {
+        _refreshTimer?.Dispose();
+        _refreshTimer = null;
+ }
+
+    /// <summary>
+    /// ? Rafraîchissement manuel avec feedback utilisateur
+    /// </summary>
+    private async Task RefreshDashboardAsync()
+    {
+try
+        {
+      _isDashboardLoading = true;
+            StateHasChanged();
+        
+            // Recharger les données critiques immédiatement
+   await Task.WhenAll( LoadDashboardStatsAsync(), LoadEnergyDataAsync(), LoadDeviceActivityAsync());
+    
+        // ? Mettre à jour le timestamp
+     _lastUpdated = DateTime.Now;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Erreur lors du rafraîchissement du Dashboard");
+        }
+        finally
+        {
+      _isDashboardLoading = false;
+         StateHasChanged();
+        }
+    }
+
+    private async Task LoadUserDataAsync()
+    {
+        try
+        {
+  var currentUser = await AuthService.GetCurrentUserAsync();
+      if (currentUser != null)
             {
-                _currentUserName = currentUser.FirstName ?? currentUser.Email?.Split('@')[0] ?? "User";
+   _currentUserName = currentUser.FirstName ?? currentUser.Email?.Split('@')[0] ?? "User";
                 _currentUserRole = currentUser.Roles.FirstOrDefault() ?? "User";
             }
         }
         catch (Exception ex)
+      {
+    Logger.LogError(ex, "Erreur lors du chargement du profil utilisateur");
+_currentUserName = "User";
+  _currentUserRole = "User";
+      }
+    }
+
+    private async Task LoadWeatherDataAsync()
+    {
+        try
         {
-            Logger.LogError(ex, "Erreur lors du chargement du profil utilisateur");
-            _currentUserName = "User";
-            _currentUserRole = "User";
+            _weatherData = await WeatherService.GetCurrentWeatherAsync();
+            if (_weatherData != null)
+            {
+                _weatherGreeting = _weatherData.Temperature > 20 ? "Bonne journée !" : "Bonne soirée !";
+            }
         }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Erreur lors du chargement des données météo");
+            Snackbar.Add("Erreur lors du chargement des données météo", Severity.Error);
+        }
+    }
+
+    private async Task LoadDashboardStatsAsync()
+    {
+        try
+        {
+            _stats = await DashboardStatsService.GetDashboardStatsAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Erreur lors du chargement des statistiques du dashboard");
+            Snackbar.Add("Erreur lors du chargement des statistiques du dashboard", Severity.Error);
+        }
+    }
+
+    private async Task LoadEnergyDataAsync()
+ {
+        try
+   {
+            var energyData = await DashboardStatsService.GetEnergyConsumptionDataAsync(_selectedPeriod);
+  
+ if (energyData?.Any() == true)
+    {
+ _energyLabels = energyData.Select(d => d.Label).ToArray();
+_energySeries = new List<ChartSeries>
+ {
+ new ChartSeries
+  {
+       Name = "Consommation (kWh)",
+  Data = energyData.Select(d => d.Value).ToArray()
+           }
+      };
+      
+     Logger.LogDebug("? Données énergétiques chargées: {Count} points", energyData.Count);
+   }
+      else
+  {
+       Logger.LogWarning("?? Aucune donnée énergétique disponible");
+ _energyLabels = Array.Empty<string>();
+          _energySeries = new List<ChartSeries>();
+     }
+  
+        StateHasChanged();
+        }
+catch (Exception ex)
+      {
+       Logger.LogError(ex, "? Erreur lors du chargement des données d'énergie");
+       // Conserver les dernières données valides en cas d'erreur
+        }
+    }
+
+    private async Task LoadDeviceActivityAsync()
+    {
+try
+  {
+            var activityData = await DashboardStatsService.GetDeviceActivityDataAsync();
+        
+      if (activityData?.Any() == true)
+     {
+   _deviceActivityLabels = activityData.Select(d => d.DeviceType).ToArray();
+_deviceActivityData = activityData.Select(d => (double)d.Count).ToArray();
+      
+      Logger.LogDebug("? Activité appareils chargée: {Count} types", activityData.Count);
+ }
+            else
+  {
+        Logger.LogWarning("?? Aucune donnée d'activité disponible");
+     _deviceActivityLabels = Array.Empty<string>();
+    _deviceActivityData = Array.Empty<double>();
+   }
+ 
+      StateHasChanged();
+     }
+        catch (Exception ex)
+     {
+ Logger.LogError(ex, "? Erreur lors du chargement de l'activité des appareils");
+  // Conserver les dernières données valides en cas d'erreur
+        }
+    }
+
+    /// <summary>
+    /// Envoie une commande à un périphérique IoT
+    /// </summary>
+    private async Task SendDeviceCommand(int peripheriqueId, string nomCommande, string? valeur = null)
+    {
+        var result = await CommandeService.SendCommandAsync(peripheriqueId, nomCommande, valeur);
+        
+        if (result.IsSuccess)
+        {
+  Logger.LogDebug("Dashboard: Commande {Command} exécutée sur périphérique {Id}", nomCommande, peripheriqueId);
+     Snackbar.Add($"Commande envoyée avec succès", Severity.Success);
+}
+        else
+ {
+  Logger.LogWarning("Dashboard: Échec commande {Command} sur périphérique {Id}: {Message}", 
+    nomCommande, peripheriqueId, result.Message);
+            Snackbar.Add($"Échec de la commande: {result.Message}", Severity.Warning);
+        }
+    }
+
+    /// <summary>
+    /// Retourne la couleur en fonction du pourcentage de changement
+    /// </summary>
+    private Color GetChangeColor(double changePercent)
+    {
+return changePercent >= 0 ? Color.Success : Color.Error;
+    }
+
+    private string FormatChangePercent(double changePercent)
+    {
+        return changePercent > 0 ? $"+{changePercent}%" : $"{changePercent}%";
     }
 
     private void NavigateToDevices()
     {
-        NavigationManager.NavigateTo("/devices");
+     NavigationManager.NavigateTo("/devices");
     }
+    
     private void NavigateToMembers()
     {
-        NavigationManager.NavigateTo("/utilisateurs");
+  NavigationManager.NavigateTo("/utilisateurs");
     }
+    
     private void NavigateToAnalytics()
     {
         NavigationManager.NavigateTo("/analytics");
     }
+    
     private void NavigateToProfile()
-    {
+ {
         NavigationManager.NavigateTo("/profile");
     }
     
-    // Données pour le graphique
-    private List<ChartSeries> _series = new List<ChartSeries>()
+    private void NavigateToZoneDetails(BackendZoneDto zone)
     {
-        new ChartSeries() { Name = "Electricity Consumed", Data = new double[] { 70, 75, 80, 85, 90, 88, 92, 95, 90, 85, 80, 75 } }
-    };
-    private string[] _xAxisLabels = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
-
-    /// <summary>
-    /// Retourne la couleur associée à un rôle
-    /// </summary>
-    private Color GetRoleColor(string? role)
+        NavigationManager.NavigateTo($"/zones");
+    }
+    
+    private void NavigateToAdminZones()
     {
-        return role?.ToLower() switch
-        {
-            "admin" => Color.Error,      // Rouge pour Admin (pouvoir maximum)
-            "manager" => Color.Warning,   // Orange pour Manager
-            "membre" => Color.Info,      // Bleu pour Membre
-            "user" => Color.Primary,     // Bleu primaire pour User
-            "visiteur" => Color.Secondary, // Gris pour Visiteur
-            _ => Color.Default
-        };
+        NavigationManager.NavigateTo("/zones");
     }
 
-    // Application Admin - Accès complet à toutes les fonctionnalités
+    public void Dispose()
+    {
+        StopAutoRefresh();
+    }
 }

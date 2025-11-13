@@ -1,7 +1,10 @@
 @using Microsoft.AspNetCore.Components.Authorization
+@using MySmartApp.Ui.Services
 @inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager Navigation
 @inject ILogger<RequireAuth> Logger
+@inject IAuthService AuthService
+@implements IDisposable
 
 @if (IsAuthenticated)
 {
@@ -20,38 +23,94 @@ else
 }
 
 @code {
-    [Parameter] public RenderFragment? ChildContent { get; set; }
-    [Parameter] public string? RedirectUrl { get; set; }
+[Parameter] public RenderFragment? ChildContent { get; set; }
+[Parameter] public string? RedirectUrl { get; set; }
+[Parameter] public bool AllowAnonymous { get; set; } = false;
+[Parameter] public string? RequiredRole { get; set; }
 
     private bool IsAuthenticated { get; set; }
     private bool IsLoading { get; set; } = true;
 
     protected override async Task OnInitializedAsync()
     {
+        // S'abonner aux changements d'état d'authentification
+        AuthStateProvider.AuthenticationStateChanged += OnAuthenticationStateChanged;
+        
+        await CheckAuthenticationStatus();
+    }
+
+    private async Task CheckAuthenticationStatus()
+    {
         try
         {
+            IsLoading = true;
+            StateHasChanged();
+
+            // Vérifier l'état d'authentification
             var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-            IsAuthenticated = authState.User?.Identity?.IsAuthenticated == true;
+            var isUserAuthenticated = authState.User?.Identity?.IsAuthenticated == true;
             
-            if (!IsAuthenticated)
+            Logger.LogDebug("?? Vérification auth: IsAuthenticated={IsAuth}, User={User}", 
+                isUserAuthenticated, authState.User?.Identity?.Name ?? "Anonymous");
+
+            if (isUserAuthenticated)
             {
-                Logger.LogInformation("?? Utilisateur non authentifié, redirection vers login");
-                
-                // Optionnel: sauvegarder l'URL actuelle pour redirection après login
-                if (!string.IsNullOrEmpty(RedirectUrl))
+                // Vérifier le rôle requis si spécifié
+                if (!string.IsNullOrEmpty(RequiredRole))
                 {
-                    Navigation.NavigateTo($"/login?returnUrl={Uri.EscapeDataString(RedirectUrl)}");
+                    var hasRequiredRole = authState.User.IsInRole(RequiredRole);
+                    if (!hasRequiredRole)
+                    {
+                        Logger.LogWarning("? Utilisateur authentifié mais sans le rôle requis: {RequiredRole}", RequiredRole);
+                        IsAuthenticated = false;
+                        return;
+                    }
                 }
-                else
+
+                // Double-vérification avec validation du token
+                try
                 {
-                    var currentUrl = Navigation.Uri;
-                    Navigation.NavigateTo($"/login?returnUrl={Uri.EscapeDataString(currentUrl)}");
+                    var isTokenValid = await AuthService.ValidateTokenAsync();
+                    if (!isTokenValid)
+                    {
+                        Logger.LogWarning("?? Token invalide détecté, déconnexion automatique");
+                        await AuthService.LogoutAsync();
+                        IsAuthenticated = false;
+                    }
+                    else
+                    {
+                        IsAuthenticated = true;
+                        Logger.LogDebug("? Utilisateur authentifié et token valide");
+                        
+                        if (!string.IsNullOrEmpty(RequiredRole))
+                        {
+                            Logger.LogDebug("? Rôle requis {RequiredRole} validé", RequiredRole);
+                        }
+                    }
                 }
+                catch (Exception ex)
+                {
+                    Logger.LogWarning(ex, "?? Erreur lors de la validation du token, déconnexion par sécurité");
+                    await AuthService.LogoutAsync();
+                    IsAuthenticated = false;
+                }
+            }
+            else
+            {
+                IsAuthenticated = false;
+                Logger.LogDebug("? Utilisateur non authentifié");
+            }
+
+            // Si l'accès anonyme est autorisé, ne pas rediriger
+            if (!IsAuthenticated && !AllowAnonymous)
+            {
+                Logger.LogInformation("?? Redirection vers login nécessaire");
+                // La redirection sera gérée par RedirectToLogin
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Erreur lors de la vérification d'authentification");
+            Logger.LogError(ex, "? Erreur lors de la vérification d'authentification");
             IsAuthenticated = false;
         }
         finally
@@ -59,5 +118,22 @@ else
             IsLoading = false;
             StateHasChanged();
         }
+    }
+
+    private async void OnAuthenticationStateChanged(Task<AuthenticationState> task)
+    {
+        try
+        {
+            await CheckAuthenticationStatus();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "? Erreur lors de la mise à jour de l'état d'authentification");
+        }
+    }
+
+    public void Dispose()
+    {
+        AuthStateProvider.AuthenticationStateChanged -= OnAuthenticationStateChanged;
     }
 }

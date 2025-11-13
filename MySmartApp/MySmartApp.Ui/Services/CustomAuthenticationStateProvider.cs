@@ -91,51 +91,82 @@ public class CustomAuthenticationStateProvider : AuthenticationStateProvider
             {
                 claims.Add(new Claim(ClaimTypes.NameIdentifier, userId.ToString()!));
             }
+            
+            // ? CORRECTION: Essayer plusieurs variantes pour NameIdentifier
+            if (keyValuePairs.TryGetValue("sub", out var sub))
+            {
+                claims.Add(new Claim(ClaimTypes.NameIdentifier, sub.ToString()!));
+            }
+            
+            if (keyValuePairs.TryGetValue("nameid", out var nameid))
+            {
+                claims.Add(new Claim(ClaimTypes.NameIdentifier, nameid.ToString()!));
+            }
 
             if (keyValuePairs.TryGetValue(ClaimTypes.Name, out var name))
             {
                 claims.Add(new Claim(ClaimTypes.Name, name.ToString()!));
+            }
+            
+            // ? CORRECTION: Essayer "unique_name" pour Name
+            if (keyValuePairs.TryGetValue("unique_name", out var uniqueName))
+            {
+                claims.Add(new Claim(ClaimTypes.Name, uniqueName.ToString()!));
             }
 
             if (keyValuePairs.TryGetValue(ClaimTypes.Email, out var email))
             {
                 claims.Add(new Claim(ClaimTypes.Email, email.ToString()!));
             }
+            
+            // ? CORRECTION: Essayer "email" standard
+            if (keyValuePairs.TryGetValue("email", out var emailStandard))
+            {
+                claims.Add(new Claim(ClaimTypes.Email, emailStandard.ToString()!));
+            }
 
-            // Gestion des rôles (peut être un seul rôle ou un tableau)
+            // ? CORRECTION CRITIQUE: Gestion des rôles avec TOUTES les variantes
+            bool roleFound = false;
+            
+            // Variante 1: ClaimTypes.Role standard
             if (keyValuePairs.TryGetValue(ClaimTypes.Role, out var rolesClaim))
             {
-                if (rolesClaim is JsonElement rolesElement)
-                {
-                    if (rolesElement.ValueKind == JsonValueKind.Array)
-                    {
-                        foreach (var role in rolesElement.EnumerateArray())
-                        {
-                            claims.Add(new Claim(ClaimTypes.Role, role.GetString()!));
-                        }
-                    }
-                    else
-                    {
-                        claims.Add(new Claim(ClaimTypes.Role, rolesElement.GetString()!));
-                    }
-                }
-                else
-                {
-                    claims.Add(new Claim(ClaimTypes.Role, rolesClaim.ToString()!));
-                }
+                roleFound = true;
+                AddRoleClaims(claims, rolesClaim);
+            }
+            
+            // Variante 2: "role" (minuscule)
+            if (!roleFound && keyValuePairs.TryGetValue("role", out var roleStandard))
+            {
+                roleFound = true;
+                AddRoleClaims(claims, roleStandard);
+            }
+            
+            // Variante 3: "roles" (pluriel)
+            if (!roleFound && keyValuePairs.TryGetValue("roles", out var rolesStandard))
+            {
+                roleFound = true;
+                AddRoleClaims(claims, rolesStandard);
+            }
+            
+            // Variante 4: "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
+            var msRoleClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role";
+            if (!roleFound && keyValuePairs.TryGetValue(msRoleClaimType, out var msRoles))
+            {
+                roleFound = true;
+                AddRoleClaims(claims, msRoles);
             }
 
             // Ajouter d'autres claims si nécessaire
+            var excludedKeys = new[] { 
+                ClaimTypes.NameIdentifier, ClaimTypes.Name, ClaimTypes.Email, ClaimTypes.Role,
+                "sub", "nameid", "unique_name", "email", "role", "roles", msRoleClaimType,
+                "iat", "exp", "aud", "iss", "nbf", "jti"
+            };
+            
             foreach (var kvp in keyValuePairs)
             {
-                if (kvp.Key != ClaimTypes.NameIdentifier && 
-                    kvp.Key != ClaimTypes.Name && 
-                    kvp.Key != ClaimTypes.Email && 
-                    kvp.Key != ClaimTypes.Role &&
-                    kvp.Key != "iat" && 
-                    kvp.Key != "exp" && 
-                    kvp.Key != "aud" && 
-                    kvp.Key != "iss")
+                if (!excludedKeys.Contains(kvp.Key))
                 {
                     claims.Add(new Claim(kvp.Key, kvp.Value.ToString()!));
                 }
@@ -143,5 +174,47 @@ public class CustomAuthenticationStateProvider : AuthenticationStateProvider
         }
 
         return claims;
+    }
+
+    // ? NOUVELLE MÉTHODE: Ajouter claims rôles de manière robuste
+    private void AddRoleClaims(List<Claim> claims, object rolesClaim)
+    {
+        if (rolesClaim is JsonElement rolesElement)
+        {
+            if (rolesElement.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var role in rolesElement.EnumerateArray())
+                {
+                    var roleValue = role.GetString();
+                    if (!string.IsNullOrEmpty(roleValue))
+                    {
+                        claims.Add(new Claim(ClaimTypes.Role, roleValue));
+                    }
+                }
+            }
+            else if (rolesElement.ValueKind == JsonValueKind.String)
+            {
+                var roleValue = rolesElement.GetString();
+                if (!string.IsNullOrEmpty(roleValue))
+                {
+                    claims.Add(new Claim(ClaimTypes.Role, roleValue));
+                }
+            }
+        }
+        else if (rolesClaim is string roleString)
+        {
+            if (!string.IsNullOrEmpty(roleString))
+            {
+                claims.Add(new Claim(ClaimTypes.Role, roleString));
+            }
+        }
+        else
+        {
+            var roleValue = rolesClaim.ToString();
+            if (!string.IsNullOrEmpty(roleValue))
+            {
+                claims.Add(new Claim(ClaimTypes.Role, roleValue));
+            }
+        }
     }
 }
