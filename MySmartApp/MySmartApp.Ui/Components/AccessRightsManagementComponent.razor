@@ -313,13 +313,13 @@
             var devices = await DeviceService.GetAllDevicesLegacyAsync();
             _availableDevices = devices.ToList();
 
-            Logger.LogInformation("? {Zones} zones et {Devices} devices chargés", 
+            Logger.LogInformation(" {Zones} zones et {Devices} devices chargés", 
                 _availableZones.Count, _availableDevices.Count);
         }
         catch (Exception ex)
         {
             _errorMessage = $"Erreur lors du chargement des données: {ex.Message}";
-            Logger.LogError(ex, "? Exception chargement données");
+            Logger.LogError(ex, " Exception chargement données");
         }
     }
 
@@ -371,7 +371,7 @@
             if (response.IsSuccess && response.Data != null)
             {
                 _userRights = response.Data;
-                Logger.LogInformation("? {Count} droits chargés pour {UserId}", 
+                Logger.LogInformation(" {Count} droits chargés pour {UserId}", 
                     response.Data.Count, _selectedUser.Id);
             }
             else
@@ -382,7 +382,7 @@
         catch (Exception ex)
         {
             _errorMessage = $"Erreur technique: {ex.Message}";
-            Logger.LogError(ex, "? Exception chargement droits utilisateur");
+            Logger.LogError(ex, " Exception chargement droits utilisateur");
         }
         finally
         {
@@ -453,7 +453,7 @@
 
             if (successCount > 0)
             {
-                Logger.LogInformation("? {Count} droit(s) assigné(s) à {UserId}", 
+                Logger.LogInformation(" {Count} droit(s) assigné(s) à {UserId}", 
                     successCount, _selectedUser.Id);
                 
                 // Recharger les droits
@@ -466,7 +466,7 @@
         catch (Exception ex)
         {
             _errorMessage = $"Erreur technique: {ex.Message}";
-            Logger.LogError(ex, "? Exception assignation droits");
+            Logger.LogError(ex, " Exception assignation droits");
         }
         finally
         {
@@ -511,7 +511,7 @@
 
             if (response.IsSuccess)
             {
-                Logger.LogInformation("? Droit révoqué pour {UserId}", _selectedUser.Id);
+                Logger.LogInformation(" Droit révoqué pour {UserId}", _selectedUser.Id);
                 await LoadUserRights();
             }
             else
@@ -522,7 +522,7 @@
         catch (Exception ex)
         {
             _errorMessage = $"Erreur technique: {ex.Message}";
-            Logger.LogError(ex, "? Exception révocation droit");
+            Logger.LogError(ex, " Exception révocation droit");
         }
         finally
         {

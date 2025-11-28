@@ -87,7 +87,7 @@
     {
         try
         {
-            Logger.LogDebug("?? Initialisation du composant SignalR...");
+            Logger.LogDebug(" Initialisation du composant SignalR...");
             
             // S'abonner aux événements du service SignalR
             SignalRService.ConnectionStateChanged += HandleConnectionStateChanged;
@@ -105,11 +105,11 @@
             _statusTimer = new Timer(CheckConnectionStatus, null, 
                 TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(30));
                 
-            Logger.LogDebug("? Composant SignalR initialisé avec état: {State}", _connectionState);
+            Logger.LogDebug(" Composant SignalR initialisé avec état: {State}", _connectionState);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "? Erreur lors de l'initialisation du composant SignalR");
+            Logger.LogError(ex, " Erreur lors de l'initialisation du composant SignalR");
             await AppState.SetErrorAsync($"Erreur SignalR: {ex.Message}");
         }
     }
@@ -119,7 +119,7 @@
         var oldState = _connectionState;
         _connectionState = newState;
         
-        Logger.LogInformation("?? État SignalR changé: {OldState} ? {NewState}", oldState, newState);
+        Logger.LogInformation(" État SignalR changé: {OldState} ? {NewState}", oldState, newState);
         
         // Notifications à l'utilisateur
         _ = Task.Run(async () =>
@@ -165,14 +165,14 @@
             _lastConnectionAttempt = DateTime.UtcNow;
             StateHasChanged();
             
-            Logger.LogInformation("?? Démarrage de la connexion SignalR...");
+            Logger.LogInformation(" Démarrage de la connexion SignalR...");
             await SignalRService.StartAsync();
             
-            Logger.LogInformation("? Connexion SignalR démarrée");
+            Logger.LogInformation(" Connexion SignalR démarrée");
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "? Erreur lors du démarrage de la connexion SignalR");
+            Logger.LogError(ex, " Erreur lors du démarrage de la connexion SignalR");
             await AppState.ShowNotificationAsync($"Impossible de se connecter: {ex.Message}", NotificationType.Error);
         }
         finally
@@ -267,7 +267,7 @@
                 SignalRService.ConnectionStateChanged -= HandleConnectionStateChanged;
             }
             
-            Logger.LogDebug("?? Composant SignalR disposé");
+            Logger.LogDebug(" Composant SignalR disposé");
         }
         catch (Exception ex)
         {

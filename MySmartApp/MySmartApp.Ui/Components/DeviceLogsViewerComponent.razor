@@ -369,7 +369,7 @@
             if (response.IsSuccess && response.Data != null)
             {
                 _paginatedLogs = response.Data;
-                Logger.LogInformation("? {Count} logs chargés (page {Page})", 
+                Logger.LogInformation(" {Count} logs chargés (page {Page})", 
                     response.Data.Data.Count, state.Page + 1);
 
                 return new TableData<DeviceLogDto>
@@ -381,14 +381,14 @@
             else
             {
                 _errorMessage = response.ErrorMessage ?? "Erreur lors du chargement";
-                Logger.LogError("? Erreur chargement logs: {Error}", _errorMessage);
+                Logger.LogError(" Erreur chargement logs: {Error}", _errorMessage);
                 return new TableData<DeviceLogDto> { Items = new List<DeviceLogDto>(), TotalItems = 0 };
             }
         }
         catch (Exception ex)
         {
             _errorMessage = $"Erreur technique: {ex.Message}";
-            Logger.LogError(ex, "? Exception lors du chargement logs");
+            Logger.LogError(ex, " Exception lors du chargement logs");
             return new TableData<DeviceLogDto> { Items = new List<DeviceLogDto>(), TotalItems = 0 };
         }
         finally
@@ -420,12 +420,12 @@
             if (response.IsSuccess && response.Data != null)
             {
                 _stats = response.Data;
-                Logger.LogInformation("? Stats logs chargées");
+                Logger.LogInformation(" Stats logs chargées");
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "? Exception lors du chargement stats logs");
+            Logger.LogError(ex, " Exception lors du chargement stats logs");
         }
     }
 
@@ -442,7 +442,7 @@
             {
                 _searchResults = response.Data;
                 _showSearchResults = true;
-                Logger.LogInformation("? {Count} logs critiques chargés", response.Data.Count);
+                Logger.LogInformation(" {Count} logs critiques chargés", response.Data.Count);
             }
             else
             {
@@ -452,7 +452,7 @@
         catch (Exception ex)
         {
             _errorMessage = $"Erreur technique: {ex.Message}";
-            Logger.LogError(ex, "? Exception lors du chargement logs critiques");
+            Logger.LogError(ex, " Exception lors du chargement logs critiques");
         }
         finally
         {
@@ -485,7 +485,7 @@
             {
                 _searchResults = response.Data;
                 _showSearchResults = true;
-                Logger.LogInformation("? {Count} logs trouvés pour '{SearchTerm}'", 
+                Logger.LogInformation(" {Count} logs trouvés pour '{SearchTerm}'", 
                     response.Data.Count, _searchTerm);
             }
             else
@@ -496,7 +496,7 @@
         catch (Exception ex)
         {
             _errorMessage = $"Erreur technique: {ex.Message}";
-            Logger.LogError(ex, "? Exception lors de la recherche logs");
+            Logger.LogError(ex, " Exception lors de la recherche logs");
         }
         finally
         {
@@ -523,7 +523,7 @@
             if (response.IsSuccess && response.Data != null)
             {
                 // TODO: Trigger browser download
-                Logger.LogInformation("? Export logs généré: {Size} bytes", response.Data.Length);
+                Logger.LogInformation(" Export logs généré: {Size} bytes", response.Data.Length);
             }
             else
             {
@@ -533,7 +533,7 @@
         catch (Exception ex)
         {
             _errorMessage = $"Erreur technique: {ex.Message}";
-            Logger.LogError(ex, "? Exception lors de l'export logs");
+            Logger.LogError(ex, " Exception lors de l'export logs");
         }
     }
 

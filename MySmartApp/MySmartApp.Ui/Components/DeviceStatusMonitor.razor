@@ -43,7 +43,7 @@
                 <MudAlert Severity="Severity.Error" Icon="@Icons.Material.Filled.Warning" Variant="Variant.Filled">
                     <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
                         <MudStack Spacing="1">
-                            <MudText Typo="Typo.h6">?? ALARME FUMÉE ACTIVE</MudText>
+                            <MudText Typo="Typo.h6"> ALARME FUMÉE ACTIVE</MudText>
                             <MudText Typo="Typo.body2">
                                 Zone: @_fullStatus.ActiveAlarm.ZoneName - 
                                 Déclenchée: @_fullStatus.ActiveAlarm.StartTime.ToString("dd/MM/yyyy HH:mm:ss")
@@ -64,7 +64,7 @@
                 <MudCard>
                     <MudCardHeader>
                         <CardHeaderContent>
-                            <MudText Typo="Typo.h6">?? Métriques Système</MudText>
+                            <MudText Typo="Typo.h6"> Métriques Système</MudText>
                         </CardHeaderContent>
                         <CardHeaderActions>
                             <MudChip T="string" Size="Size.Small" Color="@GetHealthColor(_fullStatus.LatestMetrics)">
@@ -117,7 +117,7 @@
                 <MudCard>
                     <MudCardHeader>
                         <CardHeaderContent>
-                            <MudText Typo="Typo.h6">?? Événements RFID Récents</MudText>
+                            <MudText Typo="Typo.h6"> Événements RFID Récents</MudText>
                         </CardHeaderContent>
                         <CardHeaderActions>
                             <MudChip T="string" Size="Size.Small" Color="Color.Info">
@@ -165,7 +165,7 @@
                 <MudCard>
                     <MudCardHeader>
                         <CardHeaderContent>
-                            <MudText Typo="Typo.h6">?? Périphériques</MudText>
+                            <MudText Typo="Typo.h6"> Périphériques</MudText>
                         </CardHeaderContent>
                         <CardHeaderActions>
                             <MudChip T="string" Size="Size.Small" Color="Color.Info">
@@ -309,18 +309,18 @@
             if (response.IsSuccess && response.Data != null)
             {
                 _fullStatus = response.Data;
-                Logger.LogInformation("? Statut device {DeviceId} rechargé", DeviceId);
+                Logger.LogInformation(" Statut device {DeviceId} rechargé", DeviceId);
             }
             else
             {
                 _errorMessage = response.ErrorMessage ?? "Erreur lors du chargement des données";
-                Logger.LogError("? Erreur chargement statut device: {Error}", _errorMessage);
+                Logger.LogError(" Erreur chargement statut device: {Error}", _errorMessage);
             }
         }
         catch (Exception ex)
         {
             _errorMessage = $"Erreur technique: {ex.Message}";
-            Logger.LogError(ex, "? Exception lors du chargement statut device");
+            Logger.LogError(ex, " Exception lors du chargement statut device");
         }
         finally
         {
@@ -362,7 +362,7 @@
         catch (Exception ex)
         {
             _errorMessage = $"Erreur technique: {ex.Message}";
-            Logger.LogError(ex, "? Exception lors de la désactivation alarme");
+            Logger.LogError(ex, " Exception lors de la désactivation alarme");
         }
     }
 
@@ -374,7 +374,7 @@
             await InvokeAsync(async () => await RefreshData());
         }, null, TimeSpan.FromSeconds(RefreshIntervalSeconds), TimeSpan.FromSeconds(RefreshIntervalSeconds));
 
-        Logger.LogInformation("?? Auto-refresh activé ({Interval}s)", RefreshIntervalSeconds);
+        Logger.LogInformation(" Auto-refresh activé ({Interval}s)", RefreshIntervalSeconds);
     }
 
     private void StopAutoRefresh()

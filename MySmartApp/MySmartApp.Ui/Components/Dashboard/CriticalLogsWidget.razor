@@ -135,18 +135,18 @@
             if (response.IsSuccess && response.Data != null)
             {
                 _logs = response.Data;
-                Logger.LogInformation("? {Count} log(s) critique(s) chargé(s)", _logs.Count);
+                Logger.LogInformation(" {Count} log(s) critique(s) chargé(s)", _logs.Count);
             }
             else
             {
                 _errorMessage = response.ErrorMessage ?? "Erreur lors du chargement";
-                Logger.LogError("? Erreur chargement logs critiques: {Error}", _errorMessage);
+                Logger.LogError(" Erreur chargement logs critiques: {Error}", _errorMessage);
             }
         }
         catch (Exception ex)
         {
             _errorMessage = $"Erreur technique: {ex.Message}";
-            Logger.LogError(ex, "? Exception chargement logs critiques");
+            Logger.LogError(ex, " Exception chargement logs critiques");
         }
         finally
         {

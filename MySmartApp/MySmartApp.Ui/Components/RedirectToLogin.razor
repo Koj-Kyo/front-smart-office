@@ -41,14 +41,14 @@
             var returnUrl = ReturnUrl ?? (string.IsNullOrEmpty(currentUrl) || currentUrl == "/" ? "/dashboard" : currentUrl);
             var encodedReturnUrl = Uri.EscapeDataString(returnUrl);
             
-            Logger.LogInformation("?? Redirection vers login depuis {CurrentUrl}", currentUrl);
+            Logger.LogInformation(" Redirection vers login depuis {CurrentUrl}", currentUrl);
             
             var loginUrl = $"/login?returnUrl={encodedReturnUrl}";
             Navigation.NavigateTo(loginUrl, forceLoad: true);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "? Erreur lors de la redirection vers login");
+            Logger.LogError(ex, " Erreur lors de la redirection vers login");
             // Fallback: redirection simple
             Navigation.NavigateTo("/login", forceLoad: true);
         }

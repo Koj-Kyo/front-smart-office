@@ -200,7 +200,7 @@
             // TODO: Implémenter GetAllLatestMetricsAsync() dans DeviceStatusService
             // Pour l'instant, afficher message
             _errorMessage = "Fonctionnalité en développement: nécessite GetAllLatestMetricsAsync()";
-            Logger.LogWarning("?? GetAllLatestMetricsAsync() pas encore implémenté dans DeviceStatusService");
+            Logger.LogWarning(" GetAllLatestMetricsAsync() pas encore implémenté dans DeviceStatusService");
             
             // Mock pour démonstration
             _metrics = new List<DeviceMetricsDto>();
@@ -209,7 +209,7 @@
         catch (Exception ex)
         {
             _errorMessage = $"Erreur technique: {ex.Message}";
-            Logger.LogError(ex, "? Exception chargement métriques");
+            Logger.LogError(ex, " Exception chargement métriques");
         }
         finally
         {

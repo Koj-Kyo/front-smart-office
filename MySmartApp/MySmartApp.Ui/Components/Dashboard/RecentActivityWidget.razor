@@ -126,18 +126,18 @@
             if (response.IsSuccess && response.Data?.Data != null)
             {
                 _activities = response.Data.Data;
-                Logger.LogInformation("? {Count} activité(s) récente(s) chargée(s)", _activities.Count);
+                Logger.LogInformation(" {Count} activité(s) récente(s) chargée(s)", _activities.Count);
             }
             else
             {
                 _errorMessage = response.ErrorMessage ?? "Erreur lors du chargement";
-                Logger.LogError("? Erreur chargement activités: {Error}", _errorMessage);
+                Logger.LogError(" Erreur chargement activités: {Error}", _errorMessage);
             }
         }
         catch (Exception ex)
         {
             _errorMessage = $"Erreur technique: {ex.Message}";
-            Logger.LogError(ex, "? Exception chargement activités");
+            Logger.LogError(ex, " Exception chargement activités");
         }
         finally
         {

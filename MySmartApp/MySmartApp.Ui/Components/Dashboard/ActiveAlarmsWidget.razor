@@ -42,7 +42,7 @@
                             <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
                                 <MudStack Spacing="1">
                                     <MudText Typo="Typo.subtitle1" Style="font-weight: 600;">
-                                        ?? @alarm.ZoneName
+                                         @alarm.ZoneName
                                     </MudText>
                                     <MudText Typo="Typo.body2" Color="Color.Secondary">
                                         Device: @alarm.IotDeviceId
@@ -189,18 +189,18 @@
             if (response.IsSuccess && response.Data != null)
             {
                 _alarms = response.Data;
-                Logger.LogInformation("? {Count} alarme(s) active(s) chargée(s)", _alarms.Count);
+                Logger.LogInformation(" {Count} alarme(s) active(s) chargée(s)", _alarms.Count);
             }
             else
             {
                 _errorMessage = response.ErrorMessage ?? "Erreur lors du chargement";
-                Logger.LogError("? Erreur chargement alarmes: {Error}", _errorMessage);
+                Logger.LogError(" Erreur chargement alarmes: {Error}", _errorMessage);
             }
         }
         catch (Exception ex)
         {
             _errorMessage = $"Erreur technique: {ex.Message}";
-            Logger.LogError(ex, "? Exception chargement alarmes");
+            Logger.LogError(ex, " Exception chargement alarmes");
         }
         finally
         {
@@ -238,7 +238,7 @@
             {
                 _showDeactivateDialog = false;
                 await LoadAlarmsAsync();
-                Logger.LogInformation("? Alarme désactivée pour {IotDeviceId}", _alarmToDeactivate.IotDeviceId);
+                Logger.LogInformation(" Alarme désactivée pour {IotDeviceId}", _alarmToDeactivate.IotDeviceId);
             }
             else
             {
@@ -248,7 +248,7 @@
         catch (Exception ex)
         {
             _errorMessage = $"Erreur technique: {ex.Message}";
-            Logger.LogError(ex, "? Exception désactivation alarme");
+            Logger.LogError(ex, " Exception désactivation alarme");
         }
         finally
         {
@@ -280,7 +280,7 @@
             await InvokeAsync(async () => await LoadAlarmsAsync());
         }, null, TimeSpan.FromSeconds(RefreshIntervalSeconds), TimeSpan.FromSeconds(RefreshIntervalSeconds));
 
-        Logger.LogInformation("?? Auto-refresh alarmes activé ({Interval}s)", RefreshIntervalSeconds);
+        Logger.LogInformation(" Auto-refresh alarmes activé ({Interval}s)", RefreshIntervalSeconds);
     }
 
     public void Dispose()
