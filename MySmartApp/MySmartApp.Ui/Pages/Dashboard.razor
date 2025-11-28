@@ -480,7 +480,7 @@
     {
      await InvokeAsync(async () =>
     {
-        Logger.LogDebug("?? Rafraîchissement automatique du Dashboard");
+        Logger.LogDebug(" Rafraîchissement automatique du Dashboard");
             
              // Rafraîchir seulement les données critiques (pas la météo)
   var statsTask = LoadDashboardStatsAsync();
@@ -604,11 +604,11 @@ _energySeries = new List<ChartSeries>
            }
       };
       
-     Logger.LogDebug("? Données énergétiques chargées: {Count} points", energyData.Count);
+     Logger.LogDebug(" Données énergétiques chargées: {Count} points", energyData.Count);
    }
       else
   {
-       Logger.LogWarning("?? Aucune donnée énergétique disponible");
+       Logger.LogWarning(" Aucune donnée énergétique disponible");
  _energyLabels = Array.Empty<string>();
           _energySeries = new List<ChartSeries>();
      }
@@ -617,7 +617,7 @@ _energySeries = new List<ChartSeries>
         }
 catch (Exception ex)
       {
-       Logger.LogError(ex, "? Erreur lors du chargement des données d'énergie");
+       Logger.LogError(ex, " Erreur lors du chargement des données d'énergie");
        // Conserver les dernières données valides en cas d'erreur
         }
     }
@@ -633,11 +633,11 @@ try
    _deviceActivityLabels = activityData.Select(d => d.DeviceType).ToArray();
 _deviceActivityData = activityData.Select(d => (double)d.Count).ToArray();
       
-      Logger.LogDebug("? Activité appareils chargée: {Count} types", activityData.Count);
+      Logger.LogDebug(" Activité appareils chargée: {Count} types", activityData.Count);
  }
             else
   {
-        Logger.LogWarning("?? Aucune donnée d'activité disponible");
+        Logger.LogWarning(" Aucune donnée d'activité disponible");
      _deviceActivityLabels = Array.Empty<string>();
     _deviceActivityData = Array.Empty<double>();
    }
@@ -646,7 +646,7 @@ _deviceActivityData = activityData.Select(d => (double)d.Count).ToArray();
      }
         catch (Exception ex)
      {
- Logger.LogError(ex, "? Erreur lors du chargement de l'activité des appareils");
+ Logger.LogError(ex, " Erreur lors du chargement de l'activité des appareils");
   // Conserver les dernières données valides en cas d'erreur
         }
     }

@@ -426,11 +426,11 @@
                 }
             }
             
-            Logger.LogInformation("? Profil utilisateur chargé");
+            Logger.LogInformation(" Profil utilisateur chargé");
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "? Erreur lors du chargement du profil utilisateur");
+            Logger.LogError(ex, " Erreur lors du chargement du profil utilisateur");
             
             // Fallback en cas d'erreur
             userProfile = new UserProfileModel
@@ -472,16 +472,16 @@
             if (result.IsSuccess)
             {
                 isEditing = false;
-                Logger.LogInformation("? Profil utilisateur mis à jour avec succès");
+                Logger.LogInformation(" Profil utilisateur mis à jour avec succès");
             }
             else
             {
-                Logger.LogWarning("?? Échec de la mise à jour du profil: {ErrorMessage}", result.ErrorMessage);
+                Logger.LogWarning(" Échec de la mise à jour du profil: {ErrorMessage}", result.ErrorMessage);
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "? Erreur lors de la sauvegarde du profil");
+            Logger.LogError(ex, " Erreur lors de la sauvegarde du profil");
         }
         finally
         {

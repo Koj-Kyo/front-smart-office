@@ -531,12 +531,12 @@
             if (response.IsSuccess && response.Data != null)
             {
                 availableZones = response.Data;
-                Logger.LogInformation("? {Count} zones chargées", availableZones.Count);
+                Logger.LogInformation(" {Count} zones chargées", availableZones.Count);
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "? Erreur chargement zones");
+            Logger.LogError(ex, " Erreur chargement zones");
         }
         finally
         {
@@ -552,11 +552,11 @@
         {
             var devices = await DeviceService.GetAllDevicesLegacyAsync();
             availableDevices = devices.ToList();
-            Logger.LogInformation("? {Count} devices chargés", availableDevices.Count);
+            Logger.LogInformation(" {Count} devices chargés", availableDevices.Count);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "? Erreur chargement devices");
+            Logger.LogError(ex, " Erreur chargement devices");
         }
         finally
         {
@@ -585,11 +585,11 @@
             
             statistics = await statsTask;
             
-            Logger.LogInformation("? {Count} tickets chargés", tickets.Count);
+            Logger.LogInformation(" {Count} tickets chargés", tickets.Count);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "? Erreur lors du chargement des données");
+            Logger.LogError(ex, " Erreur lors du chargement des données");
         }
         finally
         {
@@ -676,36 +676,36 @@
 
         try
         {
-            Logger.LogInformation("?? Début création ticket: {Sujet}", newTicket.Sujet);
-            Logger.LogInformation("?? DTO envoyé: Sujet={Sujet}, Priorite={Priorite}, ZoneId={ZoneId}", 
+            Logger.LogInformation(" Début création ticket: {Sujet}", newTicket.Sujet);
+            Logger.LogInformation(" DTO envoyé: Sujet={Sujet}, Priorite={Priorite}, ZoneId={ZoneId}", 
                 newTicket.Sujet, newTicket.Priorite, newTicket.ZoneId);
             
             var result = await IncidentTicketService.CreateTicketAsync(newTicket);
             
-            Logger.LogInformation("?? Résultat: IsSuccess={IsSuccess}, ErrorMessage={Error}, Data={HasData}", 
+            Logger.LogInformation(" Résultat: IsSuccess={IsSuccess}, ErrorMessage={Error}, Data={HasData}", 
                 result.IsSuccess, result.ErrorMessage, result.Data != null);
             
             if (result.IsSuccess)
             {
-                Logger.LogInformation("? Ticket créé avec succès, rechargement données...");
+                Logger.LogInformation(" Ticket créé avec succès, rechargement données...");
                 await LoadData();
                 CloseCreateDialog();
-                Logger.LogInformation("? Dialog fermé");
+                Logger.LogInformation(" Dialog fermé");
             }
             else
             {
-                Logger.LogError("? Échec création: {Error}", result.ErrorMessage);
+                Logger.LogError(" Échec création: {Error}", result.ErrorMessage);
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "?? Exception lors de la création: {Message}", ex.Message);
+            Logger.LogError(ex, " Exception lors de la création: {Message}", ex.Message);
         }
         finally
         {
             isCreating = false;
             StateHasChanged();
-            Logger.LogInformation("?? Fin tentative création ticket");
+            Logger.LogInformation(" Fin tentative création ticket");
         }
     }
 
@@ -732,7 +732,7 @@
         var statusOptions = availableStatuses.Where(s => s != ticket.Statut).ToArray();
         
         var result = await DialogService.ShowMessageBox(
-            $"?? Changer le statut du ticket #{ticket.Id}",
+            $" Changer le statut du ticket #{ticket.Id}",
             $"Statut actuel: {ticket.Statut}\n\nLe statut sera changé au suivant dans la liste.",
             yesText: "Modifier",
             cancelText: "Annuler");
@@ -755,12 +755,12 @@
     {
         if (string.IsNullOrEmpty(currentUserId))
         {
-            Logger.LogWarning("?? Impossible d'obtenir l'ID utilisateur courant");
+            Logger.LogWarning(" Impossible d'obtenir l'ID utilisateur courant");
             return;
         }
 
         var result = await DialogService.ShowMessageBox(
-            $"?? Assigner le ticket #{ticket.Id}",
+            $" Assigner le ticket #{ticket.Id}",
             $"Voulez-vous vous assigner ce ticket ?\n\nSujet: {ticket.Sujet}",
             yesText: "M'assigner",
             cancelText: "Annuler");
@@ -778,11 +778,11 @@
     private async Task DeleteTicket(IncidentTicketDto ticket)
     {
         bool? result = await DialogService.ShowMessageBox(
-            "?? Confirmation de suppression",
+            " Confirmation de suppression",
             $"Êtes-vous sûr de vouloir supprimer le ticket #{ticket.Id} ?\n\n" +
             $"Sujet: {ticket.Sujet}\n" +
             $"Statut: {ticket.Statut}\n\n" +
-            $"?? Cette action est irréversible.",
+            $" Cette action est irréversible.",
             yesText: "Oui, supprimer",
             cancelText: "Annuler");
 

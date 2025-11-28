@@ -326,7 +326,7 @@
             if (response.IsSuccess && response.Data != null)
             {
                 _paginatedActivities = response.Data;
-                Logger.LogInformation("? {Count} activités chargées (page {Page})", 
+                Logger.LogInformation(" {Count} activités chargées (page {Page})", 
                     response.Data.Data.Count, state.Page + 1);
 
                 return new TableData<UserActivityDto>
@@ -338,14 +338,14 @@
             else
             {
                 _errorMessage = response.ErrorMessage ?? "Erreur lors du chargement";
-                Logger.LogError("? Erreur chargement activités: {Error}", _errorMessage);
+                Logger.LogError(" Erreur chargement activités: {Error}", _errorMessage);
                 return new TableData<UserActivityDto> { Items = new List<UserActivityDto>(), TotalItems = 0 };
             }
         }
         catch (Exception ex)
         {
             _errorMessage = $"Erreur technique: {ex.Message}";
-            Logger.LogError(ex, "? Exception lors du chargement activités");
+            Logger.LogError(ex, " Exception lors du chargement activités");
             return new TableData<UserActivityDto> { Items = new List<UserActivityDto>(), TotalItems = 0 };
         }
         finally
@@ -374,12 +374,12 @@
             if (response.IsSuccess && response.Data != null)
             {
                 _stats = response.Data;
-                Logger.LogInformation("? Stats utilisateur chargées");
+                Logger.LogInformation(" Stats utilisateur chargées");
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "? Exception lors du chargement stats");
+            Logger.LogError(ex, " Exception lors du chargement stats");
         }
     }
 
@@ -401,7 +401,7 @@
             if (response.IsSuccess && response.Data != null)
             {
                 // TODO: Trigger download in browser
-                Logger.LogInformation("? Export CSV généré: {Size} bytes", response.Data.Length);
+                Logger.LogInformation(" Export CSV généré: {Size} bytes", response.Data.Length);
             }
             else
             {
@@ -411,7 +411,7 @@
         catch (Exception ex)
         {
             _errorMessage = $"Erreur technique: {ex.Message}";
-            Logger.LogError(ex, "? Exception lors de l'export");
+            Logger.LogError(ex, " Exception lors de l'export");
         }
     }
 

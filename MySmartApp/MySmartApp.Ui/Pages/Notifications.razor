@@ -351,7 +351,7 @@
     private async Task DeleteNotification(UserNotificationDto notification)
     {
         bool? result = await DialogService.ShowMessageBox(
-            "?? Confirmation de suppression",
+            " Confirmation de suppression",
             $"Êtes-vous sûr de vouloir supprimer cette notification ?\n\n« {notification.Titre} »",
             yesText: "Supprimer",
             cancelText: "Annuler");

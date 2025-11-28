@@ -163,7 +163,7 @@
             _showSuccessMessage = false;
             StateHasChanged();
 
-            Logger.LogInformation("?? Tentative d'inscription pour {Email}", _registerModel.Email);
+            Logger.LogInformation(" Tentative d'inscription pour {Email}", _registerModel.Email);
 
             var request = new RegisterDto(
                 _registerModel.Email!,
@@ -177,7 +177,7 @@
 
             if (result.Success)
             {
-                Logger.LogInformation("? Inscription réussie pour {Email}", _registerModel.Email);
+                Logger.LogInformation("Inscription réussie pour {Email}", _registerModel.Email);
                 _showSuccessMessage = true;
                 
                 // Optionnel: redirection automatique après 3 secondes
@@ -190,13 +190,13 @@
             {
                 _errorMessage = result.ErrorMessage;
                 _validationErrors = result.ValidationErrors;
-                Logger.LogWarning("? Échec d'inscription pour {Email}: {Error}", _registerModel.Email, _errorMessage);
+                Logger.LogWarning(" Échec d'inscription pour {Email}: {Error}", _registerModel.Email, _errorMessage);
             }
         }
         catch (Exception ex)
         {
             _errorMessage = "Une erreur inattendue s'est produite. Veuillez réessayer.";
-            Logger.LogError(ex, "? Erreur lors de l'inscription pour {Email}", _registerModel.Email);
+            Logger.LogError(ex, " Erreur lors de l'inscription pour {Email}", _registerModel.Email);
         }
         finally
         {

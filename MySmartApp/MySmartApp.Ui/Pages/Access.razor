@@ -17,7 +17,7 @@
     @if (_debugMode)
     {
         <MudAlert Severity="Severity.Info" Class="mb-4">
-            <MudText Typo="Typo.h6">🔍 Debug - Claims Utilisateur</MudText>
+            <MudText Typo="Typo.h6"> Debug - Claims Utilisateur</MudText>
             <MudText Typo="Typo.body2">Utilisateur: @_currentUser?.Identity?.Name</MudText>
             <MudText Typo="Typo.body2">Authentifié: @_currentUser?.Identity?.IsAuthenticated</MudText>
             <MudText Typo="Typo.body2">Type Auth: @_currentUser?.Identity?.AuthenticationType</MudText>
@@ -31,13 +31,13 @@
             }
             else
             {
-                <MudText Typo="Typo.body2" Color="Color.Error">⚠️ Aucun claim trouvé!</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Error">⚠ Aucun claim trouvé!</MudText>
             }
         </MudAlert>
     }
 
     <MudText Typo="Typo.h4" Class="mb-4">
-        🔐 Gestion des Droits d'Accès
+         Gestion des Droits d'Accès
         <MudIconButton Icon="@Icons.Material.Filled.BugReport" 
                       Size="Size.Small" 
                       Color="@(_debugMode ? Color.Primary : Color.Default)"

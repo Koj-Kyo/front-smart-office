@@ -4,7 +4,7 @@
 @inject ILogger<UserAccessRightsComponent> Logger
 
 <MudPaper Class="pa-4 rounded-xl" Elevation="2">
-    <MudText Typo="Typo.h6" Class="mb-4">?? Mes Droits d'Accès</MudText>
+    <MudText Typo="Typo.h6" Class="mb-4"> Mes Droits d'Accès</MudText>
     
     @if (isLoading)
     {
@@ -49,7 +49,7 @@
             </MudTabPanel>
             
             <!-- Onglet Périphériques -->
-            <MudTabPanel Text="?? Périphériques" BadgeData="@peripheriqueRights.Count" BadgeColor="Color.Success">
+            <MudTabPanel Text=" Périphériques" BadgeData="@peripheriqueRights.Count" BadgeColor="Color.Success">
                 @if (peripheriqueRights.Any())
                 {
                     <MudList T="string" Dense="true">
@@ -157,12 +157,12 @@
                 peripheriqueRights = peripheriqueResponse.Data;
             }
 
-            Logger.LogInformation("? Droits d'accès chargés: {ZoneCount} zones, {PeripheriqueCount} périphériques", 
+            Logger.LogInformation(" Droits d'accès chargés: {ZoneCount} zones, {PeripheriqueCount} périphériques", 
                 zoneRights.Count, peripheriqueRights.Count);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "? Erreur lors du chargement des droits d'accès");
+            Logger.LogError(ex, " Erreur lors du chargement des droits d'accès");
         }
         finally
         {

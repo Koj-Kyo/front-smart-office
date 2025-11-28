@@ -103,7 +103,7 @@
                                 <ItemContent>
                                     <div class="d-flex flex-column">
                                         <MudText Typo="Typo.body1" Class="@(result.Success ? "mud-success-text" : "mud-error-text")">
-                                            @result.Test - @(result.Success ? "? Succès" : "? Échec")
+                                            @result.Test - @(result.Success ? " Succès" : " Échec")
                                         </MudText>
                                         <MudText Typo="Typo.caption" Color="Color.Secondary">
                                             @result.Timestamp.ToString("HH:mm:ss")
