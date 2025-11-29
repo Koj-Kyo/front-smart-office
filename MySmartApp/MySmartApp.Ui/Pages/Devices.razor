@@ -14,7 +14,7 @@
 
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="my-8">
     <MudText Typo="Typo.h4" Class="mb-4">Gestion des Appareils IoT</MudText>
-    <MudText Typo="Typo.body1" Class="mb-4">G�rez vos p�riph�riques IoT et leurs capteurs/actionneurs physiques.</MudText>
+    <MudText Typo="Typo.body1" Class="mb-4">Gérez vos p�riphériques IoT et leurs capteurs/actionneurs physiques.</MudText>
     
     <!-- Onglets -->
     <MudTabs Elevation="2" Rounded="true" Color="Color.Primary" Class="mb-4" @bind-ActivePanelIndex="activeTabIndex">
@@ -26,7 +26,7 @@
                                Variant="Variant.Filled" 
                                Color="Color.Primary" 
                                StartIcon="@Icons.Material.Filled.Add">
-                        Ajouter un p�riph�rique IoT
+                        Ajouter un périphérique IoT
                     </MudButton>
                     
                     <MudButton OnClick="SyncDevicesFromIoTHub" 
@@ -115,7 +115,7 @@
                                   Size="Size.Small"
                                   StartIcon="@Icons.Material.Filled.Add"
                                   OnClick="@(() => OpenAddPeripheralDialog(device))">
-                            Ajouter p�riph�rique
+                            Ajouter p�riphérique
                         </MudButton>
                         
                         <MudButton Variant="Variant.Outlined" 
@@ -123,7 +123,7 @@
                                   Size="Size.Small"
                                   StartIcon="@Icons.Material.Filled.Refresh"
                                   OnClick="@(() => RefreshDevicePeripherals(device))">
-                            Rafra�chir
+                            Rafraîchir
                         </MudButton>
                         
                         <MudIconButton Icon="@Icons.Material.Filled.Edit" 
@@ -150,7 +150,7 @@
                     else if (!device.Peripherals.Any())
                     {
                         <MudAlert Severity="Severity.Info" Class="my-2">
-                            Aucun p�riph�rique configur�. Cliquez sur "Ajouter p�riph�rique" pour en ajouter.
+                            Aucun périphérique configuré. Cliquez sur "Ajouter périphérique" pour en ajouter.
                         </MudAlert>
                     }
                     else
@@ -162,7 +162,7 @@
                                     <th>Type</th>
                                     <th>GPIO</th>
                                     <th>�tat</th>
-                                    <th>Derni�re mise � jour</th>
+                                    <th>Dernière mise à jour</th>
                                     <th>Statut</th>
                                     <th>Commandes</th>
                                     <th>Actions</th>
@@ -264,9 +264,9 @@
             {
                 <div class="d-flex flex-column align-center pa-8">
                     <MudIcon Icon="@Icons.Material.Filled.DeviceHub" Size="Size.Large" Color="Color.Secondary" Class="mb-4" />
-                    <MudText Typo="Typo.h6" Color="Color.Secondary">Aucun p�riph�rique trouv�</MudText>
+                    <MudText Typo="Typo.h6" Color="Color.Secondary">Aucun périphérique trouv�</MudText>
                     <MudText Typo="Typo.body2" Color="Color.Secondary">
-                        @(string.IsNullOrEmpty(searchString) ? "Ajoutez votre premier p�riph�rique IoT" : "Aucun r�sultat pour votre recherche")
+                        @(string.IsNullOrEmpty(searchString) ? "Ajoutez votre premier périphérique IoT" : "Aucun résultat pour votre recherche")
                     </MudText>
                 </div>
             }
@@ -297,13 +297,13 @@
             {
                 <div class="d-flex justify-center align-center pa-8">
                     <MudProgressCircular Size="Size.Large" Indeterminate="true" />
-                    <MudText Class="ml-4">R�cup�ration des devices depuis Azure IoT Hub...</MudText>
+                    <MudText Class="ml-4">Récupération des devices depuis Azure IoT Hub...</MudText>
                 </div>
             }
             else if (iotHubDevices.Any())
             {
                 <MudText Typo="Typo.body2" Class="mb-4">
-                    @iotHubDevices.Count device(s) trouv�(s) dans Azure IoT Hub
+                    @iotHubDevices.Count device(s) trouvé(s) dans Azure IoT Hub
                 </MudText>
 
                 <MudSimpleTable Dense="true" Hover="true" Class="rounded" Elevation="2">
@@ -312,9 +312,9 @@
                             <th>Device ID</th>
                             <th>Statut</th>
                             <th>�tat de connexion</th>
-                            <th>Derni�re activit�</th>
-                            <th>Statut mis � jour</th>
-                            <th>Connexion mise � jour</th>
+                            <th>Dernière activit�</th>
+                            <th>Statut mis à jour</th>
+                            <th>Connexion mise à jour</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -381,7 +381,7 @@
                                             <MudIconButton Icon="@Icons.Material.Filled.Add" 
                                                           Color="Color.Success" 
                                                           Size="Size.Small"
-                                                          Title="Ajouter � la BDD"
+                                                          Title="Ajouter à la BDD"
                                                           OnClick="@(() => AddIoTDeviceToDatabase(iotDevice))" />
                                         }
                                         else
@@ -389,7 +389,7 @@
                                             <MudIconButton Icon="@Icons.Material.Filled.CheckCircle" 
                                                           Color="Color.Success" 
                                                           Size="Size.Small"
-                                                          Title="D�j� dans la BDD"
+                                                          Title="Déjà dans la BDD"
                                                           Disabled="true" />
                                         }
                                         
@@ -411,7 +411,7 @@
                     <MudIcon Icon="@Icons.Material.Filled.CloudOff" Size="Size.Large" Color="Color.Secondary" Class="mb-4" />
                     <MudText Typo="Typo.h6" Color="Color.Secondary">Aucun device dans IoT Hub</MudText>
                     <MudText Typo="Typo.body2" Color="Color.Secondary">
-                        Cliquez sur "Charger depuis IoT Hub" pour r�cup�rer la liste des devices
+                        Cliquez sur "Charger depuis IoT Hub" pour récupérer la liste des devices
                     </MudText>
                 </div>
             }
@@ -426,7 +426,7 @@
         <MudPaper Class="pa-4" Style="max-width: 600px; width: 90vw; max-height: 90vh; overflow-y: auto;" @onclick:stopPropagation="true">
             <div class="d-flex justify-space-between align-center mb-4">
                 <MudText Typo="Typo.h6">
-                    @(isAddingDevice ? " Ajouter un p�riph�rique IoT" : " Modifier le p�riph�rique")
+                    @(isAddingDevice ? " Ajouter un périphérique IoT" : " Modifier le périphérique")
                 </MudText>
                 <MudIconButton Icon="@Icons.Material.Filled.Close" OnClick="CloseDeviceDialog" />
             </div>
@@ -435,7 +435,7 @@
                 <MudGrid>
                     <MudItem xs="12" sm="6">
                         <MudTextField @bind-Value="editingDevice.Name"
-                                      Label="Nom du p�riph�rique"
+                                      Label="Nom du périphérique"
                                       Required="true"
                                       RequiredError="Le nom est obligatoire"
                                       MaxLength="100" />
@@ -443,15 +443,15 @@
                     
                     <MudItem xs="12" sm="6">
                         <MudSelect @bind-Value="editingDevice.Type"
-                                   Label="Type de p�riph�rique"
+                                   Label="Type de périphérique"
                                    Required="true"
                                    RequiredError="Le type est obligatoire">
-                            <MudSelectItem Value="@("relay")">?? Relais</MudSelectItem>
-                            <MudSelectItem Value="@("sensor")">?? Capteur</MudSelectItem>
-                            <MudSelectItem Value="@("actuator")">?? Actionneur</MudSelectItem>
-                            <MudSelectItem Value="@("light")">?? �clairage</MudSelectItem>
-                            <MudSelectItem Value="@("hvac")">?? CVC</MudSelectItem>
-                            <MudSelectItem Value="@("security")">?? S�curit�</MudSelectItem>
+                            <MudSelectItem Value="@("relay")"> Relais</MudSelectItem>
+                            <MudSelectItem Value="@("sensor")"> Capteur</MudSelectItem>
+                            <MudSelectItem Value="@("actuator")"> Actionneur</MudSelectItem>
+                            <MudSelectItem Value="@("light")">éclairage</MudSelectItem>
+                            <MudSelectItem Value="@("hvac")"> CVC</MudSelectItem>
+                            <MudSelectItem Value="@("security")"> Sécurité</MudSelectItem>
                         </MudSelect>
                     </MudItem>
                     
@@ -462,7 +462,7 @@
                                           Label="IoT Device ID"
                                           Required="true"
                                           RequiredError="L'ID IoT est obligatoire"
-                                          HelperText="Identifiant unique du p�riph�rique dans IoT Hub"
+                                          HelperText="Identifiant unique du p�riphérique dans IoT Hub"
                                           Placeholder="esp32-device-001" />
                         </MudItem>
                     }
@@ -491,7 +491,7 @@
                     {
                         <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
                     }
-                    @(isAddingDevice ? "Cr�er" : "Modifier")
+                    @(isAddingDevice ? "Créer" : "Modifier")
                 </MudButton>
             </div>
         </MudPaper>
@@ -505,7 +505,7 @@
         <MudPaper Class="pa-4" Style="max-width: 600px; width: 90vw; max-height: 90vh; overflow-y: auto;" @onclick:stopPropagation="true">
             <div class="d-flex justify-space-between align-center mb-4">
                 <MudText Typo="Typo.h6">
-                    ? Ajouter un p�riph�rique sur @selectedDevice?.Name
+                    ? Ajouter un périph�rique sur @selectedDevice?.Name
                 </MudText>
                 <MudIconButton Icon="@Icons.Material.Filled.Close" OnClick="ClosePeripheralDialog" />
             </div>
@@ -526,11 +526,11 @@
                                    Required="true"
                                    RequiredError="Le type est obligatoire">
                             <MudSelectItem Value="@("relay")"> Relais</MudSelectItem>
-                            <MudSelectItem Value="@("temperature")"> Temp�rature</MudSelectItem>
-                            <MudSelectItem Value="@("humidity")"> Humidit�</MudSelectItem>
-                            <MudSelectItem Value="@("smoke")"> Fum�e</MudSelectItem>
+                            <MudSelectItem Value="@("temperature")"> Température</MudSelectItem>
+                            <MudSelectItem Value="@("humidity")"> Humidité</MudSelectItem>
+                            <MudSelectItem Value="@("smoke")"> Fumée</MudSelectItem>
                             <MudSelectItem Value="@("motion")"> Mouvement</MudSelectItem>
-                            <MudSelectItem Value="@("light")"> Lumi�re</MudSelectItem>
+                            <MudSelectItem Value="@("light")"> Lumiére</MudSelectItem>
                             <MudSelectItem Value="@("door")"> Porte</MudSelectItem>
                         </MudSelect>
                     </MudItem>
@@ -554,12 +554,12 @@
                         <MudTextField @bind-Value="editingPeripheral.Notes"
                                       Label="Notes"
                                       Lines="2"
-                                      Placeholder="Notes de c�blage, emplacement physique..." />
+                                      Placeholder="Notes de câblage, emplacement physique..." />
                     </MudItem>
                     
                     <MudItem xs="12">
                         <MudTextField @bind-Value="editingPeripheral.WiringDiagram"
-                                      Label="Sch�ma de c�blage (URL)"
+                                      Label="Schéma de câblage (URL)"
                                       Placeholder="https://..." />
                     </MudItem>
                 </MudGrid>
@@ -589,7 +589,7 @@
         <MudPaper Class="pa-4" Style="max-width: 900px; width: 90vw; max-height: 90vh; overflow-y: auto;" @onclick:stopPropagation="true">
             <div class="d-flex justify-space-between align-center mb-4">
                 <MudText Typo="Typo.h6">
-                    ?? D�tails - @selectedPeripheral?.Name
+                     Détails - @selectedPeripheral?.Name
                 </MudText>
                 <MudIconButton Icon="@Icons.Material.Filled.Close" OnClick="CloseDetailsDialog" />
             </div>
@@ -599,13 +599,13 @@
                 <MudGrid>
                     <MudItem xs="12">
                         <MudAlert Severity="@(mergedPeripheral.IsSynchronized ? Severity.Success : Severity.Warning)">
-                            @(mergedPeripheral.IsSynchronized ? " Synchronis� (Desired = Reported)" : " Non synchronis� (Desired ? Reported)")
+                            @(mergedPeripheral.IsSynchronized ? " Synchronisé (Desired = Reported)" : " Non synchronisé (Desired ? Reported)")
                         </MudAlert>
                     </MudItem>
                     
                     <MudItem xs="12" md="6">
                         <MudPaper Class="pa-4" Elevation="1">
-                            <MudText Typo="Typo.h6" Class="mb-2">?? Configuration d�sir�e (Desired)</MudText>
+                            <MudText Typo="Typo.h6" Class="mb-2"> Configuration désirée (Desired)</MudText>
                             @if (mergedPeripheral.DesiredConfig != null)
                             {
                                 <MudSimpleTable Dense="true">
@@ -614,7 +614,7 @@
                                         <tr><td><strong>GPIO:</strong></td><td>@mergedPeripheral.DesiredConfig.Gpio</td></tr>
                                         @if (!string.IsNullOrEmpty(mergedPeripheral.DesiredConfig.Unit))
                                         {
-                                            <tr><td><strong>Unit�:</strong></td><td>@mergedPeripheral.DesiredConfig.Unit</td></tr>
+                                            <tr><td><strong>Unité:</strong></td><td>@mergedPeripheral.DesiredConfig.Unit</td></tr>
                                         }
                                         @if (!string.IsNullOrEmpty(mergedPeripheral.DesiredConfig.Notes))
                                         {
@@ -625,14 +625,14 @@
                             }
                             else
                             {
-                                <MudText Typo="Typo.body2" Color="Color.Secondary">Aucune configuration d�sir�e</MudText>
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">Aucune configuration désirée</MudText>
                             }
                         </MudPaper>
                     </MudItem>
                     
                     <MudItem xs="12" md="6">
                         <MudPaper Class="pa-4" Elevation="1">
-                            <MudText Typo="Typo.h6" Class="mb-2"> �tat report� (Reported)</MudText>
+                            <MudText Typo="Typo.h6" Class="mb-2"> état reporté (Reported)</MudText>
                             @if (mergedPeripheral.ReportedState != null)
                             {
                                 <MudSimpleTable Dense="true">
@@ -649,14 +649,14 @@
                                         }
                                         @if (mergedPeripheral.ReportedState.LastUpdate.HasValue)
                                         {
-                                            <tr><td><strong>Derni�re MAJ:</strong></td><td>@mergedPeripheral.ReportedState.LastUpdate.Value.ToString("g")</td></tr>
+                                            <tr><td><strong>Dernière MAJ:</strong></td><td>@mergedPeripheral.ReportedState.LastUpdate.Value.ToString("g")</td></tr>
                                         }
                                     </tbody>
                                 </MudSimpleTable>
                             }
                             else
                             {
-                                <MudText Typo="Typo.body2" Color="Color.Secondary">Aucun �tat report�</MudText>
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">Aucun état report�</MudText>
                             }
                         </MudPaper>
                     </MudItem>
@@ -805,12 +805,12 @@
                 await LoadAllPeripherals();
             });
             
-            Logger.LogInformation(" Donn�es charg�es: {DevicesCount} p�riph�riques, {ZonesCount} zones", 
+            Logger.LogInformation(" Données charg�es: {DevicesCount} périphériques, {ZonesCount} zones", 
                 devices.Count, zones.Count);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, " Erreur lors du chargement des donn�es");
+            Logger.LogError(ex, " Erreur lors du chargement des données");
         }
         finally
         {
@@ -835,7 +835,7 @@
         
         try
         {
-            Logger.LogInformation(" D�marrage de la synchronisation des devices depuis Azure IoT Hub");
+            Logger.LogInformation(" Démarrage de la synchronisation des devices depuis Azure IoT Hub");
             
             var result = await IoTHubService.SyncDevicesFromIoTHubAsync();
             
@@ -844,7 +844,7 @@
                 var syncResult = result.Data;
                 
                 Logger.LogInformation(
-                    " Synchronisation termin�e: {Total} devices trouv�s, {Created} cr��s, {Updated} mis � jour, {Failed} �checs",
+                    " Synchronisation terminée: {Total} devices trouvés, {Created} créés, {Updated} mis à jour, {Failed} échecs",
                     syncResult.TotalDevices,
                     syncResult.CreatedCount,
                     syncResult.UpdatedCount,
@@ -855,7 +855,7 @@
             }
             else
             {
-                Logger.LogError(" �chec de la synchronisation: {Error}", result.ErrorMessage);
+                Logger.LogError(" échec de la synchronisation: {Error}", result.ErrorMessage);
             }
         }
         catch (Exception ex)
@@ -895,7 +895,7 @@
                 }
                 
                 await InvokeAsync(StateHasChanged);
-                Logger.LogInformation(" Statuts de connexion IoT Hub mis � jour pour {Count} devices", devices.Count);
+                Logger.LogInformation(" Statuts de connexion IoT Hub mis à jour pour {Count} devices", devices.Count);
             }
         }
         catch (Exception ex)
@@ -926,11 +926,11 @@
             await Task.WhenAll(tasks);
             await InvokeAsync(StateHasChanged);
             
-            Logger.LogInformation(" P�riph�riques charg�s pour tous les devices");
+            Logger.LogInformation(" Périphériques chargés pour tous les devices");
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, " Erreur lors du chargement des p�riph�riques");
+            Logger.LogError(ex, " Erreur lors du chargement des périphériques");
         }
     }
 
@@ -943,11 +943,11 @@
             
             device.Peripherals = await PeripheralService.GetPeripheralsAsync(device.IotDeviceId);
             
-            Logger.LogInformation(" P�riph�riques rafra�chis pour {DeviceName}", device.Name);
+            Logger.LogInformation(" Périphériques rafraîchis pour {DeviceName}", device.Name);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, " Erreur lors du rafra�chissement des p�riph�riques de {DeviceName}", device.Name);
+            Logger.LogError(ex, " Erreur lors du rafraîchissement des périphériques de {DeviceName}", device.Name);
         }
         finally
         {
@@ -980,12 +980,12 @@
                 ZoneId = zones.First().Id
             };
             
-            Logger.LogInformation("ZoneId s�lectionn�e par d�faut: {ZoneId}", editingDevice.ZoneId);
+            Logger.LogInformation("ZoneId sélectionnée par défaut: {ZoneId}", editingDevice.ZoneId);
             
             isDeviceDialogOpen = true;
             StateHasChanged();
             
-            Logger.LogInformation(" Dialog ouvert avec succ�s (isDeviceDialogOpen={IsOpen})", isDeviceDialogOpen);
+            Logger.LogInformation(" Dialog ouvert avec succés (isDeviceDialogOpen={IsOpen})", isDeviceDialogOpen);
         }
         catch (Exception ex)
         {
@@ -1068,7 +1068,7 @@
     {
         bool? result = await DialogService.ShowMessageBox(
             " Confirmation de suppression",
-            $"�tes-vous s�r de vouloir supprimer le p�riph�rique '{device.Name}' \n\nCette action supprimera �galement tous les p�riph�riques physiques associ�s.",
+            $"êtes-vous sûr de vouloir supprimer le périphérique '{device.Name}' \n\nCette action supprimera également tous les périphériques physiques associés.",
             yesText: "Supprimer",
             cancelText: "Annuler");
 
@@ -1145,7 +1145,7 @@
     {
         bool? result = await DialogService.ShowMessageBox(
             " Confirmation de suppression",
-            $"�tes-vous s�r de vouloir supprimer le p�riph�rique '{peripheral.Name}' ?",
+            $"êtes-vous sûr de vouloir supprimer le périphérique '{peripheral.Name}' ?",
             yesText: "Supprimer",
             cancelText: "Annuler");
 
@@ -1186,7 +1186,7 @@
 
     private async Task ExecutePeripheralCommand(DeviceViewModel device, PeripheralDto peripheral, string command)
     {
-        Logger.LogInformation("Ex�cution de la commande {Command} sur {Peripheral} @ {Device}", 
+        Logger.LogInformation("Exécution de la commande {Command} sur {Peripheral} @ {Device}", 
             command, peripheral.Name, device.Name);
 
         var result = await PeripheralService.ExecuteCommandAsync(
@@ -1209,12 +1209,12 @@
             "relay" => new List<PeripheralCommand>
             {
                 new("turn-on", "Allumer", Icons.Material.Filled.PowerSettingsNew, Color.Success),
-                new("turn-off", "�teindre", Icons.Material.Filled.PowerOff, Color.Error)
+                new("turn-off", "éteindre", Icons.Material.Filled.PowerOff, Color.Error)
             },
             "light" => new List<PeripheralCommand>
             {
                 new("turn-on", "Allumer", Icons.Material.Filled.LightMode, Color.Warning),
-                new("turn-off", "�teindre", Icons.Material.Filled.Lightbulb, Color.Default)
+                new("turn-off", "éteindre", Icons.Material.Filled.Lightbulb, Color.Default)
             },
             "temperature" or "humidity" or "smoke" or "motion" => new List<PeripheralCommand>
             {
@@ -1242,7 +1242,7 @@
             if (result.IsSuccess && result.Data != null)
             {
                 iotHubDevices = result.Data;
-                Logger.LogInformation(" {Count} devices IoT Hub charg�s", iotHubDevices.Count);
+                Logger.LogInformation(" {Count} devices IoT Hub chargés", iotHubDevices.Count);
             }
             else
             {
@@ -1269,7 +1269,7 @@
 
     private async Task AddIoTDeviceToDatabase(IoTHubDeviceInfoDto iotDevice)
     {
-        Logger.LogInformation(" Ajout du device IoT Hub {DeviceId} � la base de donn�es", iotDevice.DeviceId);
+        Logger.LogInformation(" Ajout du device IoT Hub {DeviceId} à la base de données", iotDevice.DeviceId);
         
         // Ouvrir le dialog d'ajout avec l'ID pr�-rempli
         isAddingDevice = true;
@@ -1297,12 +1297,12 @@
             if (result.IsSuccess && result.Data != null)
             {
                 // TODO: Afficher le twin dans un dialog
-                Logger.LogInformation(" Twin r�cup�r� pour {DeviceId}", deviceId);
+                Logger.LogInformation(" Twin r�cupéré pour {DeviceId}", deviceId);
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, " Erreur lors de la r�cup�ration du twin pour {DeviceId}", deviceId);
+            Logger.LogError(ex, " Erreur lors de la récupération du twin pour {DeviceId}", deviceId);
         }
     }
 
