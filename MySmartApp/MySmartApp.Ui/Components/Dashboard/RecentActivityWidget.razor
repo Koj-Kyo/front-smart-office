@@ -1,4 +1,4 @@
-@using MySmartApp.Ui.Services
+ï»¿@using MySmartApp.Ui.Services
 @using MySmartApp.Ui.Models
 @inject IUserActivityService UserActivityService
 @inject NavigationManager Navigation
@@ -9,7 +9,7 @@
         <CardHeaderContent>
             <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
                 <MudIcon Icon="@Icons.Material.Filled.History" Color="Color.Info" />
-                <MudText Typo="Typo.h6">Activité Récente</MudText>
+                <MudText Typo="Typo.h6">Activitï¿½ Rï¿½cente</MudText>
             </MudStack>
         </CardHeaderContent>
         <CardHeaderActions>
@@ -73,7 +73,7 @@
             @if (_activities.Count > MaxActivitiesDisplayed)
             {
                 <MudText Typo="Typo.caption" Align="Align.Center" Color="Color.Secondary" Class="mt-2">
-                    +@(_activities.Count - MaxActivitiesDisplayed) activité(s) supplémentaire(s)
+                    +@(_activities.Count - MaxActivitiesDisplayed) activitï¿½(s) supplï¿½mentaire(s)
                 </MudText>
             }
         }
@@ -81,7 +81,7 @@
         {
             <MudStack AlignItems="AlignItems.Center" Spacing="2" Class="py-4">
                 <MudIcon Icon="@Icons.Material.Filled.HourglassEmpty" Color="Color.Default" Size="Size.Large" />
-                <MudText Typo="Typo.body1" Color="Color.Secondary">Aucune activité récente</MudText>
+                <MudText Typo="Typo.body1" Color="Color.Secondary">Aucune activitï¿½ rï¿½cente</MudText>
             </MudStack>
         }
     </MudCardContent>
@@ -118,7 +118,7 @@
 
         try
         {
-            // Charger toutes les activités récentes (admin view)
+            // Charger toutes les activitï¿½s rï¿½centes (admin view)
             var response = await UserActivityService.GetAllActivitiesAsync(
                 pageNumber: 1, 
                 pageSize: PageSize);
@@ -126,18 +126,18 @@
             if (response.IsSuccess && response.Data?.Data != null)
             {
                 _activities = response.Data.Data;
-                Logger.LogInformation(" {Count} activité(s) récente(s) chargée(s)", _activities.Count);
+                Logger.LogInformation(" {Count} activitï¿½(s) rï¿½cente(s) chargï¿½e(s)", _activities.Count);
             }
             else
             {
                 _errorMessage = response.ErrorMessage ?? "Erreur lors du chargement";
-                Logger.LogError(" Erreur chargement activités: {Error}", _errorMessage);
+                Logger.LogError(" Erreur chargement activitï¿½s: {Error}", _errorMessage);
             }
         }
         catch (Exception ex)
         {
             _errorMessage = $"Erreur technique: {ex.Message}";
-            Logger.LogError(ex, " Exception chargement activités");
+            Logger.LogError(ex, " Exception chargement activitï¿½s");
         }
         finally
         {
@@ -196,7 +196,7 @@
         var diff = DateTime.Now - timestamp;
 
         if (diff.TotalMinutes < 1)
-            return "À l'instant";
+            return "ï¿½ l'instant";
         if (diff.TotalMinutes < 60)
             return $"Il y a {(int)diff.TotalMinutes}min";
         if (diff.TotalHours < 24)

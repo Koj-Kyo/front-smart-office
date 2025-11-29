@@ -1,4 +1,4 @@
-@using MySmartApp.Ui.Services
+ï»¿@using MySmartApp.Ui.Services
 @using MySmartApp.Ui.Models
 @inject IBackendZoneService BackendZoneService
 @inject ILogger<ZoneManagementComponent> Logger
@@ -50,14 +50,14 @@
   </div>
          
      <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-3">
-    Zone créée à @zone.Nom.Length caractères
+    Zone crï¿½ï¿½e ï¿½ @zone.Nom.Length caractï¿½res
          </MudText>
           
     @if (ShowZoneStats)
          {
            <div class="d-flex justify-space-between mb-3">
        <div class="text-center">
-  <MudText Typo="Typo.caption" Color="Color.Secondary">Périphériques</MudText>
+  <MudText Typo="Typo.caption" Color="Color.Secondary">Pï¿½riphï¿½riques</MudText>
       <MudText Typo="Typo.body2" Style="font-weight: 500;">-</MudText>
  </div>
   <div class="text-center">
@@ -79,7 +79,7 @@
     Color="Color.Primary" 
  OnClick="@(() => OnZoneSelected.InvokeAsync(zone))"
       StartIcon="@Icons.Material.Filled.Visibility">
-    Détails
+    Dï¿½tails
      </MudButton>
          
                   <AuthorizeView Roles="Admin">
@@ -124,7 +124,7 @@
                   Class="mt-2"
        OnClick="OnCreateZoneRequested"
             StartIcon="@Icons.Material.Filled.Add">
-              Créer la première zone
+              Crï¿½er la premiï¿½re zone
   </MudButton>
             </AuthorizeView>
         </div>
@@ -160,7 +160,7 @@
     if (response.IsSuccess && response.Data != null)
             {
         zones = response.Data;
-    Logger.LogDebug("{Count} zones chargées dans le composant", zones.Count);
+    Logger.LogDebug("{Count} zones chargï¿½es dans le composant", zones.Count);
       }
             else
      {
