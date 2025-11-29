@@ -14,7 +14,7 @@
 
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="my-8">
     <MudText Typo="Typo.h4" Class="mb-4">Gestion des Appareils IoT</MudText>
-    <MudText Typo="Typo.body1" Class="mb-4">Gérez vos p�riphériques IoT et leurs capteurs/actionneurs physiques.</MudText>
+    <MudText Typo="Typo.body1" Class="mb-4">Gérez vos périphériques IoT et leurs capteurs/actionneurs physiques.</MudText>
     
     <!-- Onglets -->
     <MudTabs Elevation="2" Rounded="true" Color="Color.Primary" Class="mb-4" @bind-ActivePanelIndex="activeTabIndex">
@@ -115,7 +115,7 @@
                                   Size="Size.Small"
                                   StartIcon="@Icons.Material.Filled.Add"
                                   OnClick="@(() => OpenAddPeripheralDialog(device))">
-                            Ajouter p�riphérique
+                            Ajouter périphérique
                         </MudButton>
                         
                         <MudButton Variant="Variant.Outlined" 
@@ -505,7 +505,7 @@
         <MudPaper Class="pa-4" Style="max-width: 600px; width: 90vw; max-height: 90vh; overflow-y: auto;" @onclick:stopPropagation="true">
             <div class="d-flex justify-space-between align-center mb-4">
                 <MudText Typo="Typo.h6">
-                    ? Ajouter un périph�rique sur @selectedDevice?.Name
+                     Ajouter un périphérique sur @selectedDevice?.Name
                 </MudText>
                 <MudIconButton Icon="@Icons.Material.Filled.Close" OnClick="ClosePeripheralDialog" />
             </div>
@@ -546,7 +546,7 @@
                     
                     <MudItem xs="12" sm="6">
                         <MudTextField @bind-Value="editingPeripheral.Unit"
-                                      Label="Unit�"
+                                      Label="Unité"
                                       Placeholder="�C, %, V..." />
                     </MudItem>
                     
@@ -805,7 +805,7 @@
                 await LoadAllPeripherals();
             });
             
-            Logger.LogInformation(" Données charg�es: {DevicesCount} périphériques, {ZonesCount} zones", 
+            Logger.LogInformation(" Données chargées: {DevicesCount} périphériques, {ZonesCount} zones", 
                 devices.Count, zones.Count);
         }
         catch (Exception ex)
@@ -969,7 +969,7 @@
         {
             if (!zones.Any())
             {
-                Logger.LogWarning(" Aucune zone charg�e! Impossible d'ouvrir le dialog.");
+                Logger.LogWarning(" Aucune zone chargée! Impossible d'ouvrir le dialog.");
                 // TODO: Afficher un message � l'utilisateur via Snackbar
                 return;
             }
