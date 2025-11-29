@@ -1,4 +1,4 @@
-@page "/profile"
+ï»¿@page "/profile"
 @using MudBlazor
 @using MySmartApp.Ui.Services
 @using MySmartApp.Ui.Models
@@ -211,7 +211,7 @@
             <div class="profile-header">
                 <img src="@(userProfile.AvatarUrl ?? "/img/admin.jpg")" alt="Profile Picture" class="profile-avatar" />
                 <div class="profile-info">
-                    <h2>@(userProfile.FullName ?? "Nom non défini")</h2>
+                    <h2>@(userProfile.FullName ?? "Nom non dï¿½fini")</h2>
                     <p>@userProfile.Email</p>
                     @if (currentUser != null && currentUser.Roles.Any())
                     {
@@ -275,9 +275,9 @@
                             <label>Language</label>
                             <select @bind="userProfile.Language" disabled="@(!isEditing)">
                                 <option value="">Select language</option>
-                                <option value="French">Français</option>
+                                <option value="French">Franï¿½ais</option>
                                 <option value="English">English</option>
-                                <option value="Spanish">Español</option>
+                                <option value="Spanish">Espaï¿½ol</option>
                             </select>
                         </div>
                         <div class="form-field">
@@ -313,7 +313,7 @@
                     </button>
                 </div>
 
-                <!-- Droits d'accès Section -->
+                <!-- Droits d'accï¿½s Section -->
                 <div class="email-section">
                     <UserAccessRightsComponent ShowRefreshButton="false" />
                 </div>
@@ -347,7 +347,7 @@
     private bool isSaving = false;
     private bool isLoading = true;
 
-    // Modèle de données pour le profil utilisateur
+    // Modï¿½le de donnï¿½es pour le profil utilisateur
     public class UserProfileModel
     {
         public string FullName { get; set; } = string.Empty;
@@ -379,12 +379,12 @@
 
         try
         {
-            // Récupérer l'utilisateur actuel depuis le token JWT
+            // Rï¿½cupï¿½rer l'utilisateur actuel depuis le token JWT
             currentUser = await AuthService.GetCurrentUserAsync();
             
             if (currentUser != null)
             {
-                // Récupérer le profil détaillé depuis l'API backend
+                // Rï¿½cupï¿½rer le profil dï¿½taillï¿½ depuis l'API backend
                 var profileResponse = await UserManagementService.GetUserProfileAsync();
                 
                 if (profileResponse.IsSuccess && profileResponse.Data != null)
@@ -395,7 +395,7 @@
                     {
                         FullName = backendProfile.FullName ?? currentUser.FirstName + " " + currentUser.LastName,
                         Email = backendProfile.Email,
-                        AvatarUrl = "/img/admin.jpg", // Image par défaut
+                        AvatarUrl = "/img/admin.jpg", // Image par dï¿½faut
                         EmailAddresses = new List<EmailAddress>
                         {
                             new EmailAddress 
@@ -408,7 +408,7 @@
                 }
                 else
                 {
-                    // Fallback avec les données du token JWT
+                    // Fallback avec les donnï¿½es du token JWT
                     userProfile = new UserProfileModel
                     {
                         FullName = (currentUser.FirstName + " " + currentUser.LastName).Trim(),
@@ -426,7 +426,7 @@
                 }
             }
             
-            Logger.LogInformation(" Profil utilisateur chargé");
+            Logger.LogInformation(" Profil utilisateur chargï¿½");
         }
         catch (Exception ex)
         {
@@ -472,11 +472,11 @@
             if (result.IsSuccess)
             {
                 isEditing = false;
-                Logger.LogInformation(" Profil utilisateur mis à jour avec succès");
+                Logger.LogInformation(" Profil utilisateur mis ï¿½ jour avec succï¿½s");
             }
             else
             {
-                Logger.LogWarning(" Échec de la mise à jour du profil: {ErrorMessage}", result.ErrorMessage);
+                Logger.LogWarning(" ï¿½chec de la mise ï¿½ jour du profil: {ErrorMessage}", result.ErrorMessage);
             }
         }
         catch (Exception ex)
@@ -493,7 +493,7 @@
     private async Task AddEmailAddress()
     {
         // Simuler l'ajout d'une nouvelle adresse email
-        // Dans une vraie application, on utiliserait un dialog approprié
+        // Dans une vraie application, on utiliserait un dialog appropriï¿½
         var newEmail = $"nouveau{userProfile.EmailAddresses.Count + 1}@example.com";
         
         var emailAddress = new EmailAddress
@@ -505,7 +505,7 @@
         userProfile.EmailAddresses.Add(emailAddress);
         StateHasChanged();
         
-        Logger.LogInformation("Nouvelle adresse email ajoutée: {Email}", newEmail);
+        Logger.LogInformation("Nouvelle adresse email ajoutï¿½e: {Email}", newEmail);
     }
 
     private Color GetRoleColor(string role) => role.ToLower() switch
@@ -520,5 +520,5 @@
 
 @* Dialog pour ajouter une adresse email *@
 <MudDialog @if="false">
-    @* Cette partie sera implementée si nécessaire *@
+    @* Cette partie sera implementï¿½e si nï¿½cessaire *@
 </MudDialog>

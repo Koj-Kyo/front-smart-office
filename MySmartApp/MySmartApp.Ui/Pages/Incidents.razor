@@ -1,4 +1,4 @@
-@page "/incidents"
+ï»¿@page "/incidents"
 @using MySmartApp.Ui.Services
 @using MySmartApp.Ui.Models
 @inject IIncidentTicketService IncidentTicketService
@@ -11,7 +11,7 @@
 <RequireAuth>
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="my-8">
     <MudText Typo="Typo.h4" Class="mb-4"> Gestion des Incidents</MudText>
-    <MudText Typo="Typo.body1" Class="mb-4">Gérez les tickets d'incidents techniques de votre environnement IoT.</MudText>
+    <MudText Typo="Typo.body1" Class="mb-4">Gï¿½rez les tickets d'incidents techniques de votre environnement IoT.</MudText>
 
     <!-- Statistiques rapides -->
     <MudGrid Class="mb-6">
@@ -35,7 +35,7 @@
                    Variant="Variant.Filled" 
                    Color="Color.Primary" 
                    StartIcon="@Icons.Material.Filled.Add">
-            Créer un ticket
+            Crï¿½er un ticket
         </MudButton>
         
         <div class="d-flex gap-2">
@@ -87,19 +87,19 @@
                 <MudText Typo="Typo.h6">Tickets d'Incidents ({filteredTickets.Count()})</MudText>
                 <MudSpacer />
                 <MudText Typo="Typo.body2" Color="Color.Secondary">
-                    @($"Dernière mise à jour: {DateTime.Now:HH:mm:ss}")
+                    @($"Derniï¿½re mise ï¿½ jour: {DateTime.Now:HH:mm:ss}")
                 </MudText>
             </ToolBarContent>
             
             <HeaderContent>
                 <MudTh>ID</MudTh>
                 <MudTh>Sujet</MudTh>
-                <MudTh>Priorité</MudTh>
+                <MudTh>Prioritï¿½</MudTh>
                 <MudTh>Statut</MudTh>
-                <MudTh>Créé par</MudTh>
-                <MudTh>Assigné à</MudTh>
+                <MudTh>Crï¿½ï¿½ par</MudTh>
+                <MudTh>Assignï¿½ ï¿½</MudTh>
                 <MudTh>Ressource</MudTh>
-                <MudTh>Créé le</MudTh>
+                <MudTh>Crï¿½ï¿½ le</MudTh>
                 <MudTh>Actions</MudTh>
             </HeaderContent>
             
@@ -149,7 +149,7 @@
                     }
                     else
                     {
-                        <MudText Color="Color.Secondary">Non assigné</MudText>
+                        <MudText Color="Color.Secondary">Non assignï¿½</MudText>
                     }
                 </MudTd>
                 <MudTd DataLabel="Resource">
@@ -164,12 +164,12 @@
                     {
                         <div class="d-flex align-center">
                             <MudIcon Icon="@Icons.Material.Filled.DeviceHub" Class="mr-2" Size="Size.Small" />
-                            @(context.PeripheriqueName ?? $"Périphérique {context.PeripheriqueLogiqueId}")
+                            @(context.PeripheriqueName ?? $"Pï¿½riphï¿½rique {context.PeripheriqueLogiqueId}")
                         </div>
                     }
                     else
                     {
-                        <MudText Color="Color.Secondary">Général</MudText>
+                        <MudText Color="Color.Secondary">Gï¿½nï¿½ral</MudText>
                     }
                 </MudTd>
                 <MudTd DataLabel="CreatedAt">@context.CreatedAt.ToString("dd/MM/yyyy HH:mm")</MudTd>
@@ -179,15 +179,15 @@
                                        Color="Color.Info" 
                                        Size="Size.Small"
                                        OnClick="@(() => ViewTicketDetails(context))"
-                                       Title="Voir les détails" />
+                                       Title="Voir les dï¿½tails" />
                         
-                        <!-- Marquer comme Résolu -->
+                        <!-- Marquer comme Rï¿½solu -->
                         <MudIconButton Icon="@Icons.Material.Filled.CheckCircle"
                                        Color="Color.Success"
                                        Size="Size.Small"
-                                       Disabled="@(context.Statut == "Résolu")"
+                                       Disabled="@(context.Statut == "Rï¿½solu")"
                                        OnClick="@(() => SetTicketResolved(context))"
-                                       Title="Marquer comme résolu" />
+                                       Title="Marquer comme rï¿½solu" />
                         
                         <MudIconButton Icon="@Icons.Material.Filled.Edit" 
                                        Color="Color.Primary" 
@@ -217,9 +217,9 @@
             <NoRecordsContent>
                 <div class="d-flex flex-column align-center pa-8">
                     <MudIcon Icon="@Icons.Material.Filled.ConfirmationNumber" Size="Size.Large" Color="Color.Secondary" Class="mb-4" />
-                    <MudText Typo="Typo.h6" Color="Color.Secondary">Aucun ticket trouvé</MudText>
+                    <MudText Typo="Typo.h6" Color="Color.Secondary">Aucun ticket trouvï¿½</MudText>
                     <MudText Typo="Typo.body2" Color="Color.Secondary">
-                        @(string.IsNullOrEmpty(searchString) ? "Créez votre premier ticket d'incident" : "Aucun résultat pour votre recherche")
+                        @(string.IsNullOrEmpty(searchString) ? "Crï¿½ez votre premier ticket d'incident" : "Aucun rï¿½sultat pour votre recherche")
                     </MudText>
                 </div>
             </NoRecordsContent>
@@ -227,12 +227,12 @@
     }
 </MudContainer>
 
-<!-- Dialog de création -->
+<!-- Dialog de crï¿½ation -->
 <MudOverlay @bind-Visible="isCreateDialogOpen" DarkBackground="true" Absolute="false">
     <MudPaper Class="pa-6" Style="max-width:700px; margin:50px auto;">
         <MudText Typo="Typo.h6" Class="mb-4">
             <MudIcon Icon="@Icons.Material.Filled.BugReport" Class="mr-2" />
-            Créer un nouveau ticket
+            Crï¿½er un nouveau ticket
         </MudText>
 
         <MudForm @ref="createForm" Model="@newTicket">
@@ -266,10 +266,10 @@
                     </MudSelect>
                 </MudItem>
                 
-                <!-- ? NOUVEAU: Champ Priorité -->
+                <!-- ? NOUVEAU: Champ Prioritï¿½ -->
                 <MudItem xs="12" sm="6">
                     <MudSelect T="string" @bind-Value="newTicket.Priorite"
-                               Label="Priorité"
+                               Label="Prioritï¿½"
                                Required="true">
                         <MudSelectItem T="string" Value="@("Basse")">
                             <MudText>Basse</MudText>
@@ -290,13 +290,13 @@
                     <MudSelect T="string" @bind-Value="resourceType"
                                Label="Type de ressource"
                                @bind-Value:after="OnResourceTypeChanged">
-                        <MudSelectItem T="string" Value="@("None")">Général</MudSelectItem>
-                        <MudSelectItem T="string" Value="@("Zone")">Zone spécifique</MudSelectItem>
-                        <MudSelectItem T="string" Value="@("Peripherique")">Périphérique spécifique</MudSelectItem>
+                        <MudSelectItem T="string" Value="@("None")">Gï¿½nï¿½ral</MudSelectItem>
+                        <MudSelectItem T="string" Value="@("Zone")">Zone spï¿½cifique</MudSelectItem>
+                        <MudSelectItem T="string" Value="@("Peripherique")">Pï¿½riphï¿½rique spï¿½cifique</MudSelectItem>
                     </MudSelect>
                 </MudItem>
                 
-                <!-- ? AMÉLIORATION: Select Zones au lieu de saisie manuelle -->
+                <!-- ? AMï¿½LIORATION: Select Zones au lieu de saisie manuelle -->
                 @if (resourceType == "Zone")
                 {
                     <MudItem xs="12">
@@ -310,7 +310,7 @@
                             <MudSelect T="int?" @bind-Value="newTicket.ZoneId"
                                       Label="Zone"
                                       Required="true"
-                                      HelperText="Sélectionnez la zone concernée par l'incident">
+                                      HelperText="Sï¿½lectionnez la zone concernï¿½e par l'incident">
                                 @foreach (var zone in availableZones)
                                 {
                                     <MudSelectItem T="int?" Value="@zone.Id">
@@ -329,21 +329,21 @@
                     </MudItem>
                 }
                 
-                <!-- ? AMÉLIORATION: Select Périphériques au lieu de saisie manuelle -->
+                <!-- ? AMï¿½LIORATION: Select Pï¿½riphï¿½riques au lieu de saisie manuelle -->
                 @if (resourceType == "Peripherique")
                 {
                     <MudItem xs="12">
                         @if (isLoadingDevices)
                         {
                             <MudProgressLinear Indeterminate="true" Class="mb-2" />
-                            <MudText Typo="Typo.caption">Chargement des périphériques...</MudText>
+                            <MudText Typo="Typo.caption">Chargement des pï¿½riphï¿½riques...</MudText>
                         }
                         else if (availableDevices.Any())
                         {
                             <MudSelect T="int?" @bind-Value="newTicket.PeripheriqueLogiqueId"
-                                      Label="Périphérique"
+                                      Label="Pï¿½riphï¿½rique"
                                       Required="true"
-                                      HelperText="Sélectionnez le périphérique concerné par l'incident">
+                                      HelperText="Sï¿½lectionnez le pï¿½riphï¿½rique concernï¿½ par l'incident">
                                 @foreach (var device in availableDevices)
                                 {
                                     <MudSelectItem T="int?" Value="@device.Id">
@@ -362,7 +362,7 @@
                         }
                         else
                         {
-                            <MudAlert Severity="Severity.Warning">Aucun périphérique disponible</MudAlert>
+                            <MudAlert Severity="Severity.Warning">Aucun pï¿½riphï¿½rique disponible</MudAlert>
                         }
                     </MudItem>
                 }
@@ -381,13 +381,13 @@
                 {
                     <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
                 }
-                Créer le ticket
+                Crï¿½er le ticket
             </MudButton>
         </div>
     </MudPaper>
 </MudOverlay>
 
-<!-- Dialog de détails -->
+<!-- Dialog de dï¿½tails -->
 <MudOverlay @bind-Visible="isDetailsDialogOpen" DarkBackground="true" Absolute="false">
     <MudPaper Class="pa-6" Style="max-width:900px; margin:50px auto; max-height:80vh; overflow-y: auto;">
         @if (selectedTicket != null)
@@ -417,26 +417,26 @@
                         </div>
                         
                         <div class="mb-3">
-                            <MudText Typo="Typo.caption" Color="Color.Secondary">Créé par</MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Crï¿½ï¿½ par</MudText>
                             <MudText Typo="Typo.body2">@(selectedTicket.CreatedByName ?? selectedTicket.CreatedById)</MudText>
                         </div>
                         
                         <div class="mb-3">
-                            <MudText Typo="Typo.caption" Color="Color.Secondary">Assigné à</MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Assignï¿½ ï¿½</MudText>
                             <MudText Typo="Typo.body2">
-                                @(selectedTicket.AssignedToName ?? selectedTicket.AssignedToId ?? "Non assigné")
+                                @(selectedTicket.AssignedToName ?? selectedTicket.AssignedToId ?? "Non assignï¿½")
                             </MudText>
                         </div>
                         
                         <div class="mb-3">
-                            <MudText Typo="Typo.caption" Color="Color.Secondary">Créé le</MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Crï¿½ï¿½ le</MudText>
                             <MudText Typo="Typo.body2">@selectedTicket.CreatedAt.ToString("dd/MM/yyyy HH:mm")</MudText>
                         </div>
                         
                         @if (selectedTicket.UpdatedAt.HasValue)
                         {
                             <div class="mb-3">
-                                <MudText Typo="Typo.caption" Color="Color.Secondary">Modifié le</MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">Modifiï¿½ le</MudText>
                                 <MudText Typo="Typo.body2">@selectedTicket.UpdatedAt.Value.ToString("dd/MM/yyyy HH:mm")</MudText>
                             </div>
                         }
@@ -454,9 +454,9 @@
                 <MudButton OnClick="@(() => SetTicketResolved(selectedTicket))"
                            Color="Color.Success"
                            Class="ml-2"
-                           Disabled="@(selectedTicket.Statut == "Résolu")"
+                           Disabled="@(selectedTicket.Statut == "Rï¿½solu")"
                            StartIcon="@Icons.Material.Filled.CheckCircle">
-                    Marquer résolu
+                    Marquer rï¿½solu
                 </MudButton>
             }
         </div>
@@ -466,7 +466,7 @@
 </RequireAuth>
 
 @code {
-    // État de la page
+    // ï¿½tat de la page
     private bool isLoading = true;
     private string searchString = "";
     private string? selectedStatusFilter;
@@ -479,7 +479,7 @@
     private bool isCreating = false;
     private MudForm? createForm;
     
-    // Données
+    // Donnï¿½es
     private List<IncidentTicketDto> tickets = new();
     private List<string> availableStatuses = new();
     private Dictionary<string, int> statistics = new();
@@ -490,12 +490,12 @@
     private bool isLoadingZones = false;
     private bool isLoadingDevices = false;
     
-    // Modèles
+    // Modï¿½les
     private IncidentTicketCreateDto newTicket = new() { Sujet = "", Description = "", Statut = "Ouvert", Priorite = "Moyenne" };
     private IncidentTicketDto? selectedTicket;
     private string resourceType = "None";
 
-    // Propriétés calculées
+    // Propriï¿½tï¿½s calculï¿½es
     private IEnumerable<IncidentTicketDto> filteredTickets =>
         tickets.Where(t => 
             (string.IsNullOrEmpty(searchString) || 
@@ -508,12 +508,12 @@
 
     protected override async Task OnInitializedAsync()
     {
-        // Récupérer l'ID utilisateur courant
+        // Rï¿½cupï¿½rer l'ID utilisateur courant
         currentUserId = await IncidentTicketService.GetCurrentUserIdAsync();
         
         availableStatuses = await IncidentTicketService.GetAvailableStatusesAsync();
         
-        // ? NOUVEAU: Charger zones et devices en parallèle
+        // ? NOUVEAU: Charger zones et devices en parallï¿½le
         await Task.WhenAll(
             LoadData(),
             LoadZones(),
@@ -531,7 +531,7 @@
             if (response.IsSuccess && response.Data != null)
             {
                 availableZones = response.Data;
-                Logger.LogInformation(" {Count} zones chargées", availableZones.Count);
+                Logger.LogInformation(" {Count} zones chargï¿½es", availableZones.Count);
             }
         }
         catch (Exception ex)
@@ -552,7 +552,7 @@
         {
             var devices = await DeviceService.GetAllDevicesLegacyAsync();
             availableDevices = devices.ToList();
-            Logger.LogInformation(" {Count} devices chargés", availableDevices.Count);
+            Logger.LogInformation(" {Count} devices chargï¿½s", availableDevices.Count);
         }
         catch (Exception ex)
         {
@@ -571,7 +571,7 @@
         
         try
         {
-            // Charger tickets et statistiques en parallèle
+            // Charger tickets et statistiques en parallï¿½le
             var ticketsTask = IncidentTicketService.GetAllTicketsAsync();
             var statsTask = IncidentTicketService.GetTicketStatisticsAsync();
             
@@ -585,11 +585,11 @@
             
             statistics = await statsTask;
             
-            Logger.LogInformation(" {Count} tickets chargés", tickets.Count);
+            Logger.LogInformation(" {Count} tickets chargï¿½s", tickets.Count);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, " Erreur lors du chargement des données");
+            Logger.LogError(ex, " Erreur lors du chargement des donnï¿½es");
         }
         finally
         {
@@ -600,12 +600,12 @@
 
     private async Task SetTicketResolved(IncidentTicketDto ticket)
     {
-        if (ticket.Statut == "Résolu")
+        if (ticket.Statut == "Rï¿½solu")
         {
             return;
         }
         
-        await SetTicketStatus(ticket, "Résolu");
+        await SetTicketStatus(ticket, "Rï¿½solu");
     }
 
     private async Task SetTicketStatus(IncidentTicketDto ticket, string newStatus)
@@ -616,7 +616,7 @@
             await LoadData();
             if (isDetailsDialogOpen && selectedTicket?.Id == ticket.Id)
             {
-                // Mettre à jour la vue détails si ouverte
+                // Mettre ï¿½ jour la vue dï¿½tails si ouverte
                 var refreshed = await IncidentTicketService.GetTicketByIdAsync(ticket.Id);
                 if (refreshed.IsSuccess && refreshed.Data is not null)
                 {
@@ -676,42 +676,42 @@
 
         try
         {
-            Logger.LogInformation(" Début création ticket: {Sujet}", newTicket.Sujet);
-            Logger.LogInformation(" DTO envoyé: Sujet={Sujet}, Priorite={Priorite}, ZoneId={ZoneId}", 
+            Logger.LogInformation(" Dï¿½but crï¿½ation ticket: {Sujet}", newTicket.Sujet);
+            Logger.LogInformation(" DTO envoyï¿½: Sujet={Sujet}, Priorite={Priorite}, ZoneId={ZoneId}", 
                 newTicket.Sujet, newTicket.Priorite, newTicket.ZoneId);
             
             var result = await IncidentTicketService.CreateTicketAsync(newTicket);
             
-            Logger.LogInformation(" Résultat: IsSuccess={IsSuccess}, ErrorMessage={Error}, Data={HasData}", 
+            Logger.LogInformation(" Rï¿½sultat: IsSuccess={IsSuccess}, ErrorMessage={Error}, Data={HasData}", 
                 result.IsSuccess, result.ErrorMessage, result.Data != null);
             
             if (result.IsSuccess)
             {
-                Logger.LogInformation(" Ticket créé avec succès, rechargement données...");
+                Logger.LogInformation(" Ticket crï¿½ï¿½ avec succï¿½s, rechargement donnï¿½es...");
                 await LoadData();
                 CloseCreateDialog();
-                Logger.LogInformation(" Dialog fermé");
+                Logger.LogInformation(" Dialog fermï¿½");
             }
             else
             {
-                Logger.LogError(" Échec création: {Error}", result.ErrorMessage);
+                Logger.LogError(" ï¿½chec crï¿½ation: {Error}", result.ErrorMessage);
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, " Exception lors de la création: {Message}", ex.Message);
+            Logger.LogError(ex, " Exception lors de la crï¿½ation: {Message}", ex.Message);
         }
         finally
         {
             isCreating = false;
             StateHasChanged();
-            Logger.LogInformation(" Fin tentative création ticket");
+            Logger.LogInformation(" Fin tentative crï¿½ation ticket");
         }
     }
 
     private async Task ViewTicketDetails(IncidentTicketDto ticket)
     {
-        // Recharger les détails complets depuis l'API
+        // Recharger les dï¿½tails complets depuis l'API
         var response = await IncidentTicketService.GetTicketByIdAsync(ticket.Id);
         if (response.IsSuccess && response.Data != null)
         {
@@ -728,12 +728,12 @@
 
     private async Task UpdateTicketStatus(IncidentTicketDto ticket)
     {
-        // Créer une liste des statuts possibles pour le changement
+        // Crï¿½er une liste des statuts possibles pour le changement
         var statusOptions = availableStatuses.Where(s => s != ticket.Statut).ToArray();
         
         var result = await DialogService.ShowMessageBox(
             $" Changer le statut du ticket #{ticket.Id}",
-            $"Statut actuel: {ticket.Statut}\n\nLe statut sera changé au suivant dans la liste.",
+            $"Statut actuel: {ticket.Statut}\n\nLe statut sera changï¿½ au suivant dans la liste.",
             yesText: "Modifier",
             cancelText: "Annuler");
 
@@ -779,10 +779,10 @@
     {
         bool? result = await DialogService.ShowMessageBox(
             " Confirmation de suppression",
-            $"Êtes-vous sûr de vouloir supprimer le ticket #{ticket.Id} ?\n\n" +
+            $"ï¿½tes-vous sï¿½r de vouloir supprimer le ticket #{ticket.Id} ?\n\n" +
             $"Sujet: {ticket.Sujet}\n" +
             $"Statut: {ticket.Statut}\n\n" +
-            $" Cette action est irréversible.",
+            $" Cette action est irrï¿½versible.",
             yesText: "Oui, supprimer",
             cancelText: "Annuler");
 
@@ -801,7 +801,7 @@
         }
     }
 
-    // Méthodes utilitaires
+    // Mï¿½thodes utilitaires
     private bool IsMyTicket(IncidentTicketDto ticket)
     {
         if (string.IsNullOrEmpty(currentUserId))
@@ -815,9 +815,9 @@
         "Ouvert" => Color.Warning,
         "En cours" => Color.Info,
         "En attente" => Color.Secondary,
-        "Résolu" => Color.Success,
-        "Fermé" => Color.Default,
-        "Annulé" => Color.Error,
+        "Rï¿½solu" => Color.Success,
+        "Fermï¿½" => Color.Default,
+        "Annulï¿½" => Color.Error,
         _ => Color.Default
     };
 
@@ -826,11 +826,11 @@
         "Total" => Color.Primary,
         "Ouvert" => Color.Warning,
         "En cours" => Color.Info,
-        "Résolu" => Color.Success,
+        "Rï¿½solu" => Color.Success,
         _ => Color.Default
     };
 
-    // ? NOUVEAU: Couleur selon priorité
+    // ? NOUVEAU: Couleur selon prioritï¿½
     private Color GetPriorityColor(string priorite) => priorite switch
     {
         "Basse" => Color.Default,

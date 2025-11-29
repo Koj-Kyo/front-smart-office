@@ -1,4 +1,4 @@
-@page "/telemetrie"
+ï»¿@page "/telemetrie"
 @using MySmartApp.Ui.Services
 @using MySmartApp.Ui.Models
 @inject ITelemetrieService TelemetrieService
@@ -9,13 +9,13 @@
 
 <RequireAuth>
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="my-8">
-    <MudText Typo="Typo.h4" Class="mb-4"> Télémétrie & Analytics</MudText>
-    <MudText Typo="Typo.body1" Class="mb-4">Analysez les données de télémétrie de vos périphériques IoT en temps réel.</MudText>
+    <MudText Typo="Typo.h4" Class="mb-4"> Tï¿½lï¿½mï¿½trie & Analytics</MudText>
+    <MudText Typo="Typo.body1" Class="mb-4">Analysez les donnï¿½es de tï¿½lï¿½mï¿½trie de vos pï¿½riphï¿½riques IoT en temps rï¿½el.</MudText>
 
-    <!-- Sélecteur de périphérique et période -->
+    <!-- Sï¿½lecteur de pï¿½riphï¿½rique et pï¿½riode -->
     <MudGrid Class="mb-6">
         <MudItem xs="12" sm="4">
-            <MudSelect T="int?" @bind-Value="selectedPeripheriqueId" Label="Périphérique" Clearable>
+            <MudSelect T="int?" @bind-Value="selectedPeripheriqueId" Label="Pï¿½riphï¿½rique" Clearable>
                 @foreach (var device in devices)
                 {
                     <MudSelectItem T="int?" Value="@((int?)device.Id)">@device.Name (@device.Type)</MudSelectItem>
@@ -24,7 +24,7 @@
         </MudItem>
         
         <MudItem xs="12" sm="3">
-            <MudDatePicker @bind-Date="startDate" Label="Date de début" />
+            <MudDatePicker @bind-Date="startDate" Label="Date de dï¿½but" />
         </MudItem>
         
         <MudItem xs="12" sm="3">
@@ -53,7 +53,7 @@
             <MudItem xs="6" sm="3">
                 <MudPaper Class="pa-4 text-center" Elevation="2">
                     <MudText Typo="Typo.h4" Color="Color.Primary">@stats.TotalEvents</MudText>
-                    <MudText Typo="Typo.body2">Événements</MudText>
+                    <MudText Typo="Typo.body2">ï¿½vï¿½nements</MudText>
                 </MudPaper>
             </MudItem>
             <MudItem xs="6" sm="3">
@@ -81,13 +81,13 @@
         <!-- Graphique principal -->
         <MudItem xs="12" lg="8">
             <MudPaper Class="pa-4 rounded-xl" Elevation="2">
-                <MudText Typo="Typo.h6" Class="mb-4"> Évolution temporelle</MudText>
+                <MudText Typo="Typo.h6" Class="mb-4"> ï¿½volution temporelle</MudText>
                 
                 @if (isLoading)
                 {
                     <div class="d-flex justify-center align-center pa-8">
                         <MudProgressCircular Size="Size.Large" Indeterminate="true" />
-                        <MudText Class="ml-4">Chargement des données...</MudText>
+                        <MudText Class="ml-4">Chargement des donnï¿½es...</MudText>
                     </div>
                 }
                 else if (telemetries.Any())
@@ -95,15 +95,15 @@
                     <!-- Graphique avec ApexCharts ou Chart.js -->
                     <div class="chart-container" style="height: 400px;">
                         <MudText Typo="Typo.body2" Color="Color.Secondary">
-                            Graphique des données de télémétrie sur la période sélectionnée
+                            Graphique des donnï¿½es de tï¿½lï¿½mï¿½trie sur la pï¿½riode sï¿½lectionnï¿½e
                         </MudText>
                         
                         <!-- Simulation d'un graphique -->
                         <div class="d-flex flex-column justify-center align-center pa-4" style="height: 350px; background: linear-gradient(45deg, rgba(var(--mud-palette-primary-rgb), 0.1), rgba(var(--mud-palette-secondary-rgb), 0.1)); border-radius: 8px;">
                             <MudIcon Icon="@Icons.Material.Filled.ShowChart" Size="Size.Large" Color="Color.Primary" Class="mb-2" />
-                            <MudText Typo="Typo.h6">Graphique Télémétrie</MudText>
+                            <MudText Typo="Typo.h6">Graphique Tï¿½lï¿½mï¿½trie</MudText>
                             <MudText Typo="Typo.body2" Color="Color.Secondary" Class="text-center">
-                                @telemetries.Count événements sur la période du @startDate?.ToString("dd/MM/yyyy") au @endDate?.ToString("dd/MM/yyyy")
+                                @telemetries.Count ï¿½vï¿½nements sur la pï¿½riode du @startDate?.ToString("dd/MM/yyyy") au @endDate?.ToString("dd/MM/yyyy")
                             </MudText>
                         </div>
                     </div>
@@ -112,17 +112,17 @@
                 {
                     <div class="d-flex flex-column align-center pa-8">
                         <MudIcon Icon="@Icons.Material.Filled.TrendingFlat" Size="Size.Large" Color="Color.Secondary" Class="mb-4" />
-                        <MudText Typo="Typo.h6" Color="Color.Secondary">Aucune donnée</MudText>
-                        <MudText Typo="Typo.body2" Color="Color.Secondary">Sélectionnez un périphérique et une période pour voir les données.</MudText>
+                        <MudText Typo="Typo.h6" Color="Color.Secondary">Aucune donnï¿½e</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Sï¿½lectionnez un pï¿½riphï¿½rique et une pï¿½riode pour voir les donnï¿½es.</MudText>
                     </div>
                 }
             </MudPaper>
         </MudItem>
 
-        <!-- Répartition par type d'événement -->
+        <!-- Rï¿½partition par type d'ï¿½vï¿½nement -->
         <MudItem xs="12" lg="4">
             <MudPaper Class="pa-4 rounded-xl" Elevation="2">
-                <MudText Typo="Typo.h6" Class="mb-4"> Répartition par type</MudText>
+                <MudText Typo="Typo.h6" Class="mb-4"> Rï¿½partition par type</MudText>
                 
                 @if (stats?.EventsByType.Any() == true)
                 {
@@ -147,17 +147,17 @@
                 {
                     <div class="d-flex flex-column align-center pa-4">
                         <MudIcon Icon="@Icons.Material.Filled.PieChart" Size="Size.Large" Color="Color.Secondary" Class="mb-2" />
-                        <MudText Typo="Typo.body2" Color="Color.Secondary">Aucune donnée à afficher</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Aucune donnï¿½e ï¿½ afficher</MudText>
                     </div>
                 }
             </MudPaper>
         </MudItem>
 
-        <!-- Alertes de télémétrie -->
+        <!-- Alertes de tï¿½lï¿½mï¿½trie -->
         <MudItem xs="12" lg="6">
             <MudPaper Class="pa-4 rounded-xl" Elevation="2">
                 <div class="d-flex justify-space-between align-center mb-4">
-                    <MudText Typo="Typo.h6"> Alertes détectées</MudText>
+                    <MudText Typo="Typo.h6"> Alertes dï¿½tectï¿½es</MudText>
                     <MudButton Size="Size.Small" 
                                Variant="Variant.Text"
                                OnClick="LoadAlerts"
@@ -205,17 +205,17 @@
                 {
                     <div class="d-flex flex-column align-center pa-4">
                         <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Large" Color="Color.Success" Class="mb-2" />
-                        <MudText Typo="Typo.body2" Color="Color.Success">Aucune alerte détectée</MudText>
-                        <MudText Typo="Typo.caption" Color="Color.Secondary">Tous les systèmes fonctionnent normalement</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Success">Aucune alerte dï¿½tectï¿½e</MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Tous les systï¿½mes fonctionnent normalement</MudText>
                     </div>
                 }
             </MudPaper>
         </MudItem>
 
-        <!-- Données récentes -->
+        <!-- Donnï¿½es rï¿½centes -->
         <MudItem xs="12" lg="6">
             <MudPaper Class="pa-4 rounded-xl" Elevation="2">
-                <MudText Typo="Typo.h6" Class="mb-4"> Données récentes</MudText>
+                <MudText Typo="Typo.h6" Class="mb-4"> Donnï¿½es rï¿½centes</MudText>
                 
                 @if (recentTelemetries.Any())
                 {
@@ -227,7 +227,7 @@
                             <MudTh>Heure</MudTh>
                             <MudTh>Type</MudTh>
                             <MudTh>Valeur</MudTh>
-                            <MudTh>Périphérique</MudTh>
+                            <MudTh>Pï¿½riphï¿½rique</MudTh>
                         </HeaderContent>
                         <RowTemplate>
                             <MudTd DataLabel="Heure">@context.Horodatage.ToString("HH:mm:ss")</MudTd>
@@ -237,7 +237,7 @@
                                 </MudChip>
                             </MudTd>
                             <MudTd DataLabel="Valeur">@context.Valeur.ToString("F2")</MudTd>
-                            <MudTd DataLabel="Périphérique">@context.PeripheriqueName</MudTd>
+                            <MudTd DataLabel="Pï¿½riphï¿½rique">@context.PeripheriqueName</MudTd>
                         </RowTemplate>
                     </MudTable>
                 }
@@ -245,7 +245,7 @@
                 {
                     <div class="d-flex flex-column align-center pa-4">
                         <MudIcon Icon="@Icons.Material.Filled.Timeline" Size="Size.Large" Color="Color.Secondary" Class="mb-2" />
-                        <MudText Typo="Typo.body2" Color="Color.Secondary">Aucune donnée récente</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Aucune donnï¿½e rï¿½cente</MudText>
                     </div>
                 }
             </MudPaper>
@@ -257,21 +257,21 @@
             StartIcon="@Icons.Material.Filled.Add"
             Style="position: fixed; bottom: 80px; right: 24px;"
             OnClick="OpenAddTelemetrieDialog"
-            Title="Ajouter une donnée de télémétrie" />
+            Title="Ajouter une donnï¿½e de tï¿½lï¿½mï¿½trie" />
 </MudContainer>
 
-<!-- Dialog d'ajout de télémétrie -->
+<!-- Dialog d'ajout de tï¿½lï¿½mï¿½trie -->
 <MudOverlay @bind-Visible="isAddDialogOpen" DarkBackground="true" Absolute="false">
     <MudPaper Class="pa-6" Style="max-width: 700px; margin: 50px auto;">
-        <MudText Typo="Typo.h6" Class="mb-4"> Ajouter une donnée de télémétrie</MudText>
+        <MudText Typo="Typo.h6" Class="mb-4"> Ajouter une donnï¿½e de tï¿½lï¿½mï¿½trie</MudText>
 
         <MudForm @ref="addForm">
             <MudGrid>
                 <MudItem xs="12">
                     <MudSelect T="int" @bind-Value="newTelemetrie.PeripheriqueLogiqueId"
-                               Label="Périphérique"
+                               Label="Pï¿½riphï¿½rique"
                                Required="true"
-                               RequiredError="Le périphérique est obligatoire">
+                               RequiredError="Le pï¿½riphï¿½rique est obligatoire">
                         @foreach (var device in devices)
                         {
                             <MudSelectItem T="int" Value="@device.Id">@device.Name (@device.Type)</MudSelectItem>
@@ -281,9 +281,9 @@
                 
                 <MudItem xs="12" sm="6">
                     <MudTextField @bind-Value="newTelemetrie.TypeEvenement"
-                                  Label="Type d'événement"
+                                  Label="Type d'ï¿½vï¿½nement"
                                   Required="true"
-                                  RequiredError="Le type d'événement est obligatoire"
+                                  RequiredError="Le type d'ï¿½vï¿½nement est obligatoire"
                                   Placeholder="ex: Consommation_Energie, Impression" />
                 </MudItem>
                 
@@ -297,10 +297,10 @@
                 
                 <MudItem xs="12">
                     <MudTextField @bind-Value="newTelemetrie.DonneesJson"
-                                  Label="Données JSON (optionnel)"
+                                  Label="Donnï¿½es JSON (optionnel)"
                                   Lines="3"
-                                  Placeholder='{"température": 25.5, "humidité": 60}'
-                                  HelperText="Données supplémentaires au format JSON" />
+                                  Placeholder='{"tempï¿½rature": 25.5, "humiditï¿½": 60}'
+                                  HelperText="Donnï¿½es supplï¿½mentaires au format JSON" />
                 </MudItem>
             </MudGrid>
         </MudForm>
@@ -326,26 +326,26 @@
 </RequireAuth>
 
 @code {
-    // État de la page
+    // ï¿½tat de la page
     private bool isLoading = false;
     private bool isLoadingAlerts = false;
     private bool isAddDialogOpen = false;
     private bool isAdding = false;
     private MudForm? addForm;
     
-    // Paramètres de filtre
+    // Paramï¿½tres de filtre
     private int? selectedPeripheriqueId;
     private DateTime? startDate = DateTime.Today.AddDays(-7);
     private DateTime? endDate = DateTime.Today;
     
-    // Données
+    // Donnï¿½es
     private List<PeripheriqueLogiqueDto> devices = new();
     private List<TelemetrieDto> telemetries = new();
     private List<TelemetrieDto> recentTelemetries = new();
     private List<TelemetrieAlertDto> alerts = new();
     private TelemetrieStatsDto? stats;
     
-    // Modèle d'ajout
+    // Modï¿½le d'ajout
     private TelemetrieCreateDto newTelemetrie = new() { PeripheriqueLogiqueId = 0, TypeEvenement = "", Valeur = 0, DonneesJson = null };
 
     protected override async Task OnInitializedAsync()
@@ -361,11 +361,11 @@
         {
             var response = await DeviceService.GetAllDevicesAsync();
             devices = response.ToList();
-            Logger.LogInformation(" {Count} périphériques chargés", devices.Count);
+            Logger.LogInformation(" {Count} pï¿½riphï¿½riques chargï¿½s", devices.Count);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, " Erreur lors du chargement des périphériques");
+            Logger.LogError(ex, " Erreur lors du chargement des pï¿½riphï¿½riques");
         }
     }
 
@@ -373,7 +373,7 @@
     {
         if (!startDate.HasValue || !endDate.HasValue)
         {
-            await DialogService.ShowMessageBox(" Erreur", "Veuillez sélectionner une période valide.", "OK");
+            await DialogService.ShowMessageBox(" Erreur", "Veuillez sï¿½lectionner une pï¿½riode valide.", "OK");
             return;
         }
 
@@ -382,17 +382,17 @@
 
         try
         {
-            // Charger les données de télémétrie
+            // Charger les donnï¿½es de tï¿½lï¿½mï¿½trie
             var telemetrieResponse = await TelemetrieService.GetHistoricalDataAsync(
                 startDate.Value, endDate.Value, selectedPeripheriqueId);
             
             if (telemetrieResponse.IsSuccess && telemetrieResponse.Data != null)
             {
                 telemetries = telemetrieResponse.Data;
-                Logger.LogInformation(" {Count} données de télémétrie chargées", telemetries.Count);
+                Logger.LogInformation(" {Count} donnï¿½es de tï¿½lï¿½mï¿½trie chargï¿½es", telemetries.Count);
             }
 
-            // Charger les statistiques si un périphérique est sélectionné
+            // Charger les statistiques si un pï¿½riphï¿½rique est sï¿½lectionnï¿½
             if (selectedPeripheriqueId.HasValue)
             {
                 var statsResponse = await TelemetrieService.GetTelemetrieStatsAsync(
@@ -410,7 +410,7 @@
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, " Erreur lors du chargement des données");
+            Logger.LogError(ex, " Erreur lors du chargement des donnï¿½es");
         }
         finally
         {
@@ -432,7 +432,7 @@
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, " Erreur lors du chargement des données récentes");
+            Logger.LogError(ex, " Erreur lors du chargement des donnï¿½es rï¿½centes");
         }
     }
 
@@ -505,7 +505,7 @@
                 CloseAddDialog();
                 await LoadRecentTelemetries();
                 
-                // Recharger les données si on est dans la même période
+                // Recharger les donnï¿½es si on est dans la mï¿½me pï¿½riode
                 if (selectedPeripheriqueId == newTelemetrie.PeripheriqueLogiqueId)
                 {
                     await LoadTelemetrieData();
@@ -519,7 +519,7 @@
         }
     }
 
-    // Méthodes utilitaires
+    // Mï¿½thodes utilitaires
     private Color GetEventTypeColor(string eventType) => eventType.ToLower() switch
     {
         var type when type.Contains("consommation") => Color.Warning,

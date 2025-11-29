@@ -1,4 +1,4 @@
-@page "/notifications"
+ï»¿@page "/notifications"
 @using MySmartApp.Ui.Services
 @using MySmartApp.Ui.Models
 @inject INotificationService NotificationService
@@ -9,7 +9,7 @@
 <RequireAuth>
 <MudContainer MaxWidth="MaxWidth.Large" Class="my-8">
     <MudText Typo="Typo.h4" Class="mb-4"> Centre de Notifications</MudText>
-    <MudText Typo="Typo.body1" Class="mb-4">Gérez toutes vos notifications et restez informé des dernières activités.</MudText>
+    <MudText Typo="Typo.body1" Class="mb-4">Gï¿½rez toutes vos notifications et restez informï¿½ des derniï¿½res activitï¿½s.</MudText>
 
     <!-- Statistiques rapides -->
     @if (stats != null)
@@ -38,7 +38,7 @@
                     <MudText Typo="Typo.h4" Color="@(stats.DerniereNotification.HasValue ? Color.Info : Color.Secondary)">
                         @(stats.DerniereNotification?.ToString("HH:mm") ?? "--:--")
                     </MudText>
-                    <MudText Typo="Typo.body2">Dernière</MudText>
+                    <MudText Typo="Typo.body2">Derniï¿½re</MudText>
                 </MudPaper>
             </MudItem>
         </MudGrid>
@@ -234,17 +234,17 @@
 </style>
 
 @code {
-    // État de la page
+    // ï¿½tat de la page
     private bool isLoading = true;
     private string searchString = "";
     private string? selectedFilter;
     
-    // Données
+    // Donnï¿½es
     private List<UserNotificationDto> notifications = new();
     private NotificationStatsDto? stats;
     private int unreadCount = 0;
 
-    // Propriétés calculées
+    // Propriï¿½tï¿½s calculï¿½es
     private IEnumerable<UserNotificationDto> filteredNotifications
     {
         get
@@ -278,7 +278,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        // S'abonner aux événements
+        // S'abonner aux ï¿½vï¿½nements
         NotificationService.NotificationsUpdated += OnNotificationsUpdated;
         NotificationService.UnreadCountChanged += OnUnreadCountChanged;
         
@@ -292,7 +292,7 @@
         
         try
         {
-            // Charger les notifications et statistiques en parallèle
+            // Charger les notifications et statistiques en parallï¿½le
             var notificationsTask = NotificationService.GetUserNotificationsAsync();
             var statsTask = NotificationService.GetNotificationStatsAsync();
             
@@ -311,11 +311,11 @@
                 stats = statsResponse.Data;
             }
             
-            Logger.LogInformation("? {Count} notifications chargées", notifications.Count);
+            Logger.LogInformation("? {Count} notifications chargï¿½es", notifications.Count);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "? Erreur lors du chargement des données");
+            Logger.LogError(ex, "? Erreur lors du chargement des donnï¿½es");
         }
         finally
         {
@@ -335,7 +335,7 @@
         var result = await NotificationService.MarkAsReadAsync(notification.Id);
         if (result.IsSuccess)
         {
-            Logger.LogDebug("Notification {Id} marquée comme lue", notification.Id);
+            Logger.LogDebug("Notification {Id} marquï¿½e comme lue", notification.Id);
         }
     }
 
@@ -344,7 +344,7 @@
         var result = await NotificationService.MarkAllAsReadAsync();
         if (result.IsSuccess)
         {
-            Logger.LogInformation("Toutes les notifications marquées comme lues");
+            Logger.LogInformation("Toutes les notifications marquï¿½es comme lues");
         }
     }
 
@@ -352,7 +352,7 @@
     {
         bool? result = await DialogService.ShowMessageBox(
             " Confirmation de suppression",
-            $"Êtes-vous sûr de vouloir supprimer cette notification ?\n\n« {notification.Titre} »",
+            $"ï¿½tes-vous sï¿½r de vouloir supprimer cette notification ?\n\nï¿½ {notification.Titre} ï¿½",
             yesText: "Supprimer",
             cancelText: "Annuler");
 
@@ -361,7 +361,7 @@
             var deleteResult = await NotificationService.DeleteNotificationAsync(notification.Id);
             if (deleteResult.IsSuccess)
             {
-                Logger.LogDebug("Notification {Id} supprimée", notification.Id);
+                Logger.LogDebug("Notification {Id} supprimï¿½e", notification.Id);
             }
         }
     }
@@ -373,7 +373,7 @@
         StateHasChanged();
     }
 
-    // Événements de mise à jour
+    // ï¿½vï¿½nements de mise ï¿½ jour
     private void OnNotificationsUpdated(List<UserNotificationDto> updatedNotifications)
     {
         notifications = updatedNotifications;
@@ -387,7 +387,7 @@
         InvokeAsync(StateHasChanged);
     }
 
-    // Méthodes utilitaires
+    // Mï¿½thodes utilitaires
     private string GetNotificationClass(UserNotificationDto notification)
     {
         return notification.EstLue ? "notification-read" : "notification-unread";
@@ -405,7 +405,7 @@
             _ => timeSpan.TotalHours switch
             {
                 >= 1 => $"il y a {(int)timeSpan.TotalHours}h",
-                _ => timeSpan.TotalMinutes < 1 ? "à l'instant" : $"il y a {(int)timeSpan.TotalMinutes}min"
+                _ => timeSpan.TotalMinutes < 1 ? "ï¿½ l'instant" : $"il y a {(int)timeSpan.TotalMinutes}min"
             }
         };
     }
@@ -419,21 +419,21 @@
 
     private string GetEmptyStateTitle()
     {
-        if (!string.IsNullOrEmpty(searchString)) return "Aucun résultat";
+        if (!string.IsNullOrEmpty(searchString)) return "Aucun rï¿½sultat";
         if (selectedFilter == "unread") return "Toutes les notifications sont lues";
         return "Aucune notification";
     }
 
     private string GetEmptyStateMessage()
     {
-        if (!string.IsNullOrEmpty(searchString)) return "Aucune notification ne correspond à votre recherche.";
-        if (selectedFilter == "unread") return "Félicitations ! Vous êtes à jour.";
-        return "Vous n'avez reçu aucune notification pour le moment.";
+        if (!string.IsNullOrEmpty(searchString)) return "Aucune notification ne correspond ï¿½ votre recherche.";
+        if (selectedFilter == "unread") return "Fï¿½licitations ! Vous ï¿½tes ï¿½ jour.";
+        return "Vous n'avez reï¿½u aucune notification pour le moment.";
     }
 
     public void Dispose()
     {
-        // Se désabonner des événements
+        // Se dï¿½sabonner des ï¿½vï¿½nements
         NotificationService.NotificationsUpdated -= OnNotificationsUpdated;
         NotificationService.UnreadCountChanged -= OnUnreadCountChanged;
     }

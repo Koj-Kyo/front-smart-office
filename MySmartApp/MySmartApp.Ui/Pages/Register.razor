@@ -1,4 +1,4 @@
-@page "/register"
+ï»¿@page "/register"
 @using MySmartApp.Ui.Services
 @using MySmartApp.Ui.Models
 @inject IAuthService AuthService
@@ -12,18 +12,18 @@
         <div class="text-center mb-6">
             <MudIcon Icon="@Icons.Material.Filled.Business" Size="Size.Large" Color="Color.Primary" Class="mb-2" />
             <MudText Typo="Typo.h4" Color="Color.Primary">Smart Office</MudText>
-            <MudText Typo="Typo.body2" Class="text-muted">Créer votre compte</MudText>
+            <MudText Typo="Typo.body2" Class="text-muted">Crï¿½er votre compte</MudText>
         </div>
 
         <!-- Formulaire d'inscription -->
         <EditForm Model="@_registerModel" OnValidSubmit="@HandleRegister">
             <DataAnnotationsValidator />
             
-            <!-- Prénom et Nom -->
+            <!-- Prï¿½nom et Nom -->
             <MudGrid>
                 <MudItem xs="6">
                     <MudTextField @bind-Value="_registerModel.FirstName"
-                                 Label="Prénom"
+                                 Label="Prï¿½nom"
                                  Variant="Variant.Outlined"
                                  Class="mb-3"
                                  For="@(() => _registerModel.FirstName)"
@@ -92,12 +92,12 @@
                 @if (_isLoading)
                 {
                     <MudProgressCircular Size="Size.Small" Indeterminate="true" />
-                    <span class="ml-2">Création...</span>
+                    <span class="ml-2">Crï¿½ation...</span>
                 }
                 else
                 {
                     <MudIcon Icon="@Icons.Material.Filled.PersonAdd" Class="mr-2" />
-                    <span>Créer le compte</span>
+                    <span>Crï¿½er le compte</span>
                 }
             </MudButton>
 
@@ -119,23 +119,23 @@
                 {
                     @foreach (var message in error.Value)
                     {
-                        <MudText Typo="Typo.caption">• @error.Key: @message</MudText>
+                        <MudText Typo="Typo.caption">ï¿½ @error.Key: @message</MudText>
                     }
                 }
             </MudAlert>
         }
 
-        <!-- Message de succès -->
+        <!-- Message de succï¿½s -->
         @if (_showSuccessMessage)
         {
             <MudAlert Severity="Severity.Success" Class="mb-4">
-                <MudText Typo="Typo.body2">Compte créé avec succès ! Vous pouvez maintenant vous connecter.</MudText>
+                <MudText Typo="Typo.body2">Compte crï¿½ï¿½ avec succï¿½s ! Vous pouvez maintenant vous connecter.</MudText>
             </MudAlert>
         }
 
         <!-- Lien vers connexion -->
         <div class="text-center">
-            <MudText Typo="Typo.body2">Vous avez déjà un compte ?</MudText>
+            <MudText Typo="Typo.body2">Vous avez dï¿½jï¿½ un compte ?</MudText>
             <MudLink Href="/login" Color="Color.Primary">Se connecter</MudLink>
         </div>
     </MudPaper>
@@ -177,10 +177,10 @@
 
             if (result.Success)
             {
-                Logger.LogInformation("Inscription réussie pour {Email}", _registerModel.Email);
+                Logger.LogInformation("Inscription rï¿½ussie pour {Email}", _registerModel.Email);
                 _showSuccessMessage = true;
                 
-                // Optionnel: redirection automatique après 3 secondes
+                // Optionnel: redirection automatique aprï¿½s 3 secondes
                 _ = Task.Delay(3000).ContinueWith(_ =>
                 {
                     InvokeAsync(() => Navigation.NavigateTo("/login"));
@@ -190,12 +190,12 @@
             {
                 _errorMessage = result.ErrorMessage;
                 _validationErrors = result.ValidationErrors;
-                Logger.LogWarning(" Échec d'inscription pour {Email}: {Error}", _registerModel.Email, _errorMessage);
+                Logger.LogWarning(" ï¿½chec d'inscription pour {Email}: {Error}", _registerModel.Email, _errorMessage);
             }
         }
         catch (Exception ex)
         {
-            _errorMessage = "Une erreur inattendue s'est produite. Veuillez réessayer.";
+            _errorMessage = "Une erreur inattendue s'est produite. Veuillez rï¿½essayer.";
             Logger.LogError(ex, " Erreur lors de l'inscription pour {Email}", _registerModel.Email);
         }
         finally
@@ -205,10 +205,10 @@
         }
     }
 
-    // Modèle de données pour le formulaire
+    // Modï¿½le de donnï¿½es pour le formulaire
     public class RegisterModel
     {
-        [Required(ErrorMessage = "Le prénom est requis")]
+        [Required(ErrorMessage = "Le prï¿½nom est requis")]
         public string? FirstName { get; set; }
 
         [Required(ErrorMessage = "Le nom est requis")]
@@ -219,9 +219,9 @@
         public string? Email { get; set; }
 
         [Required(ErrorMessage = "Le mot de passe est requis")]
-        [MinLength(6, ErrorMessage = "Le mot de passe doit contenir au moins 6 caractères")]
+        [MinLength(6, ErrorMessage = "Le mot de passe doit contenir au moins 6 caractï¿½res")]
         [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\da-zA-Z]).{6,}$", 
-            ErrorMessage = "Le mot de passe doit contenir au moins une majuscule, une minuscule, un chiffre et un caractère spécial")]
+            ErrorMessage = "Le mot de passe doit contenir au moins une majuscule, une minuscule, un chiffre et un caractï¿½re spï¿½cial")]
         public string? Password { get; set; }
 
         [Required(ErrorMessage = "La confirmation du mot de passe est requise")]
