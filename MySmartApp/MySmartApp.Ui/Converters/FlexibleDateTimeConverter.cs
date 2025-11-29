@@ -1,10 +1,10 @@
-using System.Text.Json;
+ï»¿using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace MySmartApp.Ui.Converters;
 
 /// <summary>
-/// Convertisseur JSON flexible pour gérer différents formats de date/heure
+/// Convertisseur JSON flexible pour gï¿½rer diffï¿½rents formats de date/heure
 /// Compatible avec Blazor WebAssembly et les variations de format du backend
 /// </summary>
 public class FlexibleDateTimeConverter : JsonConverter<DateTime>
@@ -36,7 +36,7 @@ public class FlexibleDateTimeConverter : JsonConverter<DateTime>
         "yyyy-MM-dd HH:mm:ss",
         "yyyy-MM-dd",
         
-        // Format .NET par défaut
+        // Format .NET par dï¿½faut
         "O", // Round-trip format
         "o"  // Round-trip format (lowercase)
     };
@@ -61,7 +61,7 @@ public class FlexibleDateTimeConverter : JsonConverter<DateTime>
             return result;
         }
 
-        // Essayer les formats spécifiques
+        // Essayer les formats spï¿½cifiques
         foreach (var format in _formats)
         {
             if (DateTime.TryParseExact(dateString, format, null, System.Globalization.DateTimeStyles.RoundtripKind, out result))
@@ -70,19 +70,19 @@ public class FlexibleDateTimeConverter : JsonConverter<DateTime>
             }
         }
 
-        // Dernière tentative: parse universel
+        // Derniï¿½re tentative: parse universel
         if (DateTime.TryParse(dateString, out result))
         {
             return result;
         }
 
-        // Si tout échoue, retourner DateTime.MinValue plutôt que lever une exception
+        // Si tout ï¿½choue, retourner DateTime.MinValue plutï¿½t que lever une exception
         return DateTime.MinValue;
     }
 
     public override void Write(Utf8JsonWriter writer, DateTime value, JsonSerializerOptions options)
     {
-        // Écrire au format ISO 8601 standard
+        // ï¿½crire au format ISO 8601 standard
         writer.WriteStringValue(value.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ"));
     }
 }

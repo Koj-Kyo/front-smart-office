@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+ï»¿using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.AspNetCore.Components.Authorization;
 using MudBlazor.Services;
 using MySmartApp.Ui;
@@ -19,7 +19,7 @@ ConfigureConfiguration(builder);
 // ?? 3. SERVICES UI
 ConfigureUIServices(builder);
 
-// ?? 4. SERVICES MÉTIER
+// ?? 4. SERVICES Mï¿½TIER
 ConfigureBusinessServices(builder);
 
 // ?? 5. SERVICES HTTP ET API
@@ -28,31 +28,31 @@ ConfigureHttpServices(builder);
 // ?? 6. SERVICES D'AUTHENTIFICATION
 ConfigureAuthenticationServices(builder);
 
-// ?? 7. SERVICES TEMPS RÉEL
+// ?? 7. SERVICES TEMPS Rï¿½EL
 ConfigureSignalRServices(builder);
 
 var app = builder.Build();
 
-// ?? DÉMARRAGE AVEC GESTION D'ERREURS
+// ?? Dï¿½MARRAGE AVEC GESTION D'ERREURS
 try
 {
     var logger = app.Services.GetRequiredService<ILogger<Program>>();
-    logger.LogInformation("?? Démarrage de {AppName}...", "Smart Office");
+    logger.LogInformation("?? Dï¿½marrage de {AppName}...", "Smart Office");
     
     await app.RunAsync();
 }
 catch (Exception ex)
 {
-    Console.Error.WriteLine($"? Erreur critique de démarrage: {ex.Message}");
+    Console.Error.WriteLine($"? Erreur critique de dï¿½marrage: {ex.Message}");
     Console.Error.WriteLine($"Stack trace: {ex.StackTrace}");
     throw;
 }
 
-// ?? MÉTHODES DE CONFIGURATION
+// ?? Mï¿½THODES DE CONFIGURATION
 
 static void ConfigureLogging(WebAssemblyHostBuilder builder)
 {
-    // Le logging console est automatiquement configuré dans WebAssembly
+    // Le logging console est automatiquement configurï¿½ dans WebAssembly
     // Configuration du niveau de log selon l'environnement
     if (builder.HostEnvironment.IsDevelopment())
     {
@@ -66,16 +66,16 @@ static void ConfigureLogging(WebAssemblyHostBuilder builder)
 
 static void ConfigureConfiguration(WebAssemblyHostBuilder builder)
 {
-    // Service de configuration centralisé
+    // Service de configuration centralisï¿½
     builder.Services.AddSingleton<IConfigurationService, ConfigurationService>();
     
-    // Configuration basique sans validation avancée pour WebAssembly
+    // Configuration basique sans validation avancï¿½e pour WebAssembly
     builder.Services.Configure<AppConfiguration>(builder.Configuration);
 }
 
 static void ConfigureUIServices(WebAssemblyHostBuilder builder)
 {
-    // MudBlazor avec configuration optimisée
+    // MudBlazor avec configuration optimisï¿½e
     builder.Services.AddMudServices(config =>
     {
         config.SnackbarConfiguration.PositionClass = MudBlazor.Defaults.Classes.Position.BottomRight;
@@ -94,13 +94,13 @@ static void ConfigureUIServices(WebAssemblyHostBuilder builder)
 
 static void ConfigureBusinessServices(WebAssemblyHostBuilder builder)
 {
-    // Service d'état global de l'application
+    // Service d'ï¿½tat global de l'application
     builder.Services.AddSingleton<IAppStateService, AppStateService>();
     
     // Service de gestion d'erreurs global
     builder.Services.AddScoped<IErrorHandlerService, ErrorHandlerService>();
     
-    // Services métier spécialisés
+    // Services mï¿½tier spï¿½cialisï¿½s
     builder.Services.AddScoped<IZoneService, ZoneService>();
     builder.Services.AddScoped<IBackendZoneService, BackendZoneService>();
     builder.Services.AddScoped<IDeviceService, DeviceService>();
@@ -118,7 +118,7 @@ static void ConfigureBusinessServices(WebAssemblyHostBuilder builder)
     // ? NOUVEAUX SERVICES CRITIQUES - PHASE 1
     builder.Services.AddScoped<IDeviceStatusService, DeviceStatusService>();
     
-    // ? NOUVEAUX SERVICES AVANCÉS - PHASE 2
+    // ? NOUVEAUX SERVICES AVANCï¿½S - PHASE 2
     builder.Services.AddScoped<IUserActivityService, UserActivityService>();
     builder.Services.AddScoped<IDeviceLogService, DeviceLogService>();
     
@@ -133,7 +133,7 @@ static void ConfigureHttpServices(WebAssemblyHostBuilder builder)
     // HttpClientFactory de base
     builder.Services.AddHttpClient();
     
-    // Client HTTP principal avec Polly pour la résilience
+    // Client HTTP principal avec Polly pour la rï¿½silience
     builder.Services.AddHttpClient("Api", (serviceProvider, client) =>
     {
         var config = serviceProvider.GetRequiredService<IConfigurationService>();
@@ -142,13 +142,13 @@ static void ConfigureHttpServices(WebAssemblyHostBuilder builder)
         client.BaseAddress = new Uri(apiConfig.BaseUrl);
         client.Timeout = TimeSpan.FromSeconds(apiConfig.TimeoutSeconds);
         
-        // Headers par défaut
+        // Headers par dï¿½faut
         client.DefaultRequestHeaders.Add("User-Agent", $"SmartOffice-WebApp/{config.Configuration.App.Version}");
         client.DefaultRequestHeaders.Add("Accept", "application/json");
     })
     .AddHttpMessageHandler<AuthMessageHandler>();
     // Note: AddPolicyHandler n'est pas disponible dans WebAssembly
-    // Les policies Polly sont gérées directement dans ApiService
+    // Les policies Polly sont gï¿½rï¿½es directement dans ApiService
 
     // Service API robuste
     builder.Services.AddScoped<IApiService, ApiService>();
@@ -163,7 +163,7 @@ static void ConfigureAuthenticationServices(WebAssemblyHostBuilder builder)
     builder.Services.AddScoped<ITokenProvider, TokenProvider>();
     builder.Services.AddScoped<AuthMessageHandler>();
     
-    // Authentication state provider personnalisé
+    // Authentication state provider personnalisï¿½
     builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthenticationStateProvider>();
     
     // Service d'authentification
@@ -192,5 +192,5 @@ static IAsyncPolicy<HttpResponseMessage> GetRetryPolicy()
 
 static IAsyncPolicy<HttpResponseMessage> GetTimeoutPolicy()
 {
-    return Policy.TimeoutAsync<HttpResponseMessage>(10); // Timeout individuel par requête
+    return Policy.TimeoutAsync<HttpResponseMessage>(10); // Timeout individuel par requï¿½te
 }

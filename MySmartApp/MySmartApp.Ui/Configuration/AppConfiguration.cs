@@ -1,7 +1,7 @@
-namespace MySmartApp.Ui.Configuration;
+ï»¿namespace MySmartApp.Ui.Configuration;
 
 /// <summary>
-/// Configuration centralisée de l'application avec validation et bonnes pratiques
+/// Configuration centralisï¿½e de l'application avec validation et bonnes pratiques
 /// </summary>
 public class AppConfiguration
 {
@@ -103,7 +103,7 @@ public class ConfigurationService : IConfigurationService
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Erreur lors du chargement de la section {SectionName}, utilisation des valeurs par défaut", sectionName);
+            _logger.LogWarning(ex, "Erreur lors du chargement de la section {SectionName}, utilisation des valeurs par dï¿½faut", sectionName);
             return new T();
         }
     }
@@ -117,7 +117,7 @@ public class ConfigurationService : IConfigurationService
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Erreur lors de la vérification du feature flag {FeatureName}", featureName);
+            _logger.LogWarning(ex, "Erreur lors de la vï¿½rification du feature flag {FeatureName}", featureName);
             return false;
         }
     }
@@ -129,7 +129,7 @@ public class ConfigurationService : IConfigurationService
             lock (_lock)
             {
                 _cachedConfiguration = null;
-                _logger.LogInformation("Configuration rafraîchie");
+                _logger.LogInformation("Configuration rafraï¿½chie");
             }
         });
     }
@@ -148,18 +148,18 @@ public class ConfigurationService : IConfigurationService
             // Validation
             if (!config.Api.IsValid())
             {
-                _logger.LogWarning("Configuration API invalide, utilisation des valeurs par défaut");
+                _logger.LogWarning("Configuration API invalide, utilisation des valeurs par dï¿½faut");
                 config.Api = new ApiConfiguration();
             }
 
-            _logger.LogInformation("Configuration chargée: {AppName} v{Version} ({Environment})", 
+            _logger.LogInformation("Configuration chargï¿½e: {AppName} v{Version} ({Environment})", 
                 config.App.AppName, config.App.Version, config.App.Environment);
 
             return config;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Erreur lors du chargement de la configuration, utilisation des valeurs par défaut");
+            _logger.LogError(ex, "Erreur lors du chargement de la configuration, utilisation des valeurs par dï¿½faut");
             return new AppConfiguration();
         }
     }

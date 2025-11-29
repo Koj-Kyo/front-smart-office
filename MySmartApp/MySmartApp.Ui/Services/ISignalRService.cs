@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.SignalR.Client;
+ï»¿using Microsoft.AspNetCore.SignalR.Client;
 using MySmartApp.Ui.Models;
 
 namespace MySmartApp.Ui.Services;
@@ -10,10 +10,10 @@ public interface ISignalRService
     bool IsConnected { get; }
     HubConnectionState ConnectionState { get; }
     
-    // Événements de connexion
+    // ï¿½vï¿½nements de connexion
     event Action<HubConnectionState>? ConnectionStateChanged;
     
-    // Événements de données
+    // ï¿½vï¿½nements de donnï¿½es
     event Action<TelemetryData>? OnTelemetryUpdate;
     event Action<DeviceStatusUpdate>? OnDeviceStatusUpdate;
     event Action<SignalRNotificationDto>? OnNotificationReceived;

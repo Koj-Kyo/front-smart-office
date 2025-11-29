@@ -1,4 +1,4 @@
-namespace MySmartApp.Ui.Extensions;
+ï»¿namespace MySmartApp.Ui.Extensions;
 
 /// <summary>
 /// Extensions pour faciliter la manipulation et l'affichage des DateTime
@@ -7,7 +7,7 @@ namespace MySmartApp.Ui.Extensions;
 public static class DateTimeExtensions
 {
     /// <summary>
-    /// Vérifie si une date est valide (ni MinValue, ni MaxValue)
+    /// Vï¿½rifie si une date est valide (ni MinValue, ni MaxValue)
     /// </summary>
     public static bool IsValid(this DateTime date)
     {
@@ -15,7 +15,7 @@ public static class DateTimeExtensions
     }
 
     /// <summary>
-    /// Vérifie si une date nullable est valide
+    /// Vï¿½rifie si une date nullable est valide
     /// </summary>
     public static bool IsValid(this DateTime? date)
     {
@@ -23,10 +23,10 @@ public static class DateTimeExtensions
     }
 
     /// <summary>
-    /// Convertit une date en chaîne "friendly" (Il y a X min/h/jours)
+    /// Convertit une date en chaï¿½ne "friendly" (Il y a X min/h/jours)
     /// </summary>
-    /// <param name="date">Date à convertir</param>
-    /// <param name="fallback">Texte à afficher si la date est invalide</param>
+    /// <param name="date">Date ï¿½ convertir</param>
+    /// <param name="fallback">Texte ï¿½ afficher si la date est invalide</param>
     public static string ToFriendlyString(this DateTime date, string fallback = "Date inconnue")
     {
         if (!date.IsValid())
@@ -39,7 +39,7 @@ public static class DateTimeExtensions
             return "Dans le futur";
 
         if (diff.TotalSeconds < 60)
-            return "À l'instant";
+            return "ï¿½ l'instant";
 
         if (diff.TotalMinutes < 60)
         {
@@ -76,7 +76,7 @@ public static class DateTimeExtensions
     }
 
     /// <summary>
-    /// Convertit une date nullable en chaîne "friendly"
+    /// Convertit une date nullable en chaï¿½ne "friendly"
     /// </summary>
     public static string ToFriendlyString(this DateTime? date, string fallback = "Date inconnue")
     {
@@ -84,7 +84,7 @@ public static class DateTimeExtensions
     }
 
     /// <summary>
-    /// Formate une date au format français court (dd/MM/yyyy)
+    /// Formate une date au format franï¿½ais court (dd/MM/yyyy)
     /// </summary>
     public static string ToShortFrenchString(this DateTime date, string fallback = "-")
     {
@@ -92,7 +92,7 @@ public static class DateTimeExtensions
     }
 
     /// <summary>
-    /// Formate une date au format français long (dd/MM/yyyy HH:mm)
+    /// Formate une date au format franï¿½ais long (dd/MM/yyyy HH:mm)
     /// </summary>
     public static string ToLongFrenchString(this DateTime date, string fallback = "-")
     {
@@ -100,7 +100,7 @@ public static class DateTimeExtensions
     }
 
     /// <summary>
-    /// Formate une date au format français complet (dd MMMM yyyy à HH:mm)
+    /// Formate une date au format franï¿½ais complet (dd MMMM yyyy ï¿½ HH:mm)
     /// </summary>
     public static string ToFullFrenchString(this DateTime date, string fallback = "-")
     {
@@ -109,28 +109,28 @@ public static class DateTimeExtensions
 
         var localDate = date.ToLocalTime();
         var monthName = GetFrenchMonthName(localDate.Month);
-        return $"{localDate.Day} {monthName} {localDate.Year} à {localDate:HH:mm}";
+        return $"{localDate.Day} {monthName} {localDate.Year} ï¿½ {localDate:HH:mm}";
     }
 
     /// <summary>
-    /// Retourne le nom du mois en français
+    /// Retourne le nom du mois en franï¿½ais
     /// </summary>
     private static string GetFrenchMonthName(int month)
     {
         return month switch
         {
             1 => "janvier",
-            2 => "février",
+            2 => "fï¿½vrier",
             3 => "mars",
             4 => "avril",
             5 => "mai",
             6 => "juin",
             7 => "juillet",
-            8 => "août",
+            8 => "aoï¿½t",
             9 => "septembre",
             10 => "octobre",
             11 => "novembre",
-            12 => "décembre",
+            12 => "dï¿½cembre",
             _ => ""
         };
     }
@@ -144,7 +144,7 @@ public static class DateTimeExtensions
     }
 
     /// <summary>
-    /// Vérifie si une date est aujourd'hui
+    /// Vï¿½rifie si une date est aujourd'hui
     /// </summary>
     public static bool IsToday(this DateTime date)
     {
@@ -157,7 +157,7 @@ public static class DateTimeExtensions
     }
 
     /// <summary>
-    /// Vérifie si une date est dans le passé
+    /// Vï¿½rifie si une date est dans le passï¿½
     /// </summary>
     public static bool IsPast(this DateTime date)
     {
@@ -168,7 +168,7 @@ public static class DateTimeExtensions
     }
 
     /// <summary>
-    /// Vérifie si une date est dans le futur
+    /// Vï¿½rifie si une date est dans le futur
     /// </summary>
     public static bool IsFuture(this DateTime date)
     {
@@ -179,7 +179,7 @@ public static class DateTimeExtensions
     }
 
     /// <summary>
-    /// Retourne une icône MudBlazor appropriée selon l'âge de la date
+    /// Retourne une icï¿½ne MudBlazor appropriï¿½e selon l'ï¿½ge de la date
     /// </summary>
     public static string GetAgeIcon(this DateTime date)
     {
@@ -189,10 +189,10 @@ public static class DateTimeExtensions
         var age = DateTime.UtcNow - date.ToUniversalTime();
 
         if (age.TotalMinutes < 5)
-            return "fa-clock";  // Très récent
+            return "fa-clock";  // Trï¿½s rï¿½cent
 
         if (age.TotalHours < 1)
-            return "fa-history";  // Récent
+            return "fa-history";  // Rï¿½cent
 
         if (age.TotalDays < 1)
             return "fa-calendar-day";  // Aujourd'hui
@@ -204,7 +204,7 @@ public static class DateTimeExtensions
     }
 
     /// <summary>
-    /// Retourne une couleur appropriée selon l'âge de la date
+    /// Retourne une couleur appropriï¿½e selon l'ï¿½ge de la date
     /// </summary>
     public static string GetAgeColor(this DateTime date)
     {
@@ -214,10 +214,10 @@ public static class DateTimeExtensions
         var age = DateTime.UtcNow - date.ToUniversalTime();
 
         if (age.TotalMinutes < 5)
-            return "success";  // Vert - Très récent
+            return "success";  // Vert - Trï¿½s rï¿½cent
 
         if (age.TotalHours < 1)
-            return "info";  // Bleu - Récent
+            return "info";  // Bleu - Rï¿½cent
 
         if (age.TotalDays < 1)
             return "warning";  // Orange - Aujourd'hui
@@ -226,7 +226,7 @@ public static class DateTimeExtensions
     }
 
     /// <summary>
-    /// Calcule la durée entre deux dates au format lisible
+    /// Calcule la durï¿½e entre deux dates au format lisible
     /// </summary>
     public static string GetDurationString(this DateTime start, DateTime end)
     {
@@ -251,7 +251,7 @@ public static class DateTimeExtensions
     }
 
     /// <summary>
-    /// Retourne la date de début de la journée (00:00:00)
+    /// Retourne la date de dï¿½but de la journï¿½e (00:00:00)
     /// </summary>
     public static DateTime StartOfDay(this DateTime date)
     {
@@ -259,7 +259,7 @@ public static class DateTimeExtensions
     }
 
     /// <summary>
-    /// Retourne la date de fin de la journée (23:59:59.999)
+    /// Retourne la date de fin de la journï¿½e (23:59:59.999)
     /// </summary>
     public static DateTime EndOfDay(this DateTime date)
     {
@@ -267,7 +267,7 @@ public static class DateTimeExtensions
     }
 
     /// <summary>
-    /// Retourne la date de début de la semaine (lundi)
+    /// Retourne la date de dï¿½but de la semaine (lundi)
     /// </summary>
     public static DateTime StartOfWeek(this DateTime date)
     {
@@ -276,7 +276,7 @@ public static class DateTimeExtensions
     }
 
     /// <summary>
-    /// Retourne la date de début du mois
+    /// Retourne la date de dï¿½but du mois
     /// </summary>
     public static DateTime StartOfMonth(this DateTime date)
     {

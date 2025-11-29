@@ -1,4 +1,4 @@
-using System.Text.Json.Serialization;
+ï»¿using System.Text.Json.Serialization;
 
 namespace MySmartApp.Ui.Models;
 
@@ -7,12 +7,12 @@ namespace MySmartApp.Ui.Models;
 // ==========================================
 
 /// <summary>
-/// DTO pour la connexion (correspond à LoginDto du backend)
+/// DTO pour la connexion (correspond ï¿½ LoginDto du backend)
 /// </summary>
 public record LoginDto(string Email, string Password);
 
 /// <summary>
-/// DTO de réponse d'authentification (correspond à AuthResponseDto du backend)
+/// DTO de rï¿½ponse d'authentification (correspond ï¿½ AuthResponseDto du backend)
 /// </summary>
 public record AuthResponseDto(
     string AccessToken,
@@ -23,7 +23,7 @@ public record AuthResponseDto(
 );
 
 /// <summary>
-/// DTO pour l'inscription (correspond à RegisterDto du backend)
+/// DTO pour l'inscription (correspond ï¿½ RegisterDto du backend)
 /// </summary>
 public record RegisterDto(
     string Email, 
@@ -57,13 +57,13 @@ public record DashboardStats
   public int TotalIncidents { get; set; }
     public double IncidentsChangePercent { get; set; }
     
-    // Énergie
+    // ï¿½nergie
     public double EnergyConsumed { get; set; }
     public double EnergyChangePercent { get; set; }
 }
 
 /// <summary>
-/// DTO pour les points de données de consommation énergétique
+/// DTO pour les points de donnï¿½es de consommation ï¿½nergï¿½tique
 /// </summary>
 public record EnergyDataPoint
 {
@@ -72,7 +72,7 @@ public record EnergyDataPoint
 }
 
 /// <summary>
-/// DTO pour l'activité des appareils par type
+/// DTO pour l'activitï¿½ des appareils par type
 /// </summary>
 public record DeviceActivityData
 {
@@ -94,7 +94,7 @@ public record CurrentUserDto
 }
 
 /// <summary>
-/// Wrapper générique pour les réponses API backend Dashboard
+/// Wrapper gï¿½nï¿½rique pour les rï¿½ponses API backend Dashboard
 /// </summary>
 public record DashboardApiResponse<T>
 {
@@ -104,7 +104,7 @@ public record DashboardApiResponse<T>
 }
 
 /// <summary>
-/// DTO pour résultat d'envoi de commande
+/// DTO pour rï¿½sultat d'envoi de commande
 /// </summary>
 public record CommandeResult
 {
@@ -114,7 +114,7 @@ public record CommandeResult
 }
 
 // ==========================================
-// Wrapper pour les réponses API
+// Wrapper pour les rï¿½ponses API
 // ==========================================
 
 public record ApiResponse<T>(
@@ -133,7 +133,7 @@ public record ApiResponse<T>(
 };
 
 // ==========================================
-// Modèles métier
+// Modï¿½les mï¿½tier
 // ==========================================
 
 public record ZoneDto(
@@ -156,21 +156,21 @@ public record BackendZoneDto(
 );
 
 /// <summary>
-/// DTO pour création de zone
+/// DTO pour crï¿½ation de zone
 /// </summary>
 public record ZoneCreationDto(
     string Nom
 );
 
 /// <summary>
-/// DTO pour mise à jour de zone
+/// DTO pour mise ï¿½ jour de zone
 /// </summary>
 public record ZoneUpdateDto(
     string Nom
 );
 
 /// <summary>
-/// DTO étendu pour les zones avec statistiques
+/// DTO ï¿½tendu pour les zones avec statistiques
 /// </summary>
 public record ZoneExtendedDto(
     int Id,
@@ -210,7 +210,7 @@ public record BackendUserProfileDto(
 );
 
 /// <summary>
-/// DTO pour mise à jour du profil utilisateur
+/// DTO pour mise ï¿½ jour du profil utilisateur
 /// </summary>
 public record UserProfileUpdateDto(
     string Email,
@@ -218,14 +218,14 @@ public record UserProfileUpdateDto(
 );
 
 /// <summary>
-/// DTO pour mise à jour des rôles utilisateur
+/// DTO pour mise ï¿½ jour des rï¿½les utilisateur
 /// </summary>
 public record RoleUpdateDto(
     string RoleName
 );
 
 /// <summary>
-/// DTO pour réponse d'opération sur les rôles
+/// DTO pour rï¿½ponse d'opï¿½ration sur les rï¿½les
 /// </summary>
 public record RoleOperationResultDto(
     bool Success,
@@ -235,11 +235,11 @@ public record RoleOperationResultDto(
 );
 
 // ==========================================
-// DTOs UserManagementController (nouvelle API complète)
+// DTOs UserManagementController (nouvelle API complï¿½te)
 // ==========================================
 
 /// <summary>
-/// DTO détaillé pour un utilisateur (UserManagementController)
+/// DTO dï¿½taillï¿½ pour un utilisateur (UserManagementController)
 /// </summary>
 public record UserDetailsDto
 {
@@ -261,7 +261,7 @@ public record UserDetailsDto
 }
 
 /// <summary>
-/// DTO pour créer un utilisateur
+/// DTO pour crï¿½er un utilisateur
 /// </summary>
 public record CreateUserDto(
     string UserName,
@@ -274,7 +274,7 @@ public record CreateUserDto(
 );
 
 /// <summary>
-/// DTO pour mettre à jour un utilisateur
+/// DTO pour mettre ï¿½ jour un utilisateur
 /// </summary>
 public record UpdateUserDto(
     string UserName,
@@ -286,7 +286,7 @@ public record UpdateUserDto(
 );
 
 /// <summary>
-/// DTO pour un rôle avec statistiques
+/// DTO pour un rï¿½le avec statistiques
 /// </summary>
 public record RoleDto(
     string Id,
@@ -297,7 +297,7 @@ public record RoleDto(
 );
 
 /// <summary>
-/// DTO pour créer un rôle
+/// DTO pour crï¿½er un rï¿½le
 /// </summary>
 public record CreateRoleDto(
     string Name,
@@ -305,7 +305,7 @@ public record CreateRoleDto(
 );
 
 /// <summary>
-/// DTO pour assigner des rôles à un utilisateur
+/// DTO pour assigner des rï¿½les ï¿½ un utilisateur
 /// </summary>
 public record AssignRolesDto(
     string UserId,
@@ -335,11 +335,11 @@ public record AccessRightDto(
 );
 
 // ==========================================
-// Modèles IoT Hub
+// Modï¿½les IoT Hub
 // ==========================================
 
 /// <summary>
-/// Réponse standard IoT Hub avec propriétés optionnelles
+/// Rï¿½ponse standard IoT Hub avec propriï¿½tï¿½s optionnelles
 /// </summary>
 public record IoTResponse(
     bool Success,
@@ -356,7 +356,7 @@ public record DeviceTwinDto(
 );
 
 // ==========================================
-// Modèles SignalR
+// Modï¿½les SignalR
 // ==========================================
 
 public record TelemetryData(
@@ -379,7 +379,7 @@ public record SignalRNotificationDto(
 );
 
 // ==========================================
-// Énumérations pour UI
+// ï¿½numï¿½rations pour UI
 // ==========================================
 
 public enum ErrorSeverity
@@ -403,7 +403,7 @@ public enum NotificationType
 // ==========================================
 
 /// <summary>
-/// DTO pour envoyer une commande à un périphérique IoT
+/// DTO pour envoyer une commande ï¿½ un pï¿½riphï¿½rique IoT
 /// </summary>
 public record CommandeRequestDto(
     int PeripheriqueLogiqueId,
@@ -412,7 +412,7 @@ public record CommandeRequestDto(
 );
 
 /// <summary>
-/// DTO de réponse après envoi d'une commande IoT
+/// DTO de rï¿½ponse aprï¿½s envoi d'une commande IoT
 /// </summary>
 public record CommandeResponseDto(
     bool IsSuccess,
@@ -425,7 +425,7 @@ public record CommandeResponseDto(
 // ==========================================
 
 /// <summary>
-/// Statistiques de consommation énergétique
+/// Statistiques de consommation ï¿½nergï¿½tique
 /// </summary>
 public record ConsommationStatsDto(
     int PeripheriqueId,
@@ -445,7 +445,7 @@ public record ConsommationStatsDto(
 );
 
 /// <summary>
-/// Données de consommation horaire pour graphiques
+/// Donnï¿½es de consommation horaire pour graphiques
 /// </summary>
 public record ConsommationHoraireDto(
     DateTime Heure,
@@ -479,7 +479,7 @@ public record ConsommationQuotidienneDto(
 );
 
 /// <summary>
-/// Anomalie de consommation détectée
+/// Anomalie de consommation dï¿½tectï¿½e
 /// </summary>
 public record AnomalieConsommationDto(
     int PeripheriqueId,
@@ -494,7 +494,7 @@ public record AnomalieConsommationDto(
 );
 
 /// <summary>
-/// Rapport de consommation détaillé
+/// Rapport de consommation dï¿½taillï¿½
 /// </summary>
 public record RapportConsommationDto(
     int? ZoneId,
@@ -512,7 +512,7 @@ public record RapportConsommationDto(
 );
 
 /// <summary>
-/// Recommandation d'optimisation énergétique
+/// Recommandation d'optimisation ï¿½nergï¿½tique
 /// </summary>
 public record RecommandationOptimisationDto(
     int PeripheriqueId,
@@ -525,7 +525,7 @@ public record RecommandationOptimisationDto(
 );
 
 /// <summary>
-/// Comparaison entre périodes
+/// Comparaison entre pï¿½riodes
 /// </summary>
 public record ComparaisonPeriodeDto(
     double ConsommationPrecedenteMwh,
@@ -536,7 +536,7 @@ public record ComparaisonPeriodeDto(
 );
 
 /// <summary>
-/// Coût énergétique calculé
+/// Coï¿½t ï¿½nergï¿½tique calculï¿½
 /// </summary>
 public record CoutEnergetiqueDto(
     int PeripheriqueId,
@@ -552,7 +552,7 @@ public record CoutEnergetiqueDto(
 );
 
 /// <summary>
-/// Coût horaire
+/// Coï¿½t horaire
 /// </summary>
 public record CoutHoraireDto(
     DateTime Heure,
@@ -577,7 +577,7 @@ public record TopConsommateursDto(
 );
 
 /// <summary>
-/// Comparaison de consommation entre deux périodes
+/// Comparaison de consommation entre deux pï¿½riodes
 /// </summary>
 public record ComparaisonConsommationDto(
     int PeripheriqueId,
@@ -595,11 +595,11 @@ public record ComparaisonConsommationDto(
 );
 
 // ==========================================
-// DTOs Droits d'Accès (correspondant au backend)
+// DTOs Droits d'Accï¿½s (correspondant au backend)
 // ==========================================
 
 /// <summary>
-/// DTO principal pour les droits d'accès
+/// DTO principal pour les droits d'accï¿½s
 /// </summary>
 public record DroitAccesDto
 {
@@ -616,21 +616,21 @@ public record DroitAccesDto
     public string? ZoneName { get; set; }
     public string? ZoneDescription { get; set; }
     
-    // ?? Périphérique
+    // ?? Pï¿½riphï¿½rique
     public int? PeripheriqueLogiqueId { get; set; }
     public string? PeripheriqueLogiqueName { get; set; }
     public string? PeripheriqueLogiqueType { get; set; }
     
-    // ?? Type d'accès
+    // ?? Type d'accï¿½s
     public string Type { get; set; } = string.Empty;  // "Lecture" ou "Controle"
     
-    // ?? Métadonnées
+    // ?? Mï¿½tadonnï¿½es
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
 }
 
 /// <summary>
-/// DTO pour création/modification de droits d'accès
+/// DTO pour crï¿½ation/modification de droits d'accï¿½s
 /// </summary>
 public record DroitAccesCreationDto(
     string UserId,
@@ -640,7 +640,7 @@ public record DroitAccesCreationDto(
 );
 
 /// <summary>
-/// DTO pour les droits d'accès aux zones d'un utilisateur
+/// DTO pour les droits d'accï¿½s aux zones d'un utilisateur
 /// </summary>
 public record UserZoneAccessRightDto(
     int ZoneId,
@@ -650,7 +650,7 @@ public record UserZoneAccessRightDto(
 );
 
 /// <summary>
-/// DTO pour les droits d'accès aux périphériques d'un utilisateur
+/// DTO pour les droits d'accï¿½s aux pï¿½riphï¿½riques d'un utilisateur
 /// </summary>
 public record UserPeripheriqueAccessRightDto(
     int PeripheriqueId,
@@ -667,7 +667,7 @@ public record UserPeripheriqueAccessRightDto(
 // ==========================================
 
 /// <summary>
-/// DTO Périphérique Logique principal
+/// DTO Pï¿½riphï¿½rique Logique principal
 /// </summary>
 public record PeripheriqueLogiqueDto(
     int Id,
@@ -678,7 +678,7 @@ public record PeripheriqueLogiqueDto(
 );
 
 /// <summary>
-/// DTO pour création de périphérique logique
+/// DTO pour crï¿½ation de pï¿½riphï¿½rique logique
 /// </summary>
 public record PeripheriqueLogiqueCreationDto(
     string Name,
@@ -688,7 +688,7 @@ public record PeripheriqueLogiqueCreationDto(
 );
 
 /// <summary>
-/// DTO pour mise à jour de périphérique logique
+/// DTO pour mise ï¿½ jour de pï¿½riphï¿½rique logique
 /// </summary>
 public record PeripheriqueLogiqueUpdateDto(
     string Name,
@@ -713,7 +713,7 @@ public record IncidentTicketDto(
     string? AssignedToId,
     DateTime CreatedAt,
     DateTime? UpdatedAt,
-    string? Priorite = null,  // ? AJOUT: Priorité du ticket
+    string? Priorite = null,  // ? AJOUT: Prioritï¿½ du ticket
     string? CreatedByName = null,
     string? AssignedToName = null,
     string? ZoneName = null,
@@ -721,20 +721,20 @@ public record IncidentTicketDto(
 );
 
 /// <summary>
-/// DTO pour création de tickets d'incidents
+/// DTO pour crï¿½ation de tickets d'incidents
 /// </summary>
 public class IncidentTicketCreateDto
 {
     public string Sujet { get; set; } = "";
     public string Description { get; set; } = "";
     public string Statut { get; set; } = "";
-    public string Priorite { get; set; } = "Moyenne";  // ? AJOUT: Priorité par défaut "Moyenne"
+    public string Priorite { get; set; } = "Moyenne";  // ? AJOUT: Prioritï¿½ par dï¿½faut "Moyenne"
     public int? ZoneId { get; set; }
     public int? PeripheriqueLogiqueId { get; set; }
 }
 
 /// <summary>
-/// DTO pour mise à jour du statut d'un ticket
+/// DTO pour mise ï¿½ jour du statut d'un ticket
 /// </summary>
 public record TicketStatusUpdateDto(
     string NewStatus
@@ -752,14 +752,14 @@ public record TicketAssignmentDto(
 // ==========================================
 
 /// <summary>
-/// DTO pour invocation de méthode directe sur un device
+/// DTO pour invocation de mï¿½thode directe sur un device
 /// </summary>
 public record DeviceMethodPayloadDto(
     string? Payload = "{}"
 );
 
 /// <summary>
-/// DTO pour mise à jour des desired properties
+/// DTO pour mise ï¿½ jour des desired properties
 /// </summary>
 public record DesiredPropertiesPayloadDto(
     string DesiredProperties = "{}"
@@ -774,14 +774,14 @@ public record CloudToDeviceMessagePayloadDto(
 );
 
 /// <summary>
-/// DTO pour création/mise à jour de device
+/// DTO pour crï¿½ation/mise ï¿½ jour de device
 /// </summary>
 public record CreateDevicePayloadDto(
     bool Enabled = true
 );
 
 /// <summary>
-/// DTO pour requête de statut de devices
+/// DTO pour requï¿½te de statut de devices
 /// </summary>
 public record DeviceStatusRequestDto(
     List<string> DeviceIds
@@ -818,7 +818,7 @@ public record DeviceConnectionInfoDto(
 );
 
 /// <summary>
-/// DTO pour informations détaillées d'un device IoT Hub
+/// DTO pour informations dï¿½taillï¿½es d'un device IoT Hub
 /// </summary>
 public record IoTHubDeviceInfoDto(
     string DeviceId,
@@ -830,7 +830,7 @@ public record IoTHubDeviceInfoDto(
 );
 
 /// <summary>
-/// DTO pour réponse d'opération IoT Hub
+/// DTO pour rï¿½ponse d'opï¿½ration IoT Hub
 /// </summary>
 public record IoTHubOperationResultDto(
     bool Success,
@@ -840,7 +840,7 @@ public record IoTHubOperationResultDto(
 );
 
 /// <summary>
-/// DTO pour résultat de synchronisation des devices depuis IoT Hub
+/// DTO pour rï¿½sultat de synchronisation des devices depuis IoT Hub
 /// </summary>
 public record IoTHubSyncResultDto(
     bool Success,
@@ -858,7 +858,7 @@ public record IoTHubSyncResultDto(
 // ==========================================
 
 /// <summary>
-/// DTO pour un périphérique physique (twin peripheral)
+/// DTO pour un pï¿½riphï¿½rique physique (twin peripheral)
 /// </summary>
 public record PeripheralDto
 {
@@ -882,21 +882,21 @@ public record PeripheralDto
 }
 
 /// <summary>
-/// Payload pour mettre à jour/remplacer des périphériques
+/// Payload pour mettre ï¿½ jour/remplacer des pï¿½riphï¿½riques
 /// </summary>
 public record PeripheralsPayloadDto(
     List<PeripheralDto> Peripherals
 );
 
 /// <summary>
-/// Payload pour commande sur un périphérique
+/// Payload pour commande sur un pï¿½riphï¿½rique
 /// </summary>
 public record PeripheralCommandPayloadDto(
     Dictionary<string, object>? Parameters = null
 );
 
 /// <summary>
-/// Vue fusionnée d'un périphérique (desired + reported)
+/// Vue fusionnï¿½e d'un pï¿½riphï¿½rique (desired + reported)
 /// </summary>
 public record MergedPeripheralDto(
     string Name,
@@ -906,7 +906,7 @@ public record MergedPeripheralDto(
 );
 
 /// <summary>
-/// Twin complet d'un device avec métadonnées
+/// Twin complet d'un device avec mï¿½tadonnï¿½es
 /// </summary>
 public record DeviceTwinFullDto(
     string DeviceId,
@@ -937,7 +937,7 @@ public record UserNotificationDto(
 );
 
 /// <summary>
-/// DTO pour création de notification
+/// DTO pour crï¿½ation de notification
 /// </summary>
 public record UserNotificationCreateDto(
     string UserId,
@@ -956,11 +956,11 @@ public record NotificationStatsDto(
 );
 
 // ==========================================
-// DTOs Télémétrie (correspondant au backend)
+// DTOs Tï¿½lï¿½mï¿½trie (correspondant au backend)
 // ==========================================
 
 /// <summary>
-/// DTO principal pour les données de télémétrie
+/// DTO principal pour les donnï¿½es de tï¿½lï¿½mï¿½trie
 /// </summary>
 public record TelemetrieDto(
     int Id,
@@ -976,7 +976,7 @@ public record TelemetrieDto(
 );
 
 /// <summary>
-/// DTO pour création de télémétrie
+/// DTO pour crï¿½ation de tï¿½lï¿½mï¿½trie
 /// </summary>
 public class TelemetrieCreateDto
 {
@@ -997,7 +997,7 @@ public record SuggestionDto(
 );
 
 /// <summary>
-/// DTO pour création de suggestion
+/// DTO pour crï¿½ation de suggestion
 /// </summary>
 public record SuggestionCreateDto(
     int UtilisateurId,
@@ -1005,7 +1005,7 @@ public record SuggestionCreateDto(
 );
 
 /// <summary>
-/// DTO pour requête d'historique de télémétrie
+/// DTO pour requï¿½te d'historique de tï¿½lï¿½mï¿½trie
 /// </summary>
 public record TelemetrieHistoryRequestDto(
     DateTime StartDate,
@@ -1014,7 +1014,7 @@ public record TelemetrieHistoryRequestDto(
 );
 
 /// <summary>
-/// DTO pour statistiques de télémétrie
+/// DTO pour statistiques de tï¿½lï¿½mï¿½trie
 /// </summary>
 public record TelemetrieStatsDto(
     int PeripheriqueId,
@@ -1031,7 +1031,7 @@ public record TelemetrieStatsDto(
 );
 
 /// <summary>
-/// DTO pour données de télémétrie par heure
+/// DTO pour donnï¿½es de tï¿½lï¿½mï¿½trie par heure
 /// </summary>
 public record TelemetrieHourlyDto(
     DateTime Hour,
@@ -1042,7 +1042,7 @@ public record TelemetrieHourlyDto(
 );
 
 /// <summary>
-/// DTO pour tendances de télémétrie
+/// DTO pour tendances de tï¿½lï¿½mï¿½trie
 /// </summary>
 public record TelemetrieTrendDto(
     int PeripheriqueId,
@@ -1056,7 +1056,7 @@ public record TelemetrieTrendDto(
 );
 
 /// <summary>
-/// DTO pour données quotidiennes de télémétrie
+/// DTO pour donnï¿½es quotidiennes de tï¿½lï¿½mï¿½trie
 /// </summary>
 public record TelemetrieDailyDto(
     DateTime Date,
@@ -1066,7 +1066,7 @@ public record TelemetrieDailyDto(
 );
 
 /// <summary>
-/// DTO pour alertes basées sur la télémétrie
+/// DTO pour alertes basï¿½es sur la tï¿½lï¿½mï¿½trie
 /// </summary>
 public record TelemetrieAlertDto(
     int PeripheriqueId,
@@ -1085,7 +1085,7 @@ public record TelemetrieAlertDto(
 // ==========================================
 
 /// <summary>
-/// DTO pour métriques système d'un device IoT
+/// DTO pour mï¿½triques systï¿½me d'un device IoT
 /// </summary>
 public record DeviceMetricsDto(
     int Id,
@@ -1101,7 +1101,7 @@ public record DeviceMetricsDto(
 );
 
 /// <summary>
-/// DTO pour événement RFID
+/// DTO pour ï¿½vï¿½nement RFID
 /// </summary>
 public record RfidEventDto(
     int Id,
@@ -1115,7 +1115,7 @@ public record RfidEventDto(
 );
 
 /// <summary>
-/// DTO pour événement alarme fumée
+/// DTO pour ï¿½vï¿½nement alarme fumï¿½e
 /// </summary>
 public record SmokeAlarmEventDto(
     int Id,
@@ -1130,7 +1130,7 @@ public record SmokeAlarmEventDto(
 );
 
 /// <summary>
-/// DTO pour statut complet d'un device (métriques + RFID + alarmes + périphériques)
+/// DTO pour statut complet d'un device (mï¿½triques + RFID + alarmes + pï¿½riphï¿½riques)
 /// </summary>
 public record DeviceFullStatusDto(
     string IotDeviceId,
@@ -1146,7 +1146,7 @@ public record DeviceFullStatusDto(
 // ==========================================
 
 /// <summary>
-/// DTO pour log système d'un device
+/// DTO pour log systï¿½me d'un device
 /// </summary>
 public record DeviceLogDto(
     int Id,
@@ -1164,7 +1164,7 @@ public record DeviceLogDto(
 // ==========================================
 
 /// <summary>
-/// DTO pour activité utilisateur (audit trail)
+/// DTO pour activitï¿½ utilisateur (audit trail)
 /// </summary>
 public record UserActivityDto(
     int Id,
@@ -1181,7 +1181,7 @@ public record UserActivityDto(
 );
 
 /// <summary>
-/// DTO pour statistiques d'activité utilisateur
+/// DTO pour statistiques d'activitï¿½ utilisateur
 /// </summary>
 public record UserActivityStatsDto(
     int TotalActivities,
@@ -1197,7 +1197,7 @@ public record UserActivityStatsDto(
 // ==========================================
 
 /// <summary>
-/// Wrapper générique pour réponses paginées
+/// Wrapper gï¿½nï¿½rique pour rï¿½ponses paginï¿½es
 /// </summary>
 public record PaginatedResponse<T>(
     List<T> Data,
@@ -1214,7 +1214,7 @@ public record PaginatedResponse<T>(
 // ==========================================
 
 /// <summary>
-/// ApiResponse sans données (pour DELETE, POST sans retour, etc.)
+/// ApiResponse sans donnï¿½es (pour DELETE, POST sans retour, etc.)
 /// </summary>
 public class ApiResponse
 {
