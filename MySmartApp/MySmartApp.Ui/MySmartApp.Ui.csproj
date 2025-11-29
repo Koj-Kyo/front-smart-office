@@ -9,6 +9,10 @@
     <InvariantGlobalization>true</InvariantGlobalization>
     <!-- Désactiver le débogage WASM pour éviter les assertions Mono -->
     <WasmDebugLevel>0</WasmDebugLevel>
+    
+    <!-- Force UTF-8 encoding pour tous les fichiers -->
+    <Utf8Output>true</Utf8Output>
+    <FileEncoding>UTF-8</FileEncoding>
   </PropertyGroup>
 
   <ItemGroup>
