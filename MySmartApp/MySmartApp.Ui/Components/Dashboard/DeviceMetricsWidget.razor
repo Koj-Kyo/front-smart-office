@@ -1,4 +1,4 @@
-@using MySmartApp.Ui.Services
+ï»¿@using MySmartApp.Ui.Services
 @using MySmartApp.Ui.Models
 @inject IDeviceStatusService DeviceStatusService
 @inject NavigationManager Navigation
@@ -9,7 +9,7 @@
         <CardHeaderContent>
             <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
                 <MudIcon Icon="@Icons.Material.Filled.Sensors" Color="Color.Primary" />
-                <MudText Typo="Typo.h6">Métriques Devices IoT</MudText>
+                <MudText Typo="Typo.h6">Mï¿½triques Devices IoT</MudText>
             </MudStack>
         </CardHeaderContent>
         <CardHeaderActions>
@@ -35,7 +35,7 @@
         else if (_metrics?.Any() == true)
         {
             <MudStack Spacing="3">
-                <!-- Résumé Global -->
+                <!-- Rï¿½sumï¿½ Global -->
                 <MudGrid Spacing="2">
                     <MudItem xs="4">
                         <MudPaper Elevation="1" Class="pa-2">
@@ -43,7 +43,7 @@
                                 <MudIcon Icon="@Icons.Material.Filled.CheckCircle" 
                                         Color="@(_healthyCount > 0 ? Color.Success : Color.Default)" />
                                 <MudText Typo="Typo.h6">@_healthyCount</MudText>
-                                <MudText Typo="Typo.caption" Align="Align.Center">Bon état</MudText>
+                                <MudText Typo="Typo.caption" Align="Align.Center">Bon ï¿½tat</MudText>
                             </MudStack>
                         </MudPaper>
                     </MudItem>
@@ -109,7 +109,7 @@
                                     <!-- Heap -->
                                     <MudItem xs="6">
                                         <MudStack Spacing="0">
-                                            <MudText Typo="Typo.caption" Color="Color.Secondary">Mémoire</MudText>
+                                            <MudText Typo="Typo.caption" Color="Color.Secondary">Mï¿½moire</MudText>
                                             <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
                                                 <MudText Typo="Typo.body2">@FormatBytes(metric.HeapFree ?? 0)</MudText>
                                                 <MudProgressLinear Value="@GetHeapPercentage(metric.HeapFree)" 
@@ -130,10 +130,10 @@
                                         </MudStack>
                                     </MudItem>
 
-                                    <!-- Dernière MAJ -->
+                                    <!-- Derniï¿½re MAJ -->
                                     <MudItem xs="6">
                                         <MudStack Spacing="0">
-                                            <MudText Typo="Typo.caption" Color="Color.Secondary">Dernière MAJ</MudText>
+                                            <MudText Typo="Typo.caption" Color="Color.Secondary">Derniï¿½re MAJ</MudText>
                                             <MudText Typo="Typo.body2">
                                                 @metric.Timestamp.ToString("HH:mm:ss")
                                             </MudText>
@@ -148,7 +148,7 @@
                 @if (_metrics.Count > MaxDevicesDisplayed)
                 {
                     <MudText Typo="Typo.caption" Align="Align.Center" Color="Color.Secondary">
-                        +@(_metrics.Count - MaxDevicesDisplayed) device(s) supplémentaire(s)
+                        +@(_metrics.Count - MaxDevicesDisplayed) device(s) supplï¿½mentaire(s)
                     </MudText>
                 }
             </MudStack>
@@ -157,7 +157,7 @@
         {
             <MudStack AlignItems="AlignItems.Center" Spacing="2" Class="py-4">
                 <MudIcon Icon="@Icons.Material.Filled.DevicesOther" Color="Color.Default" Size="Size.Large" />
-                <MudText Typo="Typo.body1" Color="Color.Secondary">Aucune métrique disponible</MudText>
+                <MudText Typo="Typo.body1" Color="Color.Secondary">Aucune mï¿½trique disponible</MudText>
             </MudStack>
         }
     </MudCardContent>
@@ -197,19 +197,19 @@
 
         try
         {
-            // TODO: Implémenter GetAllLatestMetricsAsync() dans DeviceStatusService
+            // TODO: Implï¿½menter GetAllLatestMetricsAsync() dans DeviceStatusService
             // Pour l'instant, afficher message
-            _errorMessage = "Fonctionnalité en développement: nécessite GetAllLatestMetricsAsync()";
-            Logger.LogWarning(" GetAllLatestMetricsAsync() pas encore implémenté dans DeviceStatusService");
+            _errorMessage = "Fonctionnalitï¿½ en dï¿½veloppement: nï¿½cessite GetAllLatestMetricsAsync()";
+            Logger.LogWarning(" GetAllLatestMetricsAsync() pas encore implï¿½mentï¿½ dans DeviceStatusService");
             
-            // Mock pour démonstration
+            // Mock pour dï¿½monstration
             _metrics = new List<DeviceMetricsDto>();
             CalculateHealthStats();
         }
         catch (Exception ex)
         {
             _errorMessage = $"Erreur technique: {ex.Message}";
-            Logger.LogError(ex, " Exception chargement métriques");
+            Logger.LogError(ex, " Exception chargement mï¿½triques");
         }
         finally
         {
@@ -241,7 +241,7 @@
         Navigation.NavigateTo("/devices");
     }
 
-    // Helpers (identiques à DeviceStatusMonitor)
+    // Helpers (identiques ï¿½ DeviceStatusMonitor)
 
     private double GetRssiPercentage(int? rssi)
     {

@@ -1,4 +1,4 @@
-@* Composant DeviceCard pour afficher les appareils avec commandes IoT *@
+ï»¿@* Composant DeviceCard pour afficher les appareils avec commandes IoT *@
 @inject ILogger<DeviceCard> Logger
 @inject ICommandeService CommandeService
 
@@ -6,7 +6,7 @@
           Style="@GetCardStyle()" 
           Elevation="2">
     <div class="d-flex flex-column align-center text-center">
-        <!-- Icône de l'appareil -->
+        <!-- Icï¿½ne de l'appareil -->
         <div class="device-icon-container mb-3">
             <MudIcon Icon="@Icon" 
                     Color="@(IsOn ? Color.Inherit : Color.Default)"
@@ -21,7 +21,7 @@
             @DeviceName
         </MudText>
         
-        <!-- État ON/OFF -->
+        <!-- ï¿½tat ON/OFF -->
         <MudChip T="string" 
                 Size="Size.Small"
                 Color="@(IsOn ? Color.Success : Color.Default)"
@@ -29,7 +29,7 @@
             @(IsOn ? "ON" : "OFF")
         </MudChip>
         
-        <!-- Bouton toggle si l'appareil est contrôlable -->
+        <!-- Bouton toggle si l'appareil est contrï¿½lable -->
         @if (OnToggle.HasDelegate)
         {
             <MudSwitch T="bool" 
@@ -80,7 +80,7 @@
         }
         else if (PeripheriqueId.HasValue)
         {
-            // Envoyer la commande directement via le service si aucun callback personnalisé
+            // Envoyer la commande directement via le service si aucun callback personnalisï¿½
             await SendToggleCommand();
         }
     }
@@ -95,12 +95,12 @@
             
             if (result.IsSuccess)
             {
-                Logger.LogDebug("DeviceCard: Commande toggle réussie pour {DeviceName}", DeviceName);
+                Logger.LogDebug("DeviceCard: Commande toggle rï¿½ussie pour {DeviceName}", DeviceName);
             }
             else
             {
-                Logger.LogWarning("DeviceCard: Échec toggle pour {DeviceName}: {Message}", DeviceName, result.Message);
-                // Revenir à l'état précédent en cas d'échec
+                Logger.LogWarning("DeviceCard: ï¿½chec toggle pour {DeviceName}: {Message}", DeviceName, result.Message);
+                // Revenir ï¿½ l'ï¿½tat prï¿½cï¿½dent en cas d'ï¿½chec
                 IsOn = !IsOn;
                 StateHasChanged();
             }
@@ -108,7 +108,7 @@
         catch (Exception ex)
         {
             Logger.LogError(ex, "DeviceCard: Erreur lors du toggle de {DeviceName}", DeviceName);
-            // Revenir à l'état précédent en cas d'erreur
+            // Revenir ï¿½ l'ï¿½tat prï¿½cï¿½dent en cas d'erreur
             IsOn = !IsOn;
             StateHasChanged();
         }

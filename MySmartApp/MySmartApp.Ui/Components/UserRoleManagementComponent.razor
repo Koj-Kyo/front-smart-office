@@ -1,4 +1,4 @@
-@using MySmartApp.Ui.Services
+ï»¿@using MySmartApp.Ui.Services
 @using MySmartApp.Ui.Models
 @inject IUserManagementService UserManagementService
 @inject IDialogService DialogService
@@ -7,7 +7,7 @@
 
 <MudPaper Class="pa-4 rounded-xl" Elevation="2">
     <div class="d-flex justify-space-between align-center mb-4">
-        <MudText Typo="Typo.h6"> Gestion des Rôles Utilisateur</MudText>
+        <MudText Typo="Typo.h6"> Gestion des Rï¿½les Utilisateur</MudText>
         <MudIconButton Icon="@Icons.Material.Filled.Refresh" 
                        Size="Size.Small"
                        OnClick="RefreshData"
@@ -23,7 +23,7 @@
     }
     else
     {
-        <!-- Formulaire d'attribution de rôle -->
+        <!-- Formulaire d'attribution de rï¿½le -->
         <MudGrid Class="mb-4">
             <MudItem xs="12" sm="4">
                 <MudTextField @bind-Value="targetUserId"
@@ -35,7 +35,7 @@
             
             <MudItem xs="12" sm="4">
                 <MudSelect @bind-Value="selectedRole"
-                           Label="Rôle"
+                           Label="Rï¿½le"
                            Required="true">
                     @foreach (var role in availableRoles)
                     {
@@ -66,11 +66,11 @@
             </MudItem>
         </MudGrid>
 
-        <!-- Historique des opérations -->
+        <!-- Historique des opï¿½rations -->
         @if (roleOperations.Any())
         {
             <MudDivider Class="my-4" />
-            <MudText Typo="Typo.subtitle1" Class="mb-3"> Historique des Opérations</MudText>
+            <MudText Typo="Typo.subtitle1" Class="mb-3"> Historique des Opï¿½rations</MudText>
             
             <MudList T="string" Dense="true">
                 @foreach (var operation in roleOperations.Take(5))
@@ -85,7 +85,7 @@
                                     @operation.Message
                                 </MudText>
                                 <MudText Typo="Typo.caption" Color="Color.Secondary">
-                                    Utilisateur: @operation.UserId | Rôle: @operation.RoleName
+                                    Utilisateur: @operation.UserId | Rï¿½le: @operation.RoleName
                                 </MudText>
                             </div>
                         </div>
@@ -99,9 +99,9 @@
             </MudList>
         }
 
-        <!-- Rôles disponibles -->
+        <!-- Rï¿½les disponibles -->
         <MudDivider Class="my-4" />
-        <MudText Typo="Typo.subtitle1" Class="mb-3"> Rôles Disponibles</MudText>
+        <MudText Typo="Typo.subtitle1" Class="mb-3"> Rï¿½les Disponibles</MudText>
         
         <div class="d-flex flex-wrap gap-2">
             @foreach (var role in availableRoles)
@@ -119,20 +119,20 @@
             <MudExpansionPanel Text=" Guide d'utilisation">
                 <div class="pa-2">
                     <MudText Typo="Typo.body2" Class="mb-2">
-                        <strong>Attribution d'un rôle :</strong>
+                        <strong>Attribution d'un rï¿½le :</strong>
                     </MudText>
                     <MudText Typo="Typo.body2" Class="mb-3">
                         1. Saisissez l'ID de l'utilisateur cible<br/>
-                        2. Sélectionnez le rôle à attribuer<br/>
+                        2. Sï¿½lectionnez le rï¿½le ï¿½ attribuer<br/>
                         3. Cliquez sur "Attribuer"
                     </MudText>
                     
                     <MudText Typo="Typo.body2" Class="mb-2">
-                        <strong>Retrait d'un rôle :</strong>
+                        <strong>Retrait d'un rï¿½le :</strong>
                     </MudText>
                     <MudText Typo="Typo.body2">
                         1. Saisissez l'ID de l'utilisateur cible<br/>
-                        2. Sélectionnez le rôle à retirer<br/>
+                        2. Sï¿½lectionnez le rï¿½le ï¿½ retirer<br/>
                         3. Cliquez sur "Retirer"
                     </MudText>
                 </div>
@@ -168,12 +168,12 @@
             if (rolesResponse.IsSuccess && rolesResponse.Data != null)
             {
                 availableRoles = rolesResponse.Data;
-                Logger.LogInformation(" {Count} rôles disponibles chargés", availableRoles.Count);
+                Logger.LogInformation(" {Count} rï¿½les disponibles chargï¿½s", availableRoles.Count);
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, " Erreur lors du chargement des données");
+            Logger.LogError(ex, " Erreur lors du chargement des donnï¿½es");
         }
         finally
         {
@@ -203,23 +203,23 @@
             {
                 roleOperations.Insert(0, result.Data);
                 
-                // Limiter l'historique à 20 opérations
+                // Limiter l'historique ï¿½ 20 opï¿½rations
                 if (roleOperations.Count > 20)
                 {
                     roleOperations = roleOperations.Take(20).ToList();
                 }
                 
-                // Réinitialiser le formulaire
+                // Rï¿½initialiser le formulaire
                 targetUserId = "";
                 selectedRole = "";
                 
                 await OnRoleChanged.InvokeAsync();
-                Logger.LogInformation(" Rôle {Role} attribué à {UserId}", selectedRole, targetUserId);
+                Logger.LogInformation(" Rï¿½le {Role} attribuï¿½ ï¿½ {UserId}", selectedRole, targetUserId);
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, " Erreur lors de l'attribution du rôle");
+            Logger.LogError(ex, " Erreur lors de l'attribution du rï¿½le");
         }
         finally
         {
@@ -235,7 +235,7 @@
 
         bool? confirmed = await DialogService.ShowMessageBox(
             " Confirmation",
-            $"Êtes-vous sûr de vouloir retirer le rôle '{selectedRole}' à l'utilisateur '{targetUserId}' ?",
+            $"ï¿½tes-vous sï¿½r de vouloir retirer le rï¿½le '{selectedRole}' ï¿½ l'utilisateur '{targetUserId}' ?",
             yesText: "Confirmer",
             cancelText: "Annuler");
 
@@ -253,23 +253,23 @@
             {
                 roleOperations.Insert(0, result.Data);
                 
-                // Limiter l'historique à 20 opérations
+                // Limiter l'historique ï¿½ 20 opï¿½rations
                 if (roleOperations.Count > 20)
                 {
                     roleOperations = roleOperations.Take(20).ToList();
                 }
                 
-                // Réinitialiser le formulaire
+                // Rï¿½initialiser le formulaire
                 targetUserId = "";
                 selectedRole = "";
                 
                 await OnRoleChanged.InvokeAsync();
-                Logger.LogInformation(" Rôle {Role} retiré de {UserId}", selectedRole, targetUserId);
+                Logger.LogInformation(" Rï¿½le {Role} retirï¿½ de {UserId}", selectedRole, targetUserId);
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, " Erreur lors du retrait du rôle");
+            Logger.LogError(ex, " Erreur lors du retrait du rï¿½le");
         }
         finally
         {
@@ -278,7 +278,7 @@
         }
     }
 
-    // Méthodes utilitaires
+    // Mï¿½thodes utilitaires
     private Color GetRoleColor(string role) => role.ToLower() switch
     {
         "admin" => Color.Error,

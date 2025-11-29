@@ -1,4 +1,4 @@
-@using MySmartApp.Ui.Services
+ï»¿@using MySmartApp.Ui.Services
 @using MySmartApp.Ui.Models
 @inject IUserActivityService UserActivityService
 @inject ILogger<UserActivityLogComponent> Logger
@@ -24,7 +24,7 @@
         <MudGrid>
             <MudItem xs="12" md="4">
                 <MudSelect @bind-Value="_selectedActivityType" 
-                          Label="Type d'activité" 
+                          Label="Type d'activitï¿½" 
                           Variant="Variant.Outlined"
                           Clearable="true"
                           OnClearButtonClick="@(() => { _selectedActivityType = null; _ = LoadActivitiesAsync(); })">
@@ -32,15 +32,15 @@
                     <MudSelectItem Value="@("Commande")">Commandes</MudSelectItem>
                     <MudSelectItem Value="@("Audit")">Audits</MudSelectItem>
                     <MudSelectItem Value="@("Login")">Connexions</MudSelectItem>
-                    <MudSelectItem Value="@("Logout")">Déconnexions</MudSelectItem>
-                    <MudSelectItem Value="@("Create")">Créations</MudSelectItem>
+                    <MudSelectItem Value="@("Logout")">Dï¿½connexions</MudSelectItem>
+                    <MudSelectItem Value="@("Create")">Crï¿½ations</MudSelectItem>
                     <MudSelectItem Value="@("Update")">Modifications</MudSelectItem>
                     <MudSelectItem Value="@("Delete")">Suppressions</MudSelectItem>
                 </MudSelect>
             </MudItem>
             <MudItem xs="12" md="3">
                 <MudDatePicker @bind-Date="_startDate" 
-                              Label="Date début" 
+                              Label="Date dï¿½but" 
                               Variant="Variant.Outlined"
                               Clearable="true" />
             </MudItem>
@@ -61,7 +61,7 @@
             </MudItem>
         </MudGrid>
 
-        <!-- Statistiques (si UserId spécifié) -->
+        <!-- Statistiques (si UserId spï¿½cifiï¿½) -->
         @if (!string.IsNullOrEmpty(UserId) && _stats != null)
         {
             <MudGrid>
@@ -69,7 +69,7 @@
                     <MudCard>
                         <MudCardContent>
                             <MudStack Spacing="1">
-                                <MudText Typo="Typo.body2" Color="Color.Secondary">Total Activités</MudText>
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">Total Activitï¿½s</MudText>
                                 <MudText Typo="Typo.h4">@_stats.TotalActivities</MudText>
                             </MudStack>
                         </MudCardContent>
@@ -99,7 +99,7 @@
                     <MudCard>
                         <MudCardContent>
                             <MudStack Spacing="1">
-                                <MudText Typo="Typo.body2" Color="Color.Secondary">Dernière Activité</MudText>
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">Derniï¿½re Activitï¿½</MudText>
                                 <MudText Typo="Typo.body1">@_stats.LastActivity?.ToString("dd/MM HH:mm")</MudText>
                             </MudStack>
                         </MudCardContent>
@@ -115,7 +115,7 @@
             </MudAlert>
         }
 
-        <!-- Table Paginée -->
+        <!-- Table Paginï¿½e -->
         <MudTable @ref="_table"
                  TItem="UserActivityDto"
                  ServerData="ServerReload"
@@ -124,12 +124,12 @@
                  Loading="@_isLoading"
                  LoadingProgressColor="Color.Primary">
             <ToolBarContent>
-                <MudText Typo="Typo.h6">Activités</MudText>
+                <MudText Typo="Typo.h6">Activitï¿½s</MudText>
                 <MudSpacer />
                 @if (_paginatedActivities != null)
                 {
                     <MudText Typo="Typo.body2" Color="Color.Secondary">
-                        @_paginatedActivities.TotalCount activité(s)
+                        @_paginatedActivities.TotalCount activitï¿½(s)
                     </MudText>
                 }
             </ToolBarContent>
@@ -181,7 +181,7 @@
             </RowTemplate>
             <NoRecordsContent>
                 <MudText Typo="Typo.body2" Color="Color.Secondary" Align="Align.Center">
-                    Aucune activité trouvée
+                    Aucune activitï¿½ trouvï¿½e
                 </MudText>
             </NoRecordsContent>
             <LoadingContent>
@@ -196,10 +196,10 @@
     </MudStack>
 </MudPaper>
 
-<!-- Dialog Détails -->
+<!-- Dialog Dï¿½tails -->
 <MudDialog @bind-IsVisible="_showDetailsDialog" Options="_dialogOptions">
     <TitleContent>
-        <MudText Typo="Typo.h6">Détails de l'activité</MudText>
+        <MudText Typo="Typo.h6">Dï¿½tails de l'activitï¿½</MudText>
     </TitleContent>
     <DialogContent>
         @if (_selectedActivity != null)
@@ -326,7 +326,7 @@
             if (response.IsSuccess && response.Data != null)
             {
                 _paginatedActivities = response.Data;
-                Logger.LogInformation(" {Count} activités chargées (page {Page})", 
+                Logger.LogInformation(" {Count} activitï¿½s chargï¿½es (page {Page})", 
                     response.Data.Data.Count, state.Page + 1);
 
                 return new TableData<UserActivityDto>
@@ -338,14 +338,14 @@
             else
             {
                 _errorMessage = response.ErrorMessage ?? "Erreur lors du chargement";
-                Logger.LogError(" Erreur chargement activités: {Error}", _errorMessage);
+                Logger.LogError(" Erreur chargement activitï¿½s: {Error}", _errorMessage);
                 return new TableData<UserActivityDto> { Items = new List<UserActivityDto>(), TotalItems = 0 };
             }
         }
         catch (Exception ex)
         {
             _errorMessage = $"Erreur technique: {ex.Message}";
-            Logger.LogError(ex, " Exception lors du chargement activités");
+            Logger.LogError(ex, " Exception lors du chargement activitï¿½s");
             return new TableData<UserActivityDto> { Items = new List<UserActivityDto>(), TotalItems = 0 };
         }
         finally
@@ -374,7 +374,7 @@
             if (response.IsSuccess && response.Data != null)
             {
                 _stats = response.Data;
-                Logger.LogInformation(" Stats utilisateur chargées");
+                Logger.LogInformation(" Stats utilisateur chargï¿½es");
             }
         }
         catch (Exception ex)
@@ -387,7 +387,7 @@
     {
         if (string.IsNullOrEmpty(UserId))
         {
-            _errorMessage = "Export disponible uniquement pour un utilisateur spécifique";
+            _errorMessage = "Export disponible uniquement pour un utilisateur spï¿½cifique";
             return;
         }
 
@@ -401,7 +401,7 @@
             if (response.IsSuccess && response.Data != null)
             {
                 // TODO: Trigger download in browser
-                Logger.LogInformation(" Export CSV généré: {Size} bytes", response.Data.Length);
+                Logger.LogInformation(" Export CSV gï¿½nï¿½rï¿½: {Size} bytes", response.Data.Length);
             }
             else
             {

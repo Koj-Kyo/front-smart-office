@@ -1,4 +1,4 @@
-@using MySmartApp.Ui.Services
+ï»¿@using MySmartApp.Ui.Services
 @using MySmartApp.Ui.Models
 @inject INotificationService NotificationService
 @inject ILogger<NotificationBadgeComponent> Logger
@@ -15,7 +15,7 @@ Class="@($"notification-badge {Class}")">
                    Title="@GetTooltipText()" />
 </MudBadge>
 
-<!-- Menu déroulant des notifications -->
+<!-- Menu dï¿½roulant des notifications -->
 <MudPopover Open="@isPopoverOpen" 
             AnchorOrigin="Origin.BottomCenter" 
             TransformOrigin="Origin.TopCenter"
@@ -123,7 +123,7 @@ Class="@($"notification-badge {Class}")">
                         Aucune notification
                     </MudText>
                     <MudText Typo="Typo.body2" Color="Color.Secondary">
-                        Vous êtes à jour !
+                        Vous ï¿½tes ï¿½ jour !
                     </MudText>
                 </div>
             }
@@ -173,7 +173,7 @@ Class="@($"notification-badge {Class}")">
 
     protected override async Task OnInitializedAsync()
     {
-        // S'abonner aux événements du service
+        // S'abonner aux ï¿½vï¿½nements du service
         NotificationService.NotificationsUpdated += OnNotificationsUpdated;
         NotificationService.UnreadCountChanged += OnUnreadCountChanged;
         NotificationService.NewNotificationReceived += OnNewNotificationReceived;
@@ -239,7 +239,7 @@ Class="@($"notification-badge {Class}")">
     private async Task MarkAllAsRead()
     {
         await NotificationService.MarkAllAsReadAsync();
-        // Les notifications seront mises à jour automatiquement via l'événement
+        // Les notifications seront mises ï¿½ jour automatiquement via l'ï¿½vï¿½nement
     }
 
     private async Task ViewAllNotifications()
@@ -248,7 +248,7 @@ Class="@($"notification-badge {Class}")">
         await OnViewAllClicked.InvokeAsync();
     }
 
-    // Événements de mise à jour
+    // ï¿½vï¿½nements de mise ï¿½ jour
     private void OnNotificationsUpdated(List<UserNotificationDto> updatedNotifications)
     {
         notifications = updatedNotifications;
@@ -268,7 +268,7 @@ Class="@($"notification-badge {Class}")">
         InvokeAsync(StateHasChanged);
     }
 
-    // Méthodes utilitaires
+    // Mï¿½thodes utilitaires
     private string GetTooltipText()
     {
         return unreadCount switch
@@ -308,7 +308,7 @@ Class="@($"notification-badge {Class}")">
 
     public void Dispose()
     {
-        // Se désabonner des événements
+        // Se dï¿½sabonner des ï¿½vï¿½nements
         NotificationService.NotificationsUpdated -= OnNotificationsUpdated;
         NotificationService.UnreadCountChanged -= OnUnreadCountChanged;
         NotificationService.NewNotificationReceived -= OnNewNotificationReceived;

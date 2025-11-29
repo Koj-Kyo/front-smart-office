@@ -1,4 +1,4 @@
-@using MySmartApp.Ui.Services
+ï»¿@using MySmartApp.Ui.Services
 @using MySmartApp.Ui.Models
 @inject INotificationService NotificationService
 @inject ILogger<NotificationsPanelComponent> Logger
@@ -122,7 +122,7 @@
             <MudDivider Class="my-2" />
             <div class="text-center">
               <MudText Typo="Typo.caption" Color="Color.Secondary">
-              +@(filteredNotifications.Count() - MaxDisplayCount) notification(s) supplémentaire(s)
+              +@(filteredNotifications.Count() - MaxDisplayCount) notification(s) supplï¿½mentaire(s)
                 </MudText>
           @if (OnViewAll.HasDelegate)
           {
@@ -147,7 +147,7 @@
        @(showOnlyUnread ? "Aucune notification non lue" : "Aucune notification")
   </MudText>
     <MudText Typo="Typo.body2" Color="Color.Secondary" Class="text-center">
-            @(showOnlyUnread ? "Toutes vos notifications ont été lues !" : "Vous êtes à jour !")
+            @(showOnlyUnread ? "Toutes vos notifications ont ï¿½tï¿½ lues !" : "Vous ï¿½tes ï¿½ jour !")
             </MudText>
         </div>
     }
@@ -191,7 +191,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        // S'abonner aux événements
+        // S'abonner aux ï¿½vï¿½nements
   NotificationService.NotificationsUpdated += OnNotificationsUpdated;
         NotificationService.UnreadCountChanged += OnUnreadCountChanged;
         NotificationService.NewNotificationReceived += OnNewNotificationReceived;
@@ -212,7 +212,7 @@
             {
     notifications = response.Data;
                 unreadCount = notifications.Count(n => !n.EstLue);
-       Logger.LogInformation("{Count} notifications chargées ({Unread} non lues)", 
+       Logger.LogInformation("{Count} notifications chargï¿½es ({Unread} non lues)", 
   notifications.Count, unreadCount);
     }
         }
@@ -240,8 +240,8 @@ await LoadNotifications();
         var result = await NotificationService.MarkAsReadAsync(notification.Id);
         if (result.IsSuccess)
     {
-       // La mise à jour sera automatique via l'événement NotificationsUpdated
-     Logger.LogDebug("Notification {Id} marquée comme lue", notification.Id);
+       // La mise ï¿½ jour sera automatique via l'ï¿½vï¿½nement NotificationsUpdated
+     Logger.LogDebug("Notification {Id} marquï¿½e comme lue", notification.Id);
         }
     }
 
@@ -250,7 +250,7 @@ await LoadNotifications();
         var result = await NotificationService.MarkAllAsReadAsync();
         if (result.IsSuccess)
         {
-         Logger.LogInformation("Toutes les notifications marquées comme lues");
+         Logger.LogInformation("Toutes les notifications marquï¿½es comme lues");
         }
     }
 
@@ -259,7 +259,7 @@ await LoadNotifications();
     var result = await NotificationService.DeleteNotificationAsync(notification.Id);
         if (result.IsSuccess)
         {
-         Logger.LogDebug("Notification {Id} supprimée", notification.Id);
+         Logger.LogDebug("Notification {Id} supprimï¿½e", notification.Id);
         }
     }
 
@@ -269,7 +269,7 @@ await LoadNotifications();
         StateHasChanged();
     }
 
- // Événements de mise à jour
+ // ï¿½vï¿½nements de mise ï¿½ jour
     private void OnNotificationsUpdated(List<UserNotificationDto> updatedNotifications)
  {
         notifications = updatedNotifications;
@@ -285,12 +285,12 @@ await LoadNotifications();
 
     private void OnNewNotificationReceived(UserNotificationDto notification)
     {
-        // Les notifications sont déjà mises à jour via OnNotificationsUpdated
+        // Les notifications sont dï¿½jï¿½ mises ï¿½ jour via OnNotificationsUpdated
         // Ici on peut ajouter des animations ou des effets visuels
         InvokeAsync(StateHasChanged);
     }
 
-    // Méthodes utilitaires
+    // Mï¿½thodes utilitaires
     private string GetNotificationClass(UserNotificationDto notification)
     {
         return notification.EstLue ? "notification-read" : "notification-unread";
@@ -321,14 +321,14 @@ await LoadNotifications();
          _ => timeSpan.TotalHours switch
         {
          >= 1 => $"il y a {(int)timeSpan.TotalHours}h",
-_ => timeSpan.TotalMinutes < 1 ? "à l'instant" : $"il y a {(int)timeSpan.TotalMinutes}min"
+_ => timeSpan.TotalMinutes < 1 ? "ï¿½ l'instant" : $"il y a {(int)timeSpan.TotalMinutes}min"
       }
         };
     }
 
     public void Dispose()
     {
-     // Se désabonner des événements
+     // Se dï¿½sabonner des ï¿½vï¿½nements
         NotificationService.NotificationsUpdated -= OnNotificationsUpdated;
     NotificationService.UnreadCountChanged -= OnUnreadCountChanged;
       NotificationService.NewNotificationReceived -= OnNewNotificationReceived;

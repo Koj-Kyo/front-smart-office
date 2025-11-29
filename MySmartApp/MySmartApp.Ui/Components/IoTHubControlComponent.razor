@@ -1,11 +1,11 @@
-@using MySmartApp.Ui.Services
+ï»¿@using MySmartApp.Ui.Services
 @using MySmartApp.Ui.Models
 @inject IIoTHubService IoTHubService
 @inject ILogger<IoTHubControlComponent> Logger
 
 <MudPaper Class="pa-4 rounded-xl" Elevation="2">
     <div class="d-flex justify-space-between align-center mb-4">
-        <MudText Typo="Typo.h6"> Contrôles IoT Hub</MudText>
+        <MudText Typo="Typo.h6"> Contrï¿½les IoT Hub</MudText>
         <MudIconButton Icon="@Icons.Material.Filled.Refresh" 
                        Size="Size.Small"
                        OnClick="RefreshStatus"
@@ -14,9 +14,9 @@
     
     @if (DeviceId != null)
     {
-        <!-- État de connexion -->
+        <!-- ï¿½tat de connexion -->
         <div class="mb-4">
-            <MudText Typo="Typo.caption" Color="Color.Secondary">État de connexion</MudText>
+            <MudText Typo="Typo.caption" Color="Color.Secondary">ï¿½tat de connexion</MudText>
             <div class="d-flex align-center">
                 @if (isConnected.HasValue)
                 {
@@ -24,13 +24,13 @@
                              Color="@(isConnected.Value ? Color.Success : Color.Error)" 
                              Class="mr-2" />
                     <MudText Typo="Typo.body2" Color="@(isConnected.Value ? Color.Success : Color.Error)">
-                        @(isConnected.Value ? "Connecté" : "Déconnecté")
+                        @(isConnected.Value ? "Connectï¿½" : "Dï¿½connectï¿½")
                     </MudText>
                 }
                 else
                 {
                     <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
-                    <MudText Typo="Typo.body2">Vérification...</MudText>
+                    <MudText Typo="Typo.body2">Vï¿½rification...</MudText>
                 }
             </div>
         </div>
@@ -77,15 +77,15 @@
             </div>
         </div>
 
-        <!-- Contrôles avancés -->
+        <!-- Contrï¿½les avancï¿½s -->
         @if (ShowAdvancedControls)
         {
             <MudExpansionPanels>
-                <MudExpansionPanel Text=" Contrôles avancés">
+                <MudExpansionPanel Text=" Contrï¿½les avancï¿½s">
                     <div class="pa-2">
-                        <!-- Luminosité (si applicable) -->
+                        <!-- Luminositï¿½ (si applicable) -->
                         <div class="mb-4">
-                            <MudText Typo="Typo.caption" Color="Color.Secondary">Luminosité</MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Luminositï¿½</MudText>
                             <div class="d-flex align-center gap-2">
                                 <MudSlider @bind-Value="brightnessValue" 
                                            Min="0" 
@@ -101,9 +101,9 @@
                             </div>
                         </div>
 
-                        <!-- Température (si applicable) -->
+                        <!-- Tempï¿½rature (si applicable) -->
                         <div class="mb-4">
-                            <MudText Typo="Typo.caption" Color="Color.Secondary">Température</MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Tempï¿½rature</MudText>
                             <div class="d-flex align-center gap-2">
                                 <MudSlider @bind-Value="temperatureValue" 
                                            Min="10" 
@@ -111,7 +111,7 @@
                                            Step="1"
                                            Color="Color.Secondary"
                                            Style="flex: 1;" />
-                                <MudText Typo="Typo.body2" Style="min-width: 50px;">@(temperatureValue)°C</MudText>
+                                <MudText Typo="Typo.body2" Style="min-width: 50px;">@(temperatureValue)ï¿½C</MudText>
                                 <MudButton Size="Size.Small" 
                                            OnClick="SetTemperature"
                                            Disabled="@(!CanExecuteCommands)">
@@ -120,17 +120,17 @@
                             </div>
                         </div>
 
-                        <!-- Méthode personnalisée -->
+                        <!-- Mï¿½thode personnalisï¿½e -->
                         <div class="mb-4">
-                            <MudText Typo="Typo.caption" Color="Color.Secondary">Méthode personnalisée</MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Mï¿½thode personnalisï¿½e</MudText>
                             <div class="d-flex gap-2">
                                 <MudTextField @bind-Value="customMethodName" 
-                                              Label="Nom de la méthode"
+                                              Label="Nom de la mï¿½thode"
                                               Placeholder="ex: customCommand"
                                               Style="flex: 1;" />
                                 <MudButton OnClick="ExecuteCustomMethod"
                                            Disabled="@(!CanExecuteCommands || string.IsNullOrEmpty(customMethodName))">
-                                    Exécuter
+                                    Exï¿½cuter
                                 </MudButton>
                             </div>
                         </div>
@@ -139,12 +139,12 @@
             </MudExpansionPanels>
         }
 
-        <!-- Dernier résultat -->
+        <!-- Dernier rï¿½sultat -->
         @if (!string.IsNullOrEmpty(lastResult))
         {
             <MudDivider Class="my-4" />
             <div>
-                <MudText Typo="Typo.caption" Color="Color.Secondary">Dernier résultat</MudText>
+                <MudText Typo="Typo.caption" Color="Color.Secondary">Dernier rï¿½sultat</MudText>
                 <MudAlert Severity="@lastResultSeverity" Dense="true" Class="mt-2">
                     @lastResult
                 </MudAlert>
@@ -155,7 +155,7 @@
     {
         <div class="d-flex flex-column align-center pa-4">
             <MudIcon Icon="@Icons.Material.Filled.DeviceUnknown" Size="Size.Large" Color="Color.Secondary" Class="mb-2" />
-            <MudText Color="Color.Secondary">Device ID non spécifié</MudText>
+            <MudText Color="Color.Secondary">Device ID non spï¿½cifiï¿½</MudText>
         </div>
     }
 </MudPaper>
@@ -193,7 +193,7 @@
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Erreur lors de la vérification de connexion pour {DeviceId}", DeviceId);
+            Logger.LogError(ex, "Erreur lors de la vï¿½rification de connexion pour {DeviceId}", DeviceId);
             isConnected = false;
         }
         
@@ -233,13 +233,13 @@
             }
             else
             {
-                lastResult = result.ErrorMessage ?? "Erreur lors de l'exécution";
+                lastResult = result.ErrorMessage ?? "Erreur lors de l'exï¿½cution";
                 lastResultSeverity = Severity.Error;
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Erreur lors de l'exécution de la commande {Command}", command);
+            Logger.LogError(ex, "Erreur lors de l'exï¿½cution de la commande {Command}", command);
             lastResult = $"Erreur: {ex.Message}";
             lastResultSeverity = Severity.Error;
         }
@@ -258,20 +258,20 @@
             
             if (result.IsSuccess && result.Data != null)
             {
-                lastResult = $"Luminosité réglée à {brightnessValue}%";
+                lastResult = $"Luminositï¿½ rï¿½glï¿½e ï¿½ {brightnessValue}%";
                 lastResultSeverity = result.Data.Success ? Severity.Success : Severity.Warning;
                 
                 await OnCommandExecuted.InvokeAsync("set-brightness");
             }
             else
             {
-                lastResult = result.ErrorMessage ?? "Erreur lors du réglage";
+                lastResult = result.ErrorMessage ?? "Erreur lors du rï¿½glage";
                 lastResultSeverity = Severity.Error;
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Erreur lors du réglage de luminosité");
+            Logger.LogError(ex, "Erreur lors du rï¿½glage de luminositï¿½");
             lastResult = $"Erreur: {ex.Message}";
             lastResultSeverity = Severity.Error;
         }
@@ -290,20 +290,20 @@
             
             if (result.IsSuccess && result.Data != null)
             {
-                lastResult = $"Température réglée à {temperatureValue}°C";
+                lastResult = $"Tempï¿½rature rï¿½glï¿½e ï¿½ {temperatureValue}ï¿½C";
                 lastResultSeverity = result.Data.Success ? Severity.Success : Severity.Warning;
                 
                 await OnCommandExecuted.InvokeAsync("set-temperature");
             }
             else
             {
-                lastResult = result.ErrorMessage ?? "Erreur lors du réglage";
+                lastResult = result.ErrorMessage ?? "Erreur lors du rï¿½glage";
                 lastResultSeverity = Severity.Error;
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Erreur lors du réglage de température");
+            Logger.LogError(ex, "Erreur lors du rï¿½glage de tempï¿½rature");
             lastResult = $"Erreur: {ex.Message}";
             lastResultSeverity = Severity.Error;
         }
@@ -321,7 +321,7 @@
             
             if (result.IsSuccess && result.Data != null)
             {
-                lastResult = $"Méthode {customMethodName} exécutée: {result.Data.Message}";
+                lastResult = $"Mï¿½thode {customMethodName} exï¿½cutï¿½e: {result.Data.Message}";
                 lastResultSeverity = result.Data.Success ? Severity.Success : Severity.Warning;
                 
                 customMethodName = ""; // Reset after successful execution
@@ -329,13 +329,13 @@
             }
             else
             {
-                lastResult = result.ErrorMessage ?? "Erreur lors de l'exécution";
+                lastResult = result.ErrorMessage ?? "Erreur lors de l'exï¿½cution";
                 lastResultSeverity = Severity.Error;
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Erreur lors de l'exécution de la méthode personnalisée");
+            Logger.LogError(ex, "Erreur lors de l'exï¿½cution de la mï¿½thode personnalisï¿½e");
             lastResult = $"Erreur: {ex.Message}";
             lastResultSeverity = Severity.Error;
         }

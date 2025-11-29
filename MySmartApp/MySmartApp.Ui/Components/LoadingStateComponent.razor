@@ -1,4 +1,4 @@
-@using MySmartApp.Ui.Services
+ï»¿@using MySmartApp.Ui.Services
 @inject IAppStateService AppState
 @inject ILogger<LoadingStateComponent> Logger
 @implements IDisposable
@@ -127,7 +127,7 @@
     protected override void OnInitialized()
     {
         AppState.OnStateChanged += HandleStateChanged;
-        Logger.LogDebug("LoadingStateComponent initialisé");
+        Logger.LogDebug("LoadingStateComponent initialisï¿½");
     }
 
     private void HandleStateChanged()
@@ -141,7 +141,7 @@
         {
             try
             {
-                Logger.LogDebug("Annulation demandée par l'utilisateur");
+                Logger.LogDebug("Annulation demandï¿½e par l'utilisateur");
                 await CancelAction();
             }
             catch (Exception ex)
@@ -154,7 +154,7 @@
     public void Dispose()
     {
         AppState.OnStateChanged -= HandleStateChanged;
-        Logger.LogDebug("LoadingStateComponent disposé");
+        Logger.LogDebug("LoadingStateComponent disposï¿½");
         GC.SuppressFinalize(this);
     }
 }

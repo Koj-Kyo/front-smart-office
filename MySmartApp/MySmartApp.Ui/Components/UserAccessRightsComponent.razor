@@ -1,16 +1,16 @@
-@using MySmartApp.Ui.Services
+ï»¿@using MySmartApp.Ui.Services
 @using MySmartApp.Ui.Models
 @inject IDroitAccesService DroitAccesService
 @inject ILogger<UserAccessRightsComponent> Logger
 
 <MudPaper Class="pa-4 rounded-xl" Elevation="2">
-    <MudText Typo="Typo.h6" Class="mb-4"> Mes Droits d'Accès</MudText>
+    <MudText Typo="Typo.h6" Class="mb-4"> Mes Droits d'Accï¿½s</MudText>
     
     @if (isLoading)
     {
         <div class="d-flex align-center pa-4">
             <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
-            <MudText>Chargement des droits d'accès...</MudText>
+            <MudText>Chargement des droits d'accï¿½s...</MudText>
         </div>
     }
     else
@@ -28,7 +28,7 @@
                                     <div>
                                         <MudText Typo="Typo.body1">@zone.ZoneName</MudText>
                                         <MudText Typo="Typo.caption" Color="Color.Secondary">
-                                            Accordé le @zone.GrantedAt.ToString("dd/MM/yyyy")
+                                            Accordï¿½ le @zone.GrantedAt.ToString("dd/MM/yyyy")
                                         </MudText>
                                     </div>
                                     <MudChip T="string" Size="Size.Small" Color="Color.Info">
@@ -43,13 +43,13 @@
                 {
                     <div class="d-flex flex-column align-center pa-8">
                         <MudIcon Icon="@Icons.Material.Filled.LocationOff" Size="Size.Large" Color="Color.Secondary" Class="mb-2" />
-                        <MudText Color="Color.Secondary">Aucun accès à des zones</MudText>
+                        <MudText Color="Color.Secondary">Aucun accï¿½s ï¿½ des zones</MudText>
                     </div>
                 }
             </MudTabPanel>
             
-            <!-- Onglet Périphériques -->
-            <MudTabPanel Text=" Périphériques" BadgeData="@peripheriqueRights.Count" BadgeColor="Color.Success">
+            <!-- Onglet Pï¿½riphï¿½riques -->
+            <MudTabPanel Text=" Pï¿½riphï¿½riques" BadgeData="@peripheriqueRights.Count" BadgeColor="Color.Success">
                 @if (peripheriqueRights.Any())
                 {
                     <MudList T="string" Dense="true">
@@ -60,7 +60,7 @@
                                     <div>
                                         <MudText Typo="Typo.body1">@peripherique.PeripheriqueName</MudText>
                                         <MudText Typo="Typo.caption" Color="Color.Secondary">
-                                            @peripherique.ZoneName • Accordé le @peripherique.GrantedAt.ToString("dd/MM/yyyy")
+                                            @peripherique.ZoneName ï¿½ Accordï¿½ le @peripherique.GrantedAt.ToString("dd/MM/yyyy")
                                         </MudText>
                                     </div>
                                     <div class="d-flex gap-1">
@@ -80,7 +80,7 @@
                 {
                     <div class="d-flex flex-column align-center pa-8">
                         <MudIcon Icon="@Icons.Material.Filled.DeviceHub" Size="Size.Large" Color="Color.Secondary" Class="mb-2" />
-                        <MudText Color="Color.Secondary">Aucun accès à des périphériques</MudText>
+                        <MudText Color="Color.Secondary">Aucun accï¿½s ï¿½ des pï¿½riphï¿½riques</MudText>
                     </div>
                 }
             </MudTabPanel>
@@ -95,7 +95,7 @@
             </div>
             <div class="text-center">
                 <MudText Typo="Typo.h6" Color="Color.Success">@peripheriqueRights.Count</MudText>
-                <MudText Typo="Typo.caption">Périphérique(s)</MudText>
+                <MudText Typo="Typo.caption">Pï¿½riphï¿½rique(s)</MudText>
             </div>
             <div class="text-center">
                 <MudText Typo="Typo.h6" Color="Color.Primary">@(zoneRights.Count + peripheriqueRights.Count)</MudText>
@@ -138,7 +138,7 @@
 
         try
         {
-            // Charger les droits d'accès en parallèle
+            // Charger les droits d'accï¿½s en parallï¿½le
             var zoneTask = DroitAccesService.GetUserZoneAccessRightsAsync();
             var peripheriqueTask = DroitAccesService.GetUserPeripheriqueAccessRightsAsync();
 
@@ -157,12 +157,12 @@
                 peripheriqueRights = peripheriqueResponse.Data;
             }
 
-            Logger.LogInformation(" Droits d'accès chargés: {ZoneCount} zones, {PeripheriqueCount} périphériques", 
+            Logger.LogInformation(" Droits d'accï¿½s chargï¿½s: {ZoneCount} zones, {PeripheriqueCount} pï¿½riphï¿½riques", 
                 zoneRights.Count, peripheriqueRights.Count);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, " Erreur lors du chargement des droits d'accès");
+            Logger.LogError(ex, " Erreur lors du chargement des droits d'accï¿½s");
         }
         finally
         {
@@ -176,7 +176,7 @@
         await LoadAccessRights();
     }
 
-    // Méthodes utilitaires
+    // Mï¿½thodes utilitaires
     private string GetPeripheriqueIcon(string type) => type.ToLower() switch
     {
         "relay" => Icons.Material.Filled.Power,

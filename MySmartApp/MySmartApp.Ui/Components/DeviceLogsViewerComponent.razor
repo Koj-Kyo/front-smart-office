@@ -1,4 +1,4 @@
-@using MySmartApp.Ui.Services
+ï»¿@using MySmartApp.Ui.Services
 @using MySmartApp.Ui.Models
 @inject IDeviceLogService DeviceLogService
 @inject ILogger<DeviceLogsViewerComponent> Logger
@@ -72,7 +72,7 @@
             </MudItem>
             <MudItem xs="12" md="2">
                 <MudDatePicker @bind-Date="_startDate" 
-                              Label="Date début" 
+                              Label="Date dï¿½but" 
                               Variant="Variant.Outlined"
                               Clearable="true" />
             </MudItem>
@@ -103,7 +103,7 @@
                      OnKeyUp="@(e => { if (e.Key == "Enter") SearchLogs(); })"
                      Clearable="true" />
 
-        <!-- Statistiques (si DeviceId spécifié) -->
+        <!-- Statistiques (si DeviceId spï¿½cifiï¿½) -->
         @if (!string.IsNullOrEmpty(DeviceId) && _stats != null)
         {
             <MudGrid>
@@ -180,11 +180,11 @@
         <!-- Table Logs -->
         @if (_showSearchResults)
         {
-            <!-- Résultats Recherche -->
+            <!-- Rï¿½sultats Recherche -->
             <MudCard>
                 <MudCardHeader>
                     <CardHeaderContent>
-                        <MudText Typo="Typo.h6">Résultats de recherche</MudText>
+                        <MudText Typo="Typo.h6">Rï¿½sultats de recherche</MudText>
                     </CardHeaderContent>
                     <CardHeaderActions>
                         <MudIconButton Icon="@Icons.Material.Filled.Close" 
@@ -226,20 +226,20 @@
                         @if (_searchResults.Count > 20)
                         {
                             <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-2">
-                                Affichage de 20 résultats sur @_searchResults.Count
+                                Affichage de 20 rï¿½sultats sur @_searchResults.Count
                             </MudText>
                         }
                     }
                     else
                     {
-                        <MudText Typo="Typo.body2" Color="Color.Secondary">Aucun résultat trouvé</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Aucun rï¿½sultat trouvï¿½</MudText>
                     }
                 </MudCardContent>
             </MudCard>
         }
         else
         {
-            <!-- Table Paginée -->
+            <!-- Table Paginï¿½e -->
             <MudTable @ref="_table"
                      TItem="DeviceLogDto"
                      ServerData="ServerReload"
@@ -263,7 +263,7 @@
                     <MudTh>Niveau</MudTh>
                     <MudTh>Source</MudTh>
                     <MudTh>Message</MudTh>
-                    <MudTh>Périphérique</MudTh>
+                    <MudTh>Pï¿½riphï¿½rique</MudTh>
                 </HeaderContent>
                 <RowTemplate>
                     <MudTd DataLabel="Date/Heure">
@@ -287,7 +287,7 @@
                             </MudText>
                         }
                     </MudTd>
-                    <MudTd DataLabel="Périphérique">
+                    <MudTd DataLabel="Pï¿½riphï¿½rique">
                         @if (!string.IsNullOrEmpty(context.Peripheral))
                         {
                             <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">@context.Peripheral</MudChip>
@@ -300,7 +300,7 @@
                 </RowTemplate>
                 <NoRecordsContent>
                     <MudText Typo="Typo.body2" Color="Color.Secondary" Align="Align.Center">
-                        Aucun log trouvé
+                        Aucun log trouvï¿½
                     </MudText>
                 </NoRecordsContent>
                 <LoadingContent>
@@ -369,7 +369,7 @@
             if (response.IsSuccess && response.Data != null)
             {
                 _paginatedLogs = response.Data;
-                Logger.LogInformation(" {Count} logs chargés (page {Page})", 
+                Logger.LogInformation(" {Count} logs chargï¿½s (page {Page})", 
                     response.Data.Data.Count, state.Page + 1);
 
                 return new TableData<DeviceLogDto>
@@ -420,7 +420,7 @@
             if (response.IsSuccess && response.Data != null)
             {
                 _stats = response.Data;
-                Logger.LogInformation(" Stats logs chargées");
+                Logger.LogInformation(" Stats logs chargï¿½es");
             }
         }
         catch (Exception ex)
@@ -442,7 +442,7 @@
             {
                 _searchResults = response.Data;
                 _showSearchResults = true;
-                Logger.LogInformation(" {Count} logs critiques chargés", response.Data.Count);
+                Logger.LogInformation(" {Count} logs critiques chargï¿½s", response.Data.Count);
             }
             else
             {
@@ -465,7 +465,7 @@
     {
         if (string.IsNullOrWhiteSpace(_searchTerm) || _searchTerm.Length < 3)
         {
-            _errorMessage = "Entrez au moins 3 caractères pour la recherche";
+            _errorMessage = "Entrez au moins 3 caractï¿½res pour la recherche";
             return;
         }
 
@@ -485,7 +485,7 @@
             {
                 _searchResults = response.Data;
                 _showSearchResults = true;
-                Logger.LogInformation(" {Count} logs trouvés pour '{SearchTerm}'", 
+                Logger.LogInformation(" {Count} logs trouvï¿½s pour '{SearchTerm}'", 
                     response.Data.Count, _searchTerm);
             }
             else
@@ -523,7 +523,7 @@
             if (response.IsSuccess && response.Data != null)
             {
                 // TODO: Trigger browser download
-                Logger.LogInformation(" Export logs généré: {Size} bytes", response.Data.Length);
+                Logger.LogInformation(" Export logs gï¿½nï¿½rï¿½: {Size} bytes", response.Data.Length);
             }
             else
             {

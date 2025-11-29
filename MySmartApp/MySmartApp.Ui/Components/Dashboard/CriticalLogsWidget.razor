@@ -1,4 +1,4 @@
-@using MySmartApp.Ui.Services
+ï»¿@using MySmartApp.Ui.Services
 @using MySmartApp.Ui.Models
 @inject IDeviceLogService DeviceLogService
 @inject NavigationManager Navigation
@@ -80,7 +80,7 @@
                 @if (_logs.Count > MaxLogsDisplayed)
                 {
                     <MudText Typo="Typo.caption" Align="Align.Center" Color="Color.Secondary">
-                        +@(_logs.Count - MaxLogsDisplayed) log(s) critique(s) supplémentaire(s)
+                        +@(_logs.Count - MaxLogsDisplayed) log(s) critique(s) supplï¿½mentaire(s)
                     </MudText>
                 }
             </MudStack>
@@ -91,7 +91,7 @@
                 <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Large" />
                 <MudText Typo="Typo.body1" Color="Color.Success">Aucun log critique</MudText>
                 <MudText Typo="Typo.caption" Color="Color.Secondary">
-                    Aucune erreur critique détectée dans les dernières 24h
+                    Aucune erreur critique dï¿½tectï¿½e dans les derniï¿½res 24h
                 </MudText>
             </MudStack>
         }
@@ -135,7 +135,7 @@
             if (response.IsSuccess && response.Data != null)
             {
                 _logs = response.Data;
-                Logger.LogInformation(" {Count} log(s) critique(s) chargé(s)", _logs.Count);
+                Logger.LogInformation(" {Count} log(s) critique(s) chargï¿½(s)", _logs.Count);
             }
             else
             {

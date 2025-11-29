@@ -1,4 +1,4 @@
-@using Microsoft.AspNetCore.Components.Authorization
+ï»¿@using Microsoft.AspNetCore.Components.Authorization
 @using MySmartApp.Ui.Services
 @inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager Navigation
@@ -14,7 +14,7 @@ else if (IsLoading)
 {
     <div class="d-flex justify-center align-center" style="height: 100vh;">
         <MudProgressCircular Size="Size.Large" Indeterminate="true" />
-        <MudText Class="ml-3">Vérification de l'authentification...</MudText>
+        <MudText Class="ml-3">Vï¿½rification de l'authentification...</MudText>
     </div>
 }
 else
@@ -33,7 +33,7 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        // S'abonner aux changements d'état d'authentification
+        // S'abonner aux changements d'ï¿½tat d'authentification
         AuthStateProvider.AuthenticationStateChanged += OnAuthenticationStateChanged;
         
         await CheckAuthenticationStatus();
@@ -46,51 +46,51 @@ else
             IsLoading = true;
             StateHasChanged();
 
-            // Vérifier l'état d'authentification
+            // Vï¿½rifier l'ï¿½tat d'authentification
             var authState = await AuthStateProvider.GetAuthenticationStateAsync();
             var isUserAuthenticated = authState.User?.Identity?.IsAuthenticated == true;
             
-            Logger.LogDebug(" Vérification auth: IsAuthenticated={IsAuth}, User={User}", 
+            Logger.LogDebug(" Vï¿½rification auth: IsAuthenticated={IsAuth}, User={User}", 
                 isUserAuthenticated, authState.User?.Identity?.Name ?? "Anonymous");
 
             if (isUserAuthenticated)
             {
-                // Vérifier le rôle requis si spécifié
+                // Vï¿½rifier le rï¿½le requis si spï¿½cifiï¿½
                 if (!string.IsNullOrEmpty(RequiredRole))
                 {
                     var hasRequiredRole = authState.User.IsInRole(RequiredRole);
                     if (!hasRequiredRole)
                     {
-                        Logger.LogWarning(" Utilisateur authentifié mais sans le rôle requis: {RequiredRole}", RequiredRole);
+                        Logger.LogWarning(" Utilisateur authentifiï¿½ mais sans le rï¿½le requis: {RequiredRole}", RequiredRole);
                         IsAuthenticated = false;
                         return;
                     }
                 }
 
-                // Double-vérification avec validation du token
+                // Double-vï¿½rification avec validation du token
                 try
                 {
                     var isTokenValid = await AuthService.ValidateTokenAsync();
                     if (!isTokenValid)
                     {
-                        Logger.LogWarning(" Token invalide détecté, déconnexion automatique");
+                        Logger.LogWarning(" Token invalide dï¿½tectï¿½, dï¿½connexion automatique");
                         await AuthService.LogoutAsync();
                         IsAuthenticated = false;
                     }
                     else
                     {
                         IsAuthenticated = true;
-                        Logger.LogDebug(" Utilisateur authentifié et token valide");
+                        Logger.LogDebug(" Utilisateur authentifiï¿½ et token valide");
                         
                         if (!string.IsNullOrEmpty(RequiredRole))
                         {
-                            Logger.LogDebug(" Rôle requis {RequiredRole} validé", RequiredRole);
+                            Logger.LogDebug(" Rï¿½le requis {RequiredRole} validï¿½", RequiredRole);
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    Logger.LogWarning(ex, " Erreur lors de la validation du token, déconnexion par sécurité");
+                    Logger.LogWarning(ex, " Erreur lors de la validation du token, dï¿½connexion par sï¿½curitï¿½");
                     await AuthService.LogoutAsync();
                     IsAuthenticated = false;
                 }
@@ -98,19 +98,19 @@ else
             else
             {
                 IsAuthenticated = false;
-                Logger.LogDebug(" Utilisateur non authentifié");
+                Logger.LogDebug(" Utilisateur non authentifiï¿½");
             }
 
-            // Si l'accès anonyme est autorisé, ne pas rediriger
+            // Si l'accï¿½s anonyme est autorisï¿½, ne pas rediriger
             if (!IsAuthenticated && !AllowAnonymous)
             {
-                Logger.LogInformation(" Redirection vers login nécessaire");
-                // La redirection sera gérée par RedirectToLogin
+                Logger.LogInformation(" Redirection vers login nï¿½cessaire");
+                // La redirection sera gï¿½rï¿½e par RedirectToLogin
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, " Erreur lors de la vérification d'authentification");
+            Logger.LogError(ex, " Erreur lors de la vï¿½rification d'authentification");
             IsAuthenticated = false;
         }
         finally
@@ -128,7 +128,7 @@ else
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, " Erreur lors de la mise à jour de l'état d'authentification");
+            Logger.LogError(ex, " Erreur lors de la mise ï¿½ jour de l'ï¿½tat d'authentification");
         }
     }
 

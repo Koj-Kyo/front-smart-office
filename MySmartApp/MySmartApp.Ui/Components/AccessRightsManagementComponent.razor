@@ -1,4 +1,4 @@
-@using MySmartApp.Ui.Services
+ï»¿@using MySmartApp.Ui.Services
 @using MySmartApp.Ui.Models
 @inject IDroitAccesService DroitAccesService
 @inject IBackendZoneService ZoneService
@@ -11,7 +11,7 @@
         <!-- Header -->
         <MudText Typo="Typo.h5">
             <MudIcon Icon="@Icons.Material.Filled.Security" Class="mr-2" />
-            Gestion des Droits d'Accès
+            Gestion des Droits d'Accï¿½s
         </MudText>
 
         @if (_errorMessage != null)
@@ -25,12 +25,12 @@
         <MudCard>
             <MudCardHeader>
                 <CardHeaderContent>
-                    <MudText Typo="Typo.h6">Assigner des droits d'accès</MudText>
+                    <MudText Typo="Typo.h6">Assigner des droits d'accï¿½s</MudText>
                 </CardHeaderContent>
             </MudCardHeader>
             <MudCardContent>
                 <MudGrid>
-                    <!-- Sélection Utilisateur -->
+                    <!-- Sï¿½lection Utilisateur -->
                     <MudItem xs="12" md="6">
                         <MudAutocomplete T="UserDetailsDto" 
                                         @bind-Value="_selectedUser"
@@ -51,26 +51,26 @@
                         </MudAutocomplete>
                     </MudItem>
 
-                    <!-- Type d'accès -->
+                    <!-- Type d'accï¿½s -->
                     <MudItem xs="12" md="6">
                         <MudSelect @bind-Value="_selectedAccessType" 
-                                  Label="Type d'accès" 
+                                  Label="Type d'accï¿½s" 
                                   Variant="Variant.Outlined"
                                   Required="true">
                             <MudSelectItem Value="@("Lecture")">Lecture seule</MudSelectItem>
-                            <MudSelectItem Value="@("Controle")">Contrôle complet</MudSelectItem>
+                            <MudSelectItem Value="@("Controle")">Contrï¿½le complet</MudSelectItem>
                         </MudSelect>
                     </MudItem>
 
-                    <!-- Sélection Zones (Multiple) -->
+                    <!-- Sï¿½lection Zones (Multiple) -->
                     <MudItem xs="12" md="6">
                         <MudSelect T="int" 
                                   @bind-SelectedValues="_selectedZoneIds"
-                                  Label="Zones à assigner" 
+                                  Label="Zones ï¿½ assigner" 
                                   Variant="Variant.Outlined"
                                   MultiSelection="true"
                                   SelectAll="true"
-                                  SelectAllText="Sélectionner toutes les zones">
+                                  SelectAllText="Sï¿½lectionner toutes les zones">
                             @foreach (var zone in _availableZones)
                             {
                                 <MudSelectItem Value="@zone.Id">@zone.Name</MudSelectItem>
@@ -79,20 +79,20 @@
                         @if (_selectedZoneIds?.Any() == true)
                         {
                             <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-1">
-                                @_selectedZoneIds.Count() zone(s) sélectionnée(s)
+                                @_selectedZoneIds.Count() zone(s) sï¿½lectionnï¿½e(s)
                             </MudText>
                         }
                     </MudItem>
 
-                    <!-- Sélection Devices (Multiple) -->
+                    <!-- Sï¿½lection Devices (Multiple) -->
                     <MudItem xs="12" md="6">
                         <MudSelect T="int" 
                                   @bind-SelectedValues="_selectedDeviceIds"
-                                  Label="Devices à assigner" 
+                                  Label="Devices ï¿½ assigner" 
                                   Variant="Variant.Outlined"
                                   MultiSelection="true"
                                   SelectAll="true"
-                                  SelectAllText="Sélectionner tous les devices">
+                                  SelectAllText="Sï¿½lectionner tous les devices">
                             @foreach (var device in _availableDevices)
                             {
                                 <MudSelectItem Value="@device.Id">
@@ -103,7 +103,7 @@
                         @if (_selectedDeviceIds?.Any() == true)
                         {
                             <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-1">
-                                @_selectedDeviceIds.Count() device(s) sélectionné(s)
+                                @_selectedDeviceIds.Count() device(s) sï¿½lectionnï¿½(s)
                             </MudText>
                         }
                     </MudItem>
@@ -114,7 +114,7 @@
                             <MudButton OnClick="ResetForm" 
                                       Variant="Variant.Outlined"
                                       Disabled="@_isProcessing">
-                                Réinitialiser
+                                Rï¿½initialiser
                             </MudButton>
                             <MudButton OnClick="AssignRights" 
                                       Variant="Variant.Filled" 
@@ -165,8 +165,8 @@
                                 <tr>
                                     <th>Type</th>
                                     <th>Ressource</th>
-                                    <th>Type d'accès</th>
-                                    <th>Date création</th>
+                                    <th>Type d'accï¿½s</th>
+                                    <th>Date crï¿½ation</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -225,13 +225,13 @@
                         </MudSimpleTable>
 
                         <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-2">
-                            Total: @_userRights.Count droit(s) d'accès
+                            Total: @_userRights.Count droit(s) d'accï¿½s
                         </MudText>
                     }
                     else
                     {
                         <MudAlert Severity="Severity.Info">
-                            Aucun droit d'accès assigné pour cet utilisateur
+                            Aucun droit d'accï¿½s assignï¿½ pour cet utilisateur
                         </MudAlert>
                     }
                 </MudCardContent>
@@ -240,16 +240,16 @@
     </MudStack>
 </MudPaper>
 
-<!-- Dialog Confirmation Révocation -->
+<!-- Dialog Confirmation Rï¿½vocation -->
 <MudDialog @bind-IsVisible="_showRevokeDialog" Options="_dialogOptions">
     <TitleContent>
-        <MudText Typo="Typo.h6">Confirmer la révélation</MudText>
+        <MudText Typo="Typo.h6">Confirmer la rï¿½vï¿½lation</MudText>
     </TitleContent>
     <DialogContent>
         @if (_rightToRevoke != null)
         {
             <MudAlert Severity="Severity.Warning">
-                Êtes-vous sûr de vouloir révoquer l'accès à 
+                ï¿½tes-vous sï¿½r de vouloir rï¿½voquer l'accï¿½s ï¿½ 
                 <strong>@(_rightToRevoke.ZoneName ?? _rightToRevoke.PeripheriqueLogiqueName)</strong> 
                 pour <strong>@_selectedUser?.FullName</strong> ?
             </MudAlert>
@@ -261,7 +261,7 @@
                   Variant="Variant.Filled" 
                   OnClick="ConfirmRevoke"
                   Disabled="@_isProcessing">
-            Révoquer
+            Rï¿½voquer
         </MudButton>
     </DialogActions>
 </MudDialog>
@@ -313,13 +313,13 @@
             var devices = await DeviceService.GetAllDevicesLegacyAsync();
             _availableDevices = devices.ToList();
 
-            Logger.LogInformation(" {Zones} zones et {Devices} devices chargés", 
+            Logger.LogInformation(" {Zones} zones et {Devices} devices chargï¿½s", 
                 _availableZones.Count, _availableDevices.Count);
         }
         catch (Exception ex)
         {
-            _errorMessage = $"Erreur lors du chargement des données: {ex.Message}";
-            Logger.LogError(ex, " Exception chargement données");
+            _errorMessage = $"Erreur lors du chargement des donnï¿½es: {ex.Message}";
+            Logger.LogError(ex, " Exception chargement donnï¿½es");
         }
     }
 
@@ -371,7 +371,7 @@
             if (response.IsSuccess && response.Data != null)
             {
                 _userRights = response.Data;
-                Logger.LogInformation(" {Count} droits chargés pour {UserId}", 
+                Logger.LogInformation(" {Count} droits chargï¿½s pour {UserId}", 
                     response.Data.Count, _selectedUser.Id);
             }
             else
@@ -453,7 +453,7 @@
 
             if (successCount > 0)
             {
-                Logger.LogInformation(" {Count} droit(s) assigné(s) à {UserId}", 
+                Logger.LogInformation(" {Count} droit(s) assignï¿½(s) ï¿½ {UserId}", 
                     successCount, _selectedUser.Id);
                 
                 // Recharger les droits
@@ -505,24 +505,24 @@
             }
             else
             {
-                _errorMessage = "Droit d'accès invalide (ni zone ni device)";
+                _errorMessage = "Droit d'accï¿½s invalide (ni zone ni device)";
                 return;
             }
 
             if (response.IsSuccess)
             {
-                Logger.LogInformation(" Droit révoqué pour {UserId}", _selectedUser.Id);
+                Logger.LogInformation(" Droit rï¿½voquï¿½ pour {UserId}", _selectedUser.Id);
                 await LoadUserRights();
             }
             else
             {
-                _errorMessage = response.ErrorMessage ?? "Erreur lors de la révocation";
+                _errorMessage = response.ErrorMessage ?? "Erreur lors de la rï¿½vocation";
             }
         }
         catch (Exception ex)
         {
             _errorMessage = $"Erreur technique: {ex.Message}";
-            Logger.LogError(ex, " Exception révocation droit");
+            Logger.LogError(ex, " Exception rï¿½vocation droit");
         }
         finally
         {

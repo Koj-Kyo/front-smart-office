@@ -1,4 +1,4 @@
-@using Microsoft.AspNetCore.SignalR.Client
+ï»¿@using Microsoft.AspNetCore.SignalR.Client
 @using MySmartApp.Ui.Services
 @using MySmartApp.Ui.Models
 @inject ISignalRService SignalRService
@@ -89,23 +89,23 @@
         {
             Logger.LogDebug(" Initialisation du composant SignalR...");
             
-            // S'abonner aux événements du service SignalR
+            // S'abonner aux ï¿½vï¿½nements du service SignalR
             SignalRService.ConnectionStateChanged += HandleConnectionStateChanged;
             
-            // Obtenir l'état actuel
+            // Obtenir l'ï¿½tat actuel
             _connectionState = SignalRService.ConnectionState;
             
-            // Démarrer la connexion si demandé
+            // Dï¿½marrer la connexion si demandï¿½
             if (AutoReconnect && _connectionState == HubConnectionState.Disconnected)
             {
                 await StartConnectionAsync();
             }
             
-            // Timer pour vérifier périodiquement l'état
+            // Timer pour vï¿½rifier pï¿½riodiquement l'ï¿½tat
             _statusTimer = new Timer(CheckConnectionStatus, null, 
                 TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(30));
                 
-            Logger.LogDebug(" Composant SignalR initialisé avec état: {State}", _connectionState);
+            Logger.LogDebug(" Composant SignalR initialisï¿½ avec ï¿½tat: {State}", _connectionState);
         }
         catch (Exception ex)
         {
@@ -119,19 +119,19 @@
         var oldState = _connectionState;
         _connectionState = newState;
         
-        Logger.LogInformation(" État SignalR changé: {OldState} ? {NewState}", oldState, newState);
+        Logger.LogInformation(" ï¿½tat SignalR changï¿½: {OldState} ? {NewState}", oldState, newState);
         
-        // Notifications à l'utilisateur
+        // Notifications ï¿½ l'utilisateur
         _ = Task.Run(async () =>
         {
             switch (newState)
             {
                 case HubConnectionState.Connected:
-                    await AppState.ShowNotificationAsync("Connexion temps réel établie", NotificationType.Success);
+                    await AppState.ShowNotificationAsync("Connexion temps rï¿½el ï¿½tablie", NotificationType.Success);
                     break;
                     
                 case HubConnectionState.Disconnected when oldState == HubConnectionState.Connected:
-                    await AppState.ShowNotificationAsync("Connexion temps réel perdue", NotificationType.Warning);
+                    await AppState.ShowNotificationAsync("Connexion temps rï¿½el perdue", NotificationType.Warning);
                     
                     // Tentative de reconnexion automatique
                     if (AutoReconnect)
@@ -165,14 +165,14 @@
             _lastConnectionAttempt = DateTime.UtcNow;
             StateHasChanged();
             
-            Logger.LogInformation(" Démarrage de la connexion SignalR...");
+            Logger.LogInformation(" Dï¿½marrage de la connexion SignalR...");
             await SignalRService.StartAsync();
             
-            Logger.LogInformation(" Connexion SignalR démarrée");
+            Logger.LogInformation(" Connexion SignalR dï¿½marrï¿½e");
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, " Erreur lors du démarrage de la connexion SignalR");
+            Logger.LogError(ex, " Erreur lors du dï¿½marrage de la connexion SignalR");
             await AppState.ShowNotificationAsync($"Impossible de se connecter: {ex.Message}", NotificationType.Error);
         }
         finally
@@ -232,10 +232,10 @@
     {
         return _connectionState switch
         {
-            HubConnectionState.Connected => "Connecté",
+            HubConnectionState.Connected => "Connectï¿½",
             HubConnectionState.Connecting => "Connexion...",
             HubConnectionState.Reconnecting => "Reconnexion...",
-            HubConnectionState.Disconnected => "Déconnecté",
+            HubConnectionState.Disconnected => "Dï¿½connectï¿½",
             _ => "Inconnu"
         };
     }
@@ -248,11 +248,11 @@
             
         return _connectionState switch
         {
-            HubConnectionState.Connected => "Connexion temps réel active - Mises à jour automatiques",
-            HubConnectionState.Connecting => "Établissement de la connexion en cours...",
+            HubConnectionState.Connected => "Connexion temps rï¿½el active - Mises ï¿½ jour automatiques",
+            HubConnectionState.Connecting => "ï¿½tablissement de la connexion en cours...",
             HubConnectionState.Reconnecting => "Tentative de reconnexion automatique...",
-            HubConnectionState.Disconnected => $"Pas de connexion temps réel. Dernière tentative: {lastAttempt}",
-            _ => "État de connexion inconnu"
+            HubConnectionState.Disconnected => $"Pas de connexion temps rï¿½el. Derniï¿½re tentative: {lastAttempt}",
+            _ => "ï¿½tat de connexion inconnu"
         };
     }
 
@@ -267,7 +267,7 @@
                 SignalRService.ConnectionStateChanged -= HandleConnectionStateChanged;
             }
             
-            Logger.LogDebug(" Composant SignalR disposé");
+            Logger.LogDebug(" Composant SignalR disposï¿½");
         }
         catch (Exception ex)
         {

@@ -1,4 +1,4 @@
-@using Microsoft.AspNetCore.Components.Authorization
+ï»¿@using Microsoft.AspNetCore.Components.Authorization
 @using MySmartApp.Ui.Services
 @inject AuthenticationStateProvider AuthStateProvider
 @inject IAuthService AuthService
@@ -19,7 +19,7 @@
                        Color="Color.Info"
                        StartIcon="@Icons.Material.Filled.PlayArrow"
                        Class="mb-4">
-                Exécuter diagnostic
+                Exï¿½cuter diagnostic
             </MudButton>
 
             @if (diagnosticResults.Any())
@@ -53,18 +53,18 @@
     private async Task RunDiagnostic()
     {
         diagnosticResults.Clear();
-        Logger.LogInformation("Début du diagnostic d'authentification");
+        Logger.LogInformation("Dï¿½but du diagnostic d'authentification");
 
         try
         {
-            // 1. Vérifier le token
+            // 1. Vï¿½rifier le token
             var token = await TokenProvider.GetTokenAsync();
             if (string.IsNullOrEmpty(token))
             {
                 diagnosticResults.Add(new DiagnosticResult
                 {
                     Title = "Token manquant",
-                    Description = "Aucun token d'authentification trouvé",
+                    Description = "Aucun token d'authentification trouvï¿½",
                     Icon = Icons.Material.Filled.Warning,
                     Color = Color.Warning
                 });
@@ -73,9 +73,9 @@
             {
                 diagnosticResults.Add(new DiagnosticResult
                 {
-                    Title = "Token présent",
-                    Description = "Token d'authentification trouvé",
-                    Details = $"Longueur: {token.Length} caractères",
+                    Title = "Token prï¿½sent",
+                    Description = "Token d'authentification trouvï¿½",
+                    Details = $"Longueur: {token.Length} caractï¿½res",
                     Icon = Icons.Material.Filled.CheckCircle,
                     Color = Color.Success
                 });
@@ -89,7 +89,7 @@
                         diagnosticResults.Add(new DiagnosticResult
                         {
                             Title = "Token valide",
-                            Description = "Le token a été validé avec succès par le serveur",
+                            Description = "Le token a ï¿½tï¿½ validï¿½ avec succï¿½s par le serveur",
                             Icon = Icons.Material.Filled.Verified,
                             Color = Color.Success
                         });
@@ -99,7 +99,7 @@
                         diagnosticResults.Add(new DiagnosticResult
                         {
                             Title = "Token invalide",
-                            Description = "Le serveur a rejeté le token",
+                            Description = "Le serveur a rejetï¿½ le token",
                             Icon = Icons.Material.Filled.Error,
                             Color = Color.Error
                         });
@@ -118,20 +118,20 @@
                 }
             }
 
-            // 3. État d'authentification
+            // 3. ï¿½tat d'authentification
             var authState = await AuthStateProvider.GetAuthenticationStateAsync();
             var isAuthenticated = authState.User?.Identity?.IsAuthenticated == true;
             
             diagnosticResults.Add(new DiagnosticResult
             {
-                Title = $"État d'authentification: {(isAuthenticated ? "Authentifié" : "Non authentifié")}",
-                Description = isAuthenticated ? "L'utilisateur est reconnu comme authentifié" : "L'utilisateur n'est pas authentifié",
+                Title = $"ï¿½tat d'authentification: {(isAuthenticated ? "Authentifiï¿½" : "Non authentifiï¿½")}",
+                Description = isAuthenticated ? "L'utilisateur est reconnu comme authentifiï¿½" : "L'utilisateur n'est pas authentifiï¿½",
                 Details = $"Nom: {authState.User?.Identity?.Name ?? "N/A"}",
                 Icon = isAuthenticated ? Icons.Material.Filled.Person : Icons.Material.Filled.PersonOff,
                 Color = isAuthenticated ? Color.Success : Color.Warning
             });
 
-            // 4. Rôles utilisateur
+            // 4. Rï¿½les utilisateur
             if (isAuthenticated)
             {
                 var user = authState.User;
@@ -141,8 +141,8 @@
                 
                 diagnosticResults.Add(new DiagnosticResult
                 {
-                    Title = $"Rôles utilisateur ({roles.Count})",
-                    Description = roles.Any() ? $"Rôles: {string.Join(", ", roles)}" : "Aucun rôle assigné",
+                    Title = $"Rï¿½les utilisateur ({roles.Count})",
+                    Description = roles.Any() ? $"Rï¿½les: {string.Join(", ", roles)}" : "Aucun rï¿½le assignï¿½",
                     Icon = Icons.Material.Filled.AdminPanelSettings,
                     Color = roles.Any() ? Color.Info : Color.Warning
                 });
@@ -156,9 +156,9 @@
                 {
                     diagnosticResults.Add(new DiagnosticResult
                     {
-                        Title = "Profil utilisateur chargé",
+                        Title = "Profil utilisateur chargï¿½",
                         Description = $"Email: {profile.Email}",
-                        Details = $"ID: {profile.Id}, Rôles: {string.Join(", ", profile.Roles)}",
+                        Details = $"ID: {profile.Id}, Rï¿½les: {string.Join(", ", profile.Roles)}",
                         Icon = Icons.Material.Filled.AccountCircle,
                         Color = Color.Success
                     });
@@ -186,15 +186,15 @@
                 });
             }
 
-            // 6. Test de connectivité API
+            // 6. Test de connectivitï¿½ API
             try
             {
-                // Test de ping à l'API
+                // Test de ping ï¿½ l'API
                 var pingResult = await TestApiConnectivity();
                 diagnosticResults.Add(new DiagnosticResult
                 {
                     Title = pingResult.success ? "API accessible" : "API non accessible",
-                    Description = pingResult.success ? "La connexion à l'API backend fonctionne" : "Impossible de joindre l'API backend",
+                    Description = pingResult.success ? "La connexion ï¿½ l'API backend fonctionne" : "Impossible de joindre l'API backend",
                     Details = pingResult.details,
                     Icon = pingResult.success ? Icons.Material.Filled.CloudDone : Icons.Material.Filled.CloudOff,
                     Color = pingResult.success ? Color.Success : Color.Error
@@ -204,8 +204,8 @@
             {
                 diagnosticResults.Add(new DiagnosticResult
                 {
-                    Title = "Erreur de connectivité",
-                    Description = "Erreur lors du test de connectivité API",
+                    Title = "Erreur de connectivitï¿½",
+                    Description = "Erreur lors du test de connectivitï¿½ API",
                     Details = ex.Message,
                     Icon = Icons.Material.Filled.Error,
                     Color = Color.Error
@@ -216,8 +216,8 @@
             diagnosticResults.Add(new DiagnosticResult
             {
                 Title = "Configuration frontend",
-                Description = "Application Blazor WebAssembly configurée",
-                Details = $"Thème: Activé, SignalR: Configuré, Services: {GetServicesStatus()}",
+                Description = "Application Blazor WebAssembly configurï¿½e",
+                Details = $"Thï¿½me: Activï¿½, SignalR: Configurï¿½, Services: {GetServicesStatus()}",
                 Icon = Icons.Material.Filled.Settings,
                 Color = Color.Success
             });
@@ -231,8 +231,8 @@
                 diagnosticResults.Add(new DiagnosticResult
                 {
                     Title = hasValidToken ? "Local Storage accessible" : "Local Storage vide",
-                    Description = hasValidToken ? "Token stocké dans le navigateur" : "Aucun token en local storage",
-                    Details = hasValidToken ? $"Token présent ({tokenInStorage.Length} caractères)" : "Session non persistée",
+                    Description = hasValidToken ? "Token stockï¿½ dans le navigateur" : "Aucun token en local storage",
+                    Details = hasValidToken ? $"Token prï¿½sent ({tokenInStorage.Length} caractï¿½res)" : "Session non persistï¿½e",
                     Icon = hasValidToken ? Icons.Material.Filled.Storage : Icons.Material.Filled.Warning,
                     Color = hasValidToken ? Color.Success : Color.Warning
                 });
@@ -242,7 +242,7 @@
                 diagnosticResults.Add(new DiagnosticResult
                 {
                     Title = "Erreur Local Storage",
-                    Description = "Problème d'accès au stockage local",
+                    Description = "Problï¿½me d'accï¿½s au stockage local",
                     Details = ex.Message,
                     Icon = Icons.Material.Filled.Error,
                     Color = Color.Error
@@ -270,17 +270,17 @@
     {
         try
         {
-            // Test simple de validation du token qui indique si l'API répond
+            // Test simple de validation du token qui indique si l'API rï¿½pond
             var isValid = await AuthService.ValidateTokenAsync();
-            return (true, isValid ? "API répond et token valide" : "API répond mais token invalide");
+            return (true, isValid ? "API rï¿½pond et token valide" : "API rï¿½pond mais token invalide");
         }
         catch (HttpRequestException)
         {
-            return (false, "Serveur backend non accessible (vérifiez que l'API est démarrée)");
+            return (false, "Serveur backend non accessible (vï¿½rifiez que l'API est dï¿½marrï¿½e)");
         }
         catch (TaskCanceledException)
         {
-            return (false, "Délai d'attente dépassé (timeout)");
+            return (false, "Dï¿½lai d'attente dï¿½passï¿½ (timeout)");
         }
         catch (Exception ex)
         {
@@ -290,14 +290,14 @@
 
     private string GetServicesStatus()
     {
-        // Vérifier que les services principaux sont enregistrés
+        // Vï¿½rifier que les services principaux sont enregistrï¿½s
         var services = new List<string>();
         
         if (AuthService != null) services.Add("Auth");
         if (TokenProvider != null) services.Add("Token");
         if (AuthStateProvider != null) services.Add("AuthState");
         
-        return services.Any() ? string.Join(", ", services) : "Aucun service détecté";
+        return services.Any() ? string.Join(", ", services) : "Aucun service dï¿½tectï¿½";
     }
 
     public class DiagnosticResult

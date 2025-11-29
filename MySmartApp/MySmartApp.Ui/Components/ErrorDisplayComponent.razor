@@ -1,4 +1,4 @@
-@using MySmartApp.Ui.Services
+ï»¿@using MySmartApp.Ui.Services
 @using MySmartApp.Ui.Models
 @inject IAppStateService AppState
 @inject ILogger<ErrorDisplayComponent> Logger
@@ -26,7 +26,7 @@
                 @if (ShowDetails && ValidationErrors != null && ValidationErrors.Any())
                 {
                     <MudExpansionPanels Class="mt-2">
-                        <MudExpansionPanel IsInitiallyExpanded="false" Title="Détails des erreurs">
+                        <MudExpansionPanel IsInitiallyExpanded="false" Title="Dï¿½tails des erreurs">
                             @foreach (var error in ValidationErrors)
                             {
                                 <MudText Typo="Typo.caption" Class="mb-1">
@@ -53,7 +53,7 @@
                             else
                             {
                                 <MudIcon Icon="@Icons.Material.Filled.Refresh" Size="Size.Small" />
-                                <span class="ml-2">Réessayer</span>
+                                <span class="ml-2">Rï¿½essayer</span>
                             }
                         </MudButton>
                     </div>
@@ -99,7 +99,7 @@ private bool _isRetrying = false;
     {
         AppState.OnStateChanged += HandleStateChanged;
         AppState.OnError += HandleGlobalError;
-        Logger.LogDebug("ErrorDisplayComponent initialisé");
+        Logger.LogDebug("ErrorDisplayComponent initialisï¿½");
     }
 
     private void HandleStateChanged()
@@ -121,16 +121,16 @@ private bool _isRetrying = false;
             _isRetrying = true;
             StateHasChanged();
             
-            Logger.LogInformation("Nouvelle tentative demandée par l'utilisateur");
+            Logger.LogInformation("Nouvelle tentative demandï¿½e par l'utilisateur");
             await RetryAction();
             
-            // Effacer l'erreur après un retry réussi
+            // Effacer l'erreur aprï¿½s un retry rï¿½ussi
             await AppState.SetErrorAsync(null);
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Erreur lors de la nouvelle tentative");
-            await AppState.SetErrorAsync($"Nouvelle tentative échouée: {ex.Message}");
+            await AppState.SetErrorAsync($"Nouvelle tentative ï¿½chouï¿½e: {ex.Message}");
         }
         finally
         {
@@ -180,7 +180,7 @@ private bool _isRetrying = false;
     {
         AppState.OnStateChanged -= HandleStateChanged;
         AppState.OnError -= HandleGlobalError;
-        Logger.LogDebug("ErrorDisplayComponent disposé");
+        Logger.LogDebug("ErrorDisplayComponent disposï¿½");
         GC.SuppressFinalize(this);
     }
 }

@@ -1,4 +1,4 @@
-@* Application web réservée aux Admins - ProtectedContent simplifié *@
+ï»¿@* Application web rï¿½servï¿½e aux Admins - ProtectedContent simplifiï¿½ *@
 @using Microsoft.AspNetCore.Components.Authorization
 
 <AuthorizeView>
@@ -19,7 +19,7 @@
                         <div>
                             <MudText Typo="Typo.h6">Application d'Administration</MudText>
                             <MudText Typo="Typo.body2">
-                                Cette application est réservée aux administrateurs. Veuillez vous connecter.
+                                Cette application est rï¿½servï¿½e aux administrateurs. Veuillez vous connecter.
                             </MudText>
                         </div>
                     </div>
@@ -47,7 +47,7 @@
     [Parameter] public RenderFragment? CustomNotAuthorized { get; set; }
     [Parameter] public RenderFragment? CustomAuthorizing { get; set; }
     
-    // Paramètres gardés pour compatibilité mais ignorés car app Admin uniquement
+    // Paramï¿½tres gardï¿½s pour compatibilitï¿½ mais ignorï¿½s car app Admin uniquement
     [Parameter] public string? Policy { get; set; }
     [Parameter] public string? Roles { get; set; }
     [Parameter] public bool ShowAdminBypass { get; set; } = true;

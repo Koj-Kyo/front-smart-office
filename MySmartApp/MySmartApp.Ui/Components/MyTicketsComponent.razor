@@ -1,4 +1,4 @@
-@using MySmartApp.Ui.Services
+ï»¿@using MySmartApp.Ui.Services
 @using MySmartApp.Ui.Models
 @inject IIncidentTicketService IncidentTicketService
 @inject NavigationManager NavigationManager
@@ -64,7 +64,7 @@
             <MudDivider Class="my-2" />
             <div class="text-center">
                 <MudText Typo="Typo.caption" Color="Color.Secondary">
-                    +@(myTickets.Count - MaxDisplayCount) ticket(s) supplémentaire(s)
+                    +@(myTickets.Count - MaxDisplayCount) ticket(s) supplï¿½mentaire(s)
                 </MudText>
             </div>
         }
@@ -81,8 +81,8 @@
                 <MudText Typo="Typo.caption">En cours</MudText>
             </div>
             <div class="text-center">
-                <MudText Typo="Typo.h6" Color="Color.Success">@myTickets.Count(t => t.Statut == "Résolu")</MudText>
-                <MudText Typo="Typo.caption">Résolu(s)</MudText>
+                <MudText Typo="Typo.h6" Color="Color.Success">@myTickets.Count(t => t.Statut == "Rï¿½solu")</MudText>
+                <MudText Typo="Typo.caption">Rï¿½solu(s)</MudText>
             </div>
             <div class="text-center">
                 <MudText Typo="Typo.h6" Color="Color.Primary">@myTickets.Count</MudText>
@@ -103,7 +103,7 @@
                        Variant="Variant.Text"
                        StartIcon="@Icons.Material.Filled.Add"
                        Class="mt-2">
-                Créer un ticket
+                Crï¿½er un ticket
             </MudButton>
         </div>
     }
@@ -131,12 +131,12 @@
             
             if (response.IsSuccess && response.Data != null)
             {
-                // Trier par date de création (plus récent en premier)
+                // Trier par date de crï¿½ation (plus rï¿½cent en premier)
                 myTickets = response.Data
                     .OrderByDescending(t => t.CreatedAt)
                     .ToList();
                 
-                Logger.LogInformation("{Count} tickets personnels chargés", myTickets.Count);
+                Logger.LogInformation("{Count} tickets personnels chargï¿½s", myTickets.Count);
             }
         }
         catch (Exception ex)
@@ -175,9 +175,9 @@
         "Ouvert" => Color.Warning,
         "En cours" => Color.Info,
         "En attente" => Color.Secondary,
-        "Résolu" => Color.Success,
-        "Fermé" => Color.Default,
-        "Annulé" => Color.Error,
+        "Rï¿½solu" => Color.Success,
+        "Fermï¿½" => Color.Default,
+        "Annulï¿½" => Color.Error,
         _ => Color.Default
     };
 

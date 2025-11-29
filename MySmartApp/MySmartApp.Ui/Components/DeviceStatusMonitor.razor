@@ -1,4 +1,4 @@
-@using MySmartApp.Ui.Services
+ï»¿@using MySmartApp.Ui.Services
 @using MySmartApp.Ui.Models
 @inject IDeviceStatusService DeviceStatusService
 @inject ILogger<DeviceStatusMonitor> Logger
@@ -37,34 +37,34 @@
 
         @if (_fullStatus != null)
         {
-            <!-- Alarme Fumée Active -->
+            <!-- Alarme Fumï¿½e Active -->
             @if (_fullStatus.ActiveAlarm != null)
             {
                 <MudAlert Severity="Severity.Error" Icon="@Icons.Material.Filled.Warning" Variant="Variant.Filled">
                     <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
                         <MudStack Spacing="1">
-                            <MudText Typo="Typo.h6"> ALARME FUMÉE ACTIVE</MudText>
+                            <MudText Typo="Typo.h6"> ALARME FUMï¿½E ACTIVE</MudText>
                             <MudText Typo="Typo.body2">
                                 Zone: @_fullStatus.ActiveAlarm.ZoneName - 
-                                Déclenchée: @_fullStatus.ActiveAlarm.StartTime.ToString("dd/MM/yyyy HH:mm:ss")
+                                Dï¿½clenchï¿½e: @_fullStatus.ActiveAlarm.StartTime.ToString("dd/MM/yyyy HH:mm:ss")
                             </MudText>
                         </MudStack>
                         <MudButton OnClick="DeactivateAlarmDialog" 
                                   Variant="Variant.Filled" 
                                   Color="Color.Warning">
-                            Désactiver
+                            Dï¿½sactiver
                         </MudButton>
                     </MudStack>
                 </MudAlert>
             }
 
-            <!-- Métriques Système -->
+            <!-- Mï¿½triques Systï¿½me -->
             @if (_fullStatus.LatestMetrics != null)
             {
                 <MudCard>
                     <MudCardHeader>
                         <CardHeaderContent>
-                            <MudText Typo="Typo.h6"> Métriques Système</MudText>
+                            <MudText Typo="Typo.h6"> Mï¿½triques Systï¿½me</MudText>
                         </CardHeaderContent>
                         <CardHeaderActions>
                             <MudChip T="string" Size="Size.Small" Color="@GetHealthColor(_fullStatus.LatestMetrics)">
@@ -111,17 +111,17 @@
                 </MudCard>
             }
 
-            <!-- Événements RFID Récents -->
+            <!-- ï¿½vï¿½nements RFID Rï¿½cents -->
             @if (_fullStatus.RecentRfidEvents?.Any() == true)
             {
                 <MudCard>
                     <MudCardHeader>
                         <CardHeaderContent>
-                            <MudText Typo="Typo.h6"> Événements RFID Récents</MudText>
+                            <MudText Typo="Typo.h6"> ï¿½vï¿½nements RFID Rï¿½cents</MudText>
                         </CardHeaderContent>
                         <CardHeaderActions>
                             <MudChip T="string" Size="Size.Small" Color="Color.Info">
-                                @_fullStatus.RecentRfidEvents.Count événement(s)
+                                @_fullStatus.RecentRfidEvents.Count ï¿½vï¿½nement(s)
                             </MudChip>
                         </CardHeaderActions>
                     </MudCardHeader>
@@ -137,7 +137,7 @@
                                                 <MudIcon Icon="@(evt.AccessGranted ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.Cancel)" 
                                                         Size="Size.Small" />
                                                 <MudText Typo="Typo.body1" Style="font-weight: 500">
-                                                    @(evt.AccessGranted ? "Accès accordé" : "Accès refusé")
+                                                    @(evt.AccessGranted ? "Accï¿½s accordï¿½" : "Accï¿½s refusï¿½")
                                                 </MudText>
                                                 <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">@evt.CardUid</MudChip>
                                             </MudStack>
@@ -159,17 +159,17 @@
                 </MudCard>
             }
 
-            <!-- Périphériques -->
+            <!-- Pï¿½riphï¿½riques -->
             @if (_fullStatus.Peripherals?.Any() == true)
             {
                 <MudCard>
                     <MudCardHeader>
                         <CardHeaderContent>
-                            <MudText Typo="Typo.h6"> Périphériques</MudText>
+                            <MudText Typo="Typo.h6"> Pï¿½riphï¿½riques</MudText>
                         </CardHeaderContent>
                         <CardHeaderActions>
                             <MudChip T="string" Size="Size.Small" Color="Color.Info">
-                                @_fullStatus.Peripherals.Count périphérique(s)
+                                @_fullStatus.Peripherals.Count pï¿½riphï¿½rique(s)
                             </MudChip>
                         </CardHeaderActions>
                     </MudCardHeader>
@@ -180,8 +180,8 @@
                                     <th>Nom</th>
                                     <th>Type</th>
                                     <th>GPIO</th>
-                                    <th>État</th>
-                                    <th>Dernière MAJ</th>
+                                    <th>ï¿½tat</th>
+                                    <th>Derniï¿½re MAJ</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -211,32 +211,32 @@
         else if (!_isLoading)
         {
             <MudAlert Severity="Severity.Info">
-                Aucune donnée disponible. Cliquez sur "Refresh" pour charger les informations.
+                Aucune donnï¿½e disponible. Cliquez sur "Refresh" pour charger les informations.
             </MudAlert>
         }
 
-        <!-- Dernière mise à jour -->
+        <!-- Derniï¿½re mise ï¿½ jour -->
         @if (_fullStatus != null)
         {
             <MudText Typo="Typo.caption" Align="Align.Right" Color="Color.Secondary">
-                Dernière mise à jour: @_fullStatus.RetrievedAt.ToString("dd/MM/yyyy HH:mm:ss")
+                Derniï¿½re mise ï¿½ jour: @_fullStatus.RetrievedAt.ToString("dd/MM/yyyy HH:mm:ss")
             </MudText>
         }
     </MudStack>
 </MudPaper>
 
-<!-- Dialog Désactivation Alarme -->
+<!-- Dialog Dï¿½sactivation Alarme -->
 <MudDialog @bind-IsVisible="_showDeactivateDialog" Options="_dialogOptions">
     <TitleContent>
-        <MudText Typo="Typo.h6">Désactiver l'alarme fumée</MudText>
+        <MudText Typo="Typo.h6">Dï¿½sactiver l'alarme fumï¿½e</MudText>
     </TitleContent>
     <DialogContent>
         <MudStack Spacing="3">
             <MudAlert Severity="Severity.Warning">
-                Vous êtes sur le point de désactiver l'alarme fumée. Assurez-vous que la situation est sécurisée.
+                Vous ï¿½tes sur le point de dï¿½sactiver l'alarme fumï¿½e. Assurez-vous que la situation est sï¿½curisï¿½e.
             </MudAlert>
             <MudTextField @bind-Value="_deactivationReason" 
-                         Label="Raison de la désactivation" 
+                         Label="Raison de la dï¿½sactivation" 
                          Variant="Variant.Outlined" 
                          Lines="3"
                          Required="true" />
@@ -248,7 +248,7 @@
                   Variant="Variant.Filled" 
                   OnClick="DeactivateAlarm"
                   Disabled="@string.IsNullOrWhiteSpace(_deactivationReason)">
-            Désactiver
+            Dï¿½sactiver
         </MudButton>
     </DialogActions>
 </MudDialog>
@@ -309,11 +309,11 @@
             if (response.IsSuccess && response.Data != null)
             {
                 _fullStatus = response.Data;
-                Logger.LogInformation(" Statut device {DeviceId} rechargé", DeviceId);
+                Logger.LogInformation(" Statut device {DeviceId} rechargï¿½", DeviceId);
             }
             else
             {
-                _errorMessage = response.ErrorMessage ?? "Erreur lors du chargement des données";
+                _errorMessage = response.ErrorMessage ?? "Erreur lors du chargement des donnï¿½es";
                 Logger.LogError(" Erreur chargement statut device: {Error}", _errorMessage);
             }
         }
@@ -356,13 +356,13 @@
             }
             else
             {
-                _errorMessage = response.ErrorMessage ?? "Erreur lors de la désactivation";
+                _errorMessage = response.ErrorMessage ?? "Erreur lors de la dï¿½sactivation";
             }
         }
         catch (Exception ex)
         {
             _errorMessage = $"Erreur technique: {ex.Message}";
-            Logger.LogError(ex, " Exception lors de la désactivation alarme");
+            Logger.LogError(ex, " Exception lors de la dï¿½sactivation alarme");
         }
     }
 
@@ -374,7 +374,7 @@
             await InvokeAsync(async () => await RefreshData());
         }, null, TimeSpan.FromSeconds(RefreshIntervalSeconds), TimeSpan.FromSeconds(RefreshIntervalSeconds));
 
-        Logger.LogInformation(" Auto-refresh activé ({Interval}s)", RefreshIntervalSeconds);
+        Logger.LogInformation(" Auto-refresh activï¿½ ({Interval}s)", RefreshIntervalSeconds);
     }
 
     private void StopAutoRefresh()
@@ -383,7 +383,7 @@
         _refreshTimer = null;
     }
 
-    // Helpers Métriques
+    // Helpers Mï¿½triques
 
     private Color GetHealthColor(DeviceMetricsDto metrics)
     {
@@ -444,16 +444,16 @@
 
     private bool GetPeripheralIsOn(PeripheralDto peripheral)
     {
-        // Essayer d'extraire l'état ON/OFF depuis State
+        // Essayer d'extraire l'ï¿½tat ON/OFF depuis State
         if (peripheral.State == null) return false;
         
         try
         {
-            // Si State est un booléen
+            // Si State est un boolï¿½en
             if (peripheral.State is bool boolState)
                 return boolState;
             
-            // Si State est un dictionnaire avec une clé "on" ou "isOn"
+            // Si State est un dictionnaire avec une clï¿½ "on" ou "isOn"
             if (peripheral.State is System.Collections.Generic.IDictionary<string, object> dict)
             {
                 if (dict.TryGetValue("on", out var onValue) && onValue is bool on)
@@ -470,7 +470,7 @@
                 if (jsonElement.ValueKind == System.Text.Json.JsonValueKind.False)
                     return false;
                     
-                // Essayer de chercher une propriété "on" ou "isOn"
+                // Essayer de chercher une propriï¿½tï¿½ "on" ou "isOn"
                 if (jsonElement.ValueKind == System.Text.Json.JsonValueKind.Object)
                 {
                     if (jsonElement.TryGetProperty("on", out var onProp) && onProp.ValueKind == System.Text.Json.JsonValueKind.True)
@@ -486,7 +486,7 @@
         }
         catch (Exception ex)
         {
-            Logger.LogWarning(ex, "Erreur extraction état périphérique {Name}", peripheral.Name);
+            Logger.LogWarning(ex, "Erreur extraction ï¿½tat pï¿½riphï¿½rique {Name}", peripheral.Name);
             return false;
         }
     }

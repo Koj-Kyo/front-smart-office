@@ -1,4 +1,4 @@
-@using MySmartApp.Ui.Services
+ï»¿@using MySmartApp.Ui.Services
 @using MySmartApp.Ui.Models
 @inject IDeviceStatusService DeviceStatusService
 @inject NavigationManager Navigation
@@ -9,7 +9,7 @@
         <CardHeaderContent>
             <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
                 <MudIcon Icon="@Icons.Material.Filled.Warning" Color="Color.Error" />
-                <MudText Typo="Typo.h6">Alarmes Fumée Actives</MudText>
+                <MudText Typo="Typo.h6">Alarmes Fumï¿½e Actives</MudText>
             </MudStack>
         </CardHeaderContent>
         <CardHeaderActions>
@@ -52,17 +52,17 @@
                                           Variant="Variant.Filled" 
                                           Color="Color.Warning"
                                           OnClick="@(() => DeactivateAlarm(alarm))">
-                                    Désactiver
+                                    Dï¿½sactiver
                                 </MudButton>
                             </MudStack>
                             <MudDivider />
                             <MudStack Row="true" Spacing="3">
                                 <MudStack Spacing="0">
-                                    <MudText Typo="Typo.caption" Color="Color.Secondary">Déclenchée</MudText>
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">Dï¿½clenchï¿½e</MudText>
                                     <MudText Typo="Typo.body2">@alarm.StartTime.ToString("dd/MM HH:mm")</MudText>
                                 </MudStack>
                                 <MudStack Spacing="0">
-                                    <MudText Typo="Typo.caption" Color="Color.Secondary">Durée</MudText>
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">Durï¿½e</MudText>
                                     <MudText Typo="Typo.body2">@GetAlarmDuration(alarm.StartTime)</MudText>
                                 </MudStack>
                             </MudStack>
@@ -73,7 +73,7 @@
                 @if (_alarms.Count > MaxAlarmsDisplayed)
                 {
                     <MudText Typo="Typo.caption" Align="Align.Center" Color="Color.Secondary">
-                        +@(_alarms.Count - MaxAlarmsDisplayed) alarme(s) supplémentaire(s)
+                        +@(_alarms.Count - MaxAlarmsDisplayed) alarme(s) supplï¿½mentaire(s)
                     </MudText>
                 }
             </MudStack>
@@ -84,7 +84,7 @@
                 <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Large" />
                 <MudText Typo="Typo.body1" Color="Color.Success">Aucune alarme active</MudText>
                 <MudText Typo="Typo.caption" Color="Color.Secondary">
-                    Tous les systèmes fonctionnent normalement
+                    Tous les systï¿½mes fonctionnent normalement
                 </MudText>
             </MudStack>
         }
@@ -101,10 +101,10 @@
     }
 </MudCard>
 
-<!-- Dialog Désactivation -->
+<!-- Dialog Dï¿½sactivation -->
 <MudDialog @bind-IsVisible="_showDeactivateDialog" Options="_dialogOptions">
     <TitleContent>
-        <MudText Typo="Typo.h6">Désactiver l'alarme</MudText>
+        <MudText Typo="Typo.h6">Dï¿½sactiver l'alarme</MudText>
     </TitleContent>
     <DialogContent>
         @if (_alarmToDeactivate != null)
@@ -113,14 +113,14 @@
                 <MudAlert Severity="Severity.Warning">
                     <strong>Zone:</strong> @_alarmToDeactivate.ZoneName<br />
                     <strong>Device:</strong> @_alarmToDeactivate.IotDeviceId<br />
-                    <strong>Déclenchée:</strong> @_alarmToDeactivate.StartTime.ToString("dd/MM/yyyy HH:mm:ss")
+                    <strong>Dï¿½clenchï¿½e:</strong> @_alarmToDeactivate.StartTime.ToString("dd/MM/yyyy HH:mm:ss")
                 </MudAlert>
                 <MudTextField @bind-Value="_deactivationReason" 
-                             Label="Raison de la désactivation" 
+                             Label="Raison de la dï¿½sactivation" 
                              Variant="Variant.Outlined" 
                              Lines="3"
                              Required="true"
-                             HelperText="Veuillez expliquer pourquoi l'alarme est désactivée" />
+                             HelperText="Veuillez expliquer pourquoi l'alarme est dï¿½sactivï¿½e" />
             </MudStack>
         }
     </DialogContent>
@@ -133,7 +133,7 @@
             @if (_isProcessing)
             {
                 <MudProgressCircular Size="Size.Small" Indeterminate="true" />
-                <span class="ml-2">Désactivation...</span>
+                <span class="ml-2">Dï¿½sactivation...</span>
             }
             else
             {
@@ -189,7 +189,7 @@
             if (response.IsSuccess && response.Data != null)
             {
                 _alarms = response.Data;
-                Logger.LogInformation(" {Count} alarme(s) active(s) chargée(s)", _alarms.Count);
+                Logger.LogInformation(" {Count} alarme(s) active(s) chargï¿½e(s)", _alarms.Count);
             }
             else
             {
@@ -238,17 +238,17 @@
             {
                 _showDeactivateDialog = false;
                 await LoadAlarmsAsync();
-                Logger.LogInformation(" Alarme désactivée pour {IotDeviceId}", _alarmToDeactivate.IotDeviceId);
+                Logger.LogInformation(" Alarme dï¿½sactivï¿½e pour {IotDeviceId}", _alarmToDeactivate.IotDeviceId);
             }
             else
             {
-                _errorMessage = response.ErrorMessage ?? "Erreur lors de la désactivation";
+                _errorMessage = response.ErrorMessage ?? "Erreur lors de la dï¿½sactivation";
             }
         }
         catch (Exception ex)
         {
             _errorMessage = $"Erreur technique: {ex.Message}";
-            Logger.LogError(ex, " Exception désactivation alarme");
+            Logger.LogError(ex, " Exception dï¿½sactivation alarme");
         }
         finally
         {
@@ -280,7 +280,7 @@
             await InvokeAsync(async () => await LoadAlarmsAsync());
         }, null, TimeSpan.FromSeconds(RefreshIntervalSeconds), TimeSpan.FromSeconds(RefreshIntervalSeconds));
 
-        Logger.LogInformation(" Auto-refresh alarmes activé ({Interval}s)", RefreshIntervalSeconds);
+        Logger.LogInformation(" Auto-refresh alarmes activï¿½ ({Interval}s)", RefreshIntervalSeconds);
     }
 
     public void Dispose()
